@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
-export type CookiePayload = { exp: number };
+export type CookiePayload = { exp: number /* ms-since-epoch */ };
 
 export type VerifyResult =
   | { valid: true; payload: CookiePayload }
@@ -39,13 +39,17 @@ export function verifyCookie(cookie: string, secret: string): VerifyResult {
   }
   if (providedSig.length !== expectedSig.length) return { valid: false, reason: 'bad_signature' };
   if (!timingSafeEqual(providedSig, expectedSig)) return { valid: false, reason: 'bad_signature' };
-  let payload: CookiePayload;
+  let parsed: unknown;
   try {
-    payload = JSON.parse(fromB64url(payloadStr).toString('utf8'));
+    parsed = JSON.parse(fromB64url(payloadStr).toString('utf8'));
   } catch {
     return { valid: false, reason: 'malformed' };
   }
-  if (typeof payload.exp !== 'number' || payload.exp < Date.now()) {
+  if (!parsed || typeof parsed !== 'object' || typeof (parsed as any).exp !== 'number') {
+    return { valid: false, reason: 'malformed' };
+  }
+  const payload = parsed as CookiePayload;
+  if (payload.exp < Date.now()) {
     return { valid: false, reason: 'expired' };
   }
   return { valid: true, payload };
