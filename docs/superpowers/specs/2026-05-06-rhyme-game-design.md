@@ -5,7 +5,7 @@
 
 ## Summary
 
-A Ukrainian-language web clone of [The Rhyme Game](https://creative-rhythm.com/)'s Classic mode: a freestyle-rap scaffolding tool. A beat plays, a ball bounces left→right across cells in time with the beat, and each row's rightmost cell shows a Ukrainian target word — the user freestyles a bar that ends in a word rhyming with that target. Rhymes are grouped by ending (color-coded) and generated fresh per session by an LLM call to Claude.
+A Ukrainian-language web clone of [The Rhyme Game](https://creative-rhythm.com/)'s Classic mode: a freestyle-rap scaffolding tool. A beat plays, a ball bounces left→right across the four cells of each row in time with the four beats of a bar; the rightmost cell shows a Ukrainian target word, and the user is meant to land the last syllable of their freestyled bar on that cell — i.e. close the bar with a word that rhymes with the target. Rhymes are grouped by ending (color-coded) and generated fresh per session by an LLM call to Claude.
 
 The app is single-user-pool gated by a shared password (so it isn't open to the world / doesn't burn API credit).
 
@@ -148,10 +148,11 @@ The exact prompt is in `lib/rhymes.ts` and can be tuned without redeploying logi
         │
         ▼
 [Playing]
-  - Audio plays from t=0
-  - RAF loop computes currentBeat from audio.currentTime
+  - Audio plays from t=0 (audio.currentTime reset to 0 if replaying)
+  - RAF loop computes currentBeat from a sessionTime() that handles audio loop wraparound
   - Ball position + active row update each frame
   - Grid scrolls so active row sits at fixed visible y
+  - "←" back button in top-left → confirms ("Завершити сесію?"), then stops audio and returns to Setup
         │
         │ when all bars consumed
         ▼
@@ -181,22 +182,38 @@ A typical session produces ~30 bars (10 groups × 3 words). At 90 BPM, one bar �
 
 ## Game loop & timing
 
-```ts
-function tick(audio: HTMLAudioElement, bpm: number, totalBars: number) {
-  const t = audio.currentTime;          // seconds
-  const beatsPerSecond = bpm / 60;
-  const currentBeat = t * beatsPerSecond;
-  const currentBar  = Math.floor(currentBeat / 4);
-  const beatInBar   = currentBeat % 4;  // 0..4
+The audio is short (typical loop is 8–16 bars; a session is ~30 bars) and we set `<audio loop>`, which means `audio.currentTime` resets to 0 on every loop. The game loop must track loop count to compute a monotonically increasing "session time".
 
-  const ballX = beatInBar / 4;          // 0..1, lerp across the 4 cells
+```ts
+function makeSessionTimer(audio: HTMLAudioElement) {
+  let loopsCompleted = 0;
+  let lastT = 0;
+  audio.addEventListener('seeking', () => { lastT = 0; }); // user replay
+  return () => {
+    const t = audio.currentTime;
+    if (t < lastT - 0.5) loopsCompleted++; // wrapped around
+    lastT = t;
+    return loopsCompleted * audio.duration + t;
+  };
+}
+
+function tick(sessionTime: number, bpm: number, totalBars: number) {
+  const beatsPerSecond = bpm / 60;
+  const currentBeat = sessionTime * beatsPerSecond;
+  const currentBar  = Math.floor(currentBeat / 4);
+  const beatInBar   = currentBeat % 4;            // 0..4
+
+  const ballX = beatInBar / 4;                    // 0..1, lerp across the 4 cells
   const activeRow = currentBar;
+  // The user lands their rhyme as the ball reaches ballX = 1 (end of the bar).
 
   if (currentBar >= totalBars) endGame();
 }
 ```
 
-Timing is driven by `audio.currentTime`, which means visuals stay in sync even if the browser drops frames. The ball X-position is computed continuously (not snapped to the beat grid) — this gives smooth motion. Vertical position can dip slightly between beats to mimic a real bouncing ball (sine wave on `beatInBar` fractional part).
+Timing is driven by `audio.currentTime` (via `sessionTime`), which means visuals stay in sync with audio even if the browser drops frames. The ball X-position is computed continuously (not snapped to the beat grid) — this gives smooth motion. Vertical position can dip slightly between beats to mimic a real bouncing ball (sine wave on `beatInBar` fractional part).
+
+**BPM accuracy.** Each beat's `bpm` in `lib/beats.ts` is the source of truth for timing. MP3 loops from royalty-free libraries are often labeled "88 BPM" but actually run at 87.9 or 88.1, and over a 30-bar session that drifts by half a beat. The implementer must verify BPM by deriving it from the audio file's actual duration: `bpm = (loopBarsPerLoop × 4 × 60) / audio.duration`. If a loop is 16 bars and `audio.duration === 43.62s`, then `bpm = 64 × 60 / 43.62 = 88.03`. Use the derived value, not the labeled value.
 
 ## Visual design
 
@@ -220,13 +237,15 @@ Timing is driven by `audio.currentTime`, which means visuals stay in sync even i
 `lib/beats.ts`:
 ```ts
 export const beats = [
-  { id: 'b1', src: '/beats/calm-bap.mp3', title: 'Calm Bap', bpm: 88 },
-  { id: 'b2', src: '/beats/cyber-drill.mp3', title: 'Cyber Drill', bpm: 95 },
+  { id: 'b1', src: '/beats/calm-bap.mp3',    title: 'Calm Bap',    bpm: 88.03, barsPerLoop: 16 },
+  { id: 'b2', src: '/beats/cyber-drill.mp3', title: 'Cyber Drill', bpm: 95.00, barsPerLoop: 8  },
   // ... 8–10 total
 ] as const;
 ```
 
-BPMs hand-verified against each track (the BPM number is what drives our timing — wrong BPM means the ball desyncs).
+For each track:
+- `barsPerLoop` is the musical length of the audio file (typical: 8 or 16).
+- `bpm` is derived from the actual file duration (`bpm = barsPerLoop × 4 × 60 / duration`), not whatever the source labels it. Use a DAW or a quick `ffprobe` + arithmetic to fill these in. Wrong BPM → ball desyncs over the session.
 
 **Open item:** if the user has preferred beats, they drop them in `public/beats/` and add metadata; otherwise the implementer picks 8–10 from royalty-free libraries.
 
