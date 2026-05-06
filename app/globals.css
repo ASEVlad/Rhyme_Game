@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { background: #0e1330; color: white; min-height: 100%; }
+body { font-family: var(--font-manrope), system-ui, sans-serif; }
