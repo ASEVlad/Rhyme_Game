@@ -1,57 +1,81 @@
-import { createHmac, timingSafeEqual } from 'crypto';
-
 export type CookiePayload = { exp: number /* ms-since-epoch */ };
 
 export type VerifyResult =
   | { valid: true; payload: CookiePayload }
   | { valid: false; reason: 'malformed' | 'bad_signature' | 'expired' };
 
-function b64url(buf: Buffer): string {
-  return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+function b64url(bytes: Uint8Array): string {
+  let s = '';
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
-function fromB64url(s: string): Buffer {
+function fromB64url(s: string): Uint8Array {
   const pad = s.length % 4 === 0 ? '' : '='.repeat(4 - (s.length % 4));
-  return Buffer.from(s.replace(/-/g, '+').replace(/_/g, '/') + pad, 'base64');
+  const std = (s + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(std);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
 }
 
-function hmac(payload: string, secret: string): Buffer {
-  return createHmac('sha256', secret).update(payload).digest();
+async function hmac(payload: string, secret: string): Promise<Uint8Array> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
+  return new Uint8Array(sig);
 }
 
-export function signCookie(payload: CookiePayload, secret: string): string {
-  const payloadStr = b64url(Buffer.from(JSON.stringify(payload)));
-  const sig = b64url(hmac(payloadStr, secret));
+export function constantTimeEq(a: Uint8Array | string, b: Uint8Array | string): boolean {
+  const ab = typeof a === 'string' ? enc.encode(a) : a;
+  const bb = typeof b === 'string' ? enc.encode(b) : b;
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
+export async function signCookie(payload: CookiePayload, secret: string): Promise<string> {
+  const payloadStr = b64url(enc.encode(JSON.stringify(payload)));
+  const sigBytes = await hmac(payloadStr, secret);
+  const sig = b64url(sigBytes);
   return `${payloadStr}.${sig}`;
 }
 
-export function verifyCookie(cookie: string, secret: string): VerifyResult {
+export async function verifyCookie(cookie: string, secret: string): Promise<VerifyResult> {
   if (!cookie || typeof cookie !== 'string') return { valid: false, reason: 'malformed' };
   const parts = cookie.split('.');
   if (parts.length !== 2) return { valid: false, reason: 'malformed' };
   const [payloadStr, sigStr] = parts;
-  const expectedSig = hmac(payloadStr, secret);
-  let providedSig: Buffer;
+  const expectedSig = await hmac(payloadStr, secret);
+  let providedSig: Uint8Array;
   try {
     providedSig = fromB64url(sigStr);
   } catch {
     return { valid: false, reason: 'malformed' };
   }
-  if (providedSig.length !== expectedSig.length) return { valid: false, reason: 'bad_signature' };
-  if (!timingSafeEqual(providedSig, expectedSig)) return { valid: false, reason: 'bad_signature' };
+  if (!constantTimeEq(providedSig, expectedSig)) {
+    return { valid: false, reason: 'bad_signature' };
+  }
   let parsed: unknown;
   try {
-    parsed = JSON.parse(fromB64url(payloadStr).toString('utf8'));
+    parsed = JSON.parse(dec.decode(fromB64url(payloadStr)));
   } catch {
     return { valid: false, reason: 'malformed' };
   }
-  if (!parsed || typeof parsed !== 'object' || typeof (parsed as any).exp !== 'number') {
+  if (!parsed || typeof parsed !== 'object' || typeof (parsed as { exp?: unknown }).exp !== 'number') {
     return { valid: false, reason: 'malformed' };
   }
   const payload = parsed as CookiePayload;
-  if (payload.exp < Date.now()) {
-    return { valid: false, reason: 'expired' };
-  }
+  if (payload.exp < Date.now()) return { valid: false, reason: 'expired' };
   return { valid: true, payload };
 }
 
