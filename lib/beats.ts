@@ -7,7 +7,13 @@ export type Beat = {
 };
 
 export const BEATS: Beat[] = [
-  // No bundled beats yet. Drop MP3 files into public/beats/ and add entries here.
+  {
+    id: 'click-90',
+    src: '/beats/click-90.wav',
+    title: 'Click 90',
+    bpm: 90,
+    barsPerLoop: 8,
+  },
 ];
 
 export function pickBeat(id: string | undefined): Beat | undefined {
