@@ -13,17 +13,22 @@ export default function LoginPage() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    setSubmitting(false);
-    if (res.ok) {
-      router.push('/');
-      router.refresh();
-    } else {
-      setError('Неправильний пароль');
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        router.push('/');
+        router.refresh();
+      } else {
+        setError('Неправильний пароль');
+      }
+    } catch {
+      setError("Помилка з'єднання");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -34,13 +39,16 @@ export default function LoginPage() {
         <p className="text-center text-white/60">Введіть пароль</p>
         <input
           type="password"
+          aria-label="Пароль"
           value={password}
           onChange={e => setPassword(e.target.value)}
           autoFocus
           className="w-full rounded-xl bg-white/10 px-4 py-3 text-lg outline-none focus:bg-white/15"
           placeholder="Пароль"
         />
-        {error && <p className="text-rhyme-red text-center">{error}</p>}
+        {error && (
+          <p role="alert" className="text-rhyme-red text-center">{error}</p>
+        )}
         <button
           type="submit"
           disabled={submitting || !password}
