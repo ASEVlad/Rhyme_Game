@@ -1,0 +1,23 @@
+import type { Config } from 'tailwindcss';
+
+export default {
+  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './hooks/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        bg: '#0e1330',
+        rhyme: {
+          yellow: '#ffd447',
+          blue:   '#3aa3ff',
+          orange: '#ff8a3c',
+          red:    '#e44d4d',
+        },
+        ball: '#ff9d2a',
+      },
+      fontFamily: {
+        sans: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
+      },
+    },
+  },
+  plugins: [],
+} satisfies Config;
