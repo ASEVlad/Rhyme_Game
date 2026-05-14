@@ -126,6 +126,10 @@ export function useGamePhases(): GamePhasesReturn {
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Intentional: effect reads languageId/difficultyId/schemeId/beatHandle as
+    // stable snapshots from the render that set phase='loading'. playAgain()
+    // deliberately re-uses the last settings by only setting phase, not re-setting
+    // the other state. Do not add them as deps without re-auditing playAgain.
   }, [phase]);
 
   function handlePlay(beat: Beat, lang: LanguageId, difficulty: DifficultyId, scheme: RhymeSchemeId) {
