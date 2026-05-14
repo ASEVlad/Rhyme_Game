@@ -49,7 +49,7 @@ export function useGameLoop(args: {
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [active, audio, bpm, totalBars]);
+  }, [active, audio, bpm, totalBars, startOffset]);
 
   return tick;
 }
