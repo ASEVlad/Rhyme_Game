@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { BeatCategory } from '@/lib/beats';
 
 const CATEGORIES: BeatCategory[] = ['boom-bap', 'trap', 'jazz', 'lo-fi', 'drill', 'other'];
@@ -17,6 +17,12 @@ export default function CalibratePage() {
   const [title, setTitle] = useState('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, []);
+
   async function handleLoad() {
     if (!path) return;
     setLoaded(false);
@@ -30,34 +36,40 @@ export default function CalibratePage() {
     setId(stem);
     setTitle(stem.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
 
-    // Playback — HTMLAudioElement for loop play + currentTime reads
+    // Stop previous audio
     if (audioRef.current) audioRef.current.pause();
+
+    // Playback — starts immediately (independent of analysis)
     const audio = new Audio(src);
     audio.loop = true;
-    audio.play().catch(() => {});
+    audio.play().catch(e => console.error('[calibrate] play failed', e));
     audioRef.current = audio;
 
-    // Analysis — fetch → decodeAudioData → music-tempo (parallel to playback)
+    // Analysis — runs in parallel with playback
     try {
       const res = await fetch(src);
       const arrayBuffer = await res.arrayBuffer();
       const audioCtx = new AudioContext();
-      const buffer = await audioCtx.decodeAudioData(arrayBuffer);
-      // Dynamic import keeps music-tempo out of the main game bundle
-      const MusicTempo = (await import('music-tempo')).default;
-      const mt = new MusicTempo(buffer.getChannelData(0));
-      const detectedBpm = Math.round(mt.tempo * 10) / 10;
-      setBpm(detectedBpm);
+      try {
+        const buffer = await audioCtx.decodeAudioData(arrayBuffer);
+        // Dynamic import keeps music-tempo out of the main game bundle
+        const MusicTempo = (await import('music-tempo')).default;
+        const mt = new MusicTempo(buffer.getChannelData(0));
+        const detectedBpm = Math.round(mt.tempo * 10) / 10;
+        setBpm(detectedBpm);
 
-      // Claude category suggestion
-      const catRes = await fetch('/api/analyze-beat', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ bpm: detectedBpm, title: stem }),
-      });
-      if (catRes.ok) {
-        const { category: suggested } = await catRes.json();
-        if (CATEGORIES.includes(suggested)) setCategory(suggested);
+        // Claude category suggestion
+        const catRes = await fetch('/api/analyze-beat', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ bpm: detectedBpm, title: stem }),
+        });
+        if (catRes.ok) {
+          const { category: suggested } = await catRes.json();
+          if (CATEGORIES.includes(suggested)) setCategory(suggested);
+        }
+      } finally {
+        audioCtx.close();
       }
     } catch (e) {
       console.error('[calibrate] analysis failed', e);
@@ -69,15 +81,13 @@ export default function CalibratePage() {
 
   function handleTap() {
     const now = Date.now();
-    setTaps(prev => {
-      const next = [...prev, now];
-      if (next.length >= 2) {
-        const intervals = next.slice(1).map((t, i) => t - next[i]);
-        const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-        setBpm(Math.round((60_000 / avg) * 10) / 10);
-      }
-      return next;
-    });
+    const next = [...taps, now];
+    if (next.length >= 2) {
+      const intervals = next.slice(1).map((t, i) => t - next[i]);
+      const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      setBpm(Math.round((60_000 / avg) * 10) / 10);
+    }
+    setTaps(next);
   }
 
   function handleMark() {
