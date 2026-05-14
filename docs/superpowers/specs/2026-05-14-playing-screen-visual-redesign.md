@@ -68,13 +68,13 @@ The header row (back arrow + beat title) gets `opacity: 0.18` applied inline via
 
 ### 5. Cell flash
 
-In `WordGrid`, the currently active beat cell (non-word cells in the active row) gets:
+In `WordGrid`, only the single cell matching `activeCol` (i.e. `isActive && col === activeCol`) gets the flash — not all beat cells in the active row. That cell gets:
 
 ```
 bg-white/20 border border-white/40
 ```
 
-replacing the current `bg-white/20` highlight. The word cell (col 3) on the active row keeps its `COLOR_BG` color but adds a stronger glow via `ring-2 ring-white/80` plus a color-matched shadow:
+replacing the current `bg-white/20` (adding the border is the meaningful change). The word cell (col 3) on the active row, when `index >= introRows` (i.e. the word is actually shown), keeps its `COLOR_BG` color but adds a stronger glow via `ring-2 ring-white/80` plus a color-matched shadow. During `introRows` (bars 0–1) col 3 renders as a plain beat cell and the word glow does not apply — this is expected.
 
 | RhymeColor | Shadow |
 |------------|--------|
@@ -85,7 +85,7 @@ replacing the current `bg-white/20` highlight. The word cell (col 3) on the acti
 
 ### 6. Active row spotlight
 
-A `div` with `position: absolute; inset: -8px -10px; border-radius: 18px` and `background: radial-gradient(ellipse at 50% 50%, rgba(255,200,50,0.12) 0%, transparent 70%)` wraps the active row inside `WordGrid`. It's a sibling of the row's grid div, rendered with `position: relative` on the row wrapper.
+Only the active row (`index === activeRow`) gets a wrapper `div` with `position: relative`. Inside it, a sibling `div` before the cells grid has `position: absolute; inset: -8px -10px; border-radius: 18px; background: radial-gradient(ellipse at 50% 50%, rgba(255,200,50,0.12) 0%, transparent 70%); pointer-events: none`. Inactive rows render their grid directly with no extra wrapper.
 
 ### 7. Row opacity hierarchy
 
@@ -104,7 +104,7 @@ The fade from active (1.0) → upcoming (0.28) → past (0.07) happens automatic
 Word cells (col 3) get larger:
 
 - Height: `py-4` → `py-5` (or explicit `h-[52px]`)
-- Font: `text-xl font-bold` → `text-lg font-black`
+- Font: `text-xl font-bold` → `text-xl font-black` (same size, heavier weight)
 - Border radius: `rounded-xl` → `rounded-2xl`
 
 Applied to all cells (beat cells too) for visual consistency.
@@ -117,7 +117,6 @@ Applied to all cells (beat cells too) for visual consistency.
 | `app/globals.css` | `background: #080808` |
 | `components/BouncingBall.tsx` | Remove `yDip` prop, smaller size, golden restyle, `h-5` container |
 | `components/WordGrid.tsx` | Row opacity tiers, cell flash, active row spotlight, bigger tiles |
-| `app/globals.css` | No additional changes needed |
 | `components/Game.tsx` | Move ball inside `max-w-md` wrapper, stop passing `yDip`, add pulse overlay div, fade header |
 
 ## Implementation Order
