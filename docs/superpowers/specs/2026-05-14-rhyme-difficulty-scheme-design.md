@@ -209,13 +209,12 @@ Layout order inside the `space-y-3` container (top → bottom):
 
 ### Upstream cascade from `onPlay` extension
 
-Three files are affected by the `onPlay` signature change:
+`app/page.tsx` is `return <Game />;` — it doesn't need to change. `Game.tsx` renders `<Setup onPlay={handlePlay} />` internally and manages all phases. So the cascade is two files only:
 
 | File | Change |
 |------|--------|
 | `components/Setup.tsx` | Calls `onPlay(activeBeat, languageId, difficultyId, schemeId)` |
-| `app/page.tsx` | Receives and stores `difficultyId` + `schemeId`; passes them to Game as props |
-| `components/Game.tsx` | Receives `initialDifficultyId` + `initialSchemeId` props; passes to `/api/rhymes` |
+| `components/Game.tsx` | `handlePlay` signature extends to `(beat, lang, difficultyId, schemeId)`; stores both in state; passes them to `/api/rhymes` |
 
 ### `app/api/rhymes/route.ts` changes
 
@@ -266,8 +265,7 @@ Estimated new tests: ~8 for `flatten-bars` + ~6 for `buildPrompt` = ~14.
 | `lib/flatten-bars.test.ts` | Modify — add alternating + edge-case tests |
 | `lib/rhymes.test.ts` | Modify — add `buildPrompt` tests |
 | `components/Setup.tsx` | Modify — add state + pickers + extend `onPlay` |
-| `app/page.tsx` | Modify — store `difficultyId` + `schemeId`, pass to Game |
-| `components/Game.tsx` | Modify — receive `initialDifficultyId` + `initialSchemeId` props, pass to `/api/rhymes` |
+| `components/Game.tsx` | Modify — extend `handlePlay` signature, store difficulty + scheme in state, pass to `/api/rhymes` |
 | `app/api/rhymes/route.ts` | Modify — accept + resolve `difficultyId` + `schemeId` |
 
 ---
