@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { fetchRhymeGroups, sampleGroups } from './rhymes';
 import { FALLBACK_GROUPS_BY_LANGUAGE } from './fallback-groups';
 import type { RhymeGroup } from './fallback-groups';
+import { getLanguage } from './languages';
 
 type Behavior = 'good' | 'malformed' | 'throws' | 'empty';
 
@@ -60,7 +61,7 @@ describe('fetchRhymeGroups', () => {
     await fetchRhymeGroups({ count: 3, client, language: 'en' });
     const call = client.messages.create.mock.calls[0][0];
     const userMessage: string = call.messages[0].content;
-    const themes = ['nature','city life','emotions','movement','food','school','sport','music','family','animals','weather','travel'];
+    const themes = getLanguage('en').themes;
     expect(themes.some(t => userMessage.includes(t))).toBe(true);
   });
 
