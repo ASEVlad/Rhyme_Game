@@ -9,10 +9,14 @@ export const maxDuration = 30;
 
 export async function POST(request: Request) {
   let rawLanguage: string | null = null;
+  let rawDifficultyId: string | null = null;
+  let rawSchemeId: string | null = null;
   let exclude: RhymeExclusion = { words: [], endings: [] };
   try {
     const body = await request.json();
     if (body && typeof body.language === 'string') rawLanguage = body.language;
+    if (body && typeof body.difficultyId === 'string') rawDifficultyId = body.difficultyId;
+    if (body && typeof body.schemeId === 'string') rawSchemeId = body.schemeId;
     if (Array.isArray(body?.exclude?.words)) {
       exclude.words = body.exclude.words
         .filter((w: unknown) => typeof w === 'string')
@@ -33,6 +37,12 @@ export async function POST(request: Request) {
     console.warn('[rhymes] ANTHROPIC_API_KEY not set — using fallback groups');
   }
   const client = apiKey ? new Anthropic({ apiKey }) : undefined;
-  const groups = await fetchRhymeGroups({ client, language: lang.id, exclude });
+  const groups = await fetchRhymeGroups({
+    client,
+    language: lang.id,
+    exclude,
+    difficultyId: rawDifficultyId ?? undefined,
+    schemeId: rawSchemeId ?? undefined,
+  });
   return NextResponse.json({ groups });
 }
