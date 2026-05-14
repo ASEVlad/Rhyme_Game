@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isYouTubeUrl, hashUrl, selectFilesToDelete } from './yt-beat';
+import { isYouTubeUrl, hashUrl } from './yt-beat';
 
 describe('isYouTubeUrl', () => {
   it('accepts youtube.com/watch URL', () => {
@@ -39,22 +39,3 @@ describe('hashUrl', () => {
   });
 });
 
-describe('selectFilesToDelete', () => {
-  it('returns empty array when at the limit', () => {
-    expect(selectFilesToDelete(['a', 'b', 'c'], 3)).toEqual([]);
-  });
-  it('returns empty array when under limit', () => {
-    expect(selectFilesToDelete(['a', 'b'], 3)).toEqual([]);
-  });
-  it('returns oldest files when over limit', () => {
-    const files = ['old1.mp3', 'old2.mp3', 'keep1.mp3', 'keep2.mp3', 'keep3.mp3'];
-    expect(selectFilesToDelete(files, 3)).toEqual(['old1.mp3', 'old2.mp3']);
-  });
-  it('returns single file when one over limit', () => {
-    expect(selectFilesToDelete(['old.mp3', 'keep1.mp3', 'keep2.mp3', 'keep3.mp3'], 3))
-      .toEqual(['old.mp3']);
-  });
-  it('returns all files when keepN is 0', () => {
-    expect(selectFilesToDelete(['a', 'b', 'c'], 0)).toEqual(['a', 'b', 'c']);
-  });
-});

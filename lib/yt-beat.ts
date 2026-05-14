@@ -8,10 +8,3 @@ export function hashUrl(url: string): string {
   const { createHash } = require('crypto');
   return createHash('sha256').update(url.trim()).digest('hex').slice(0, 12);
 }
-
-// files must be sorted by mtime ascending (oldest first).
-// Returns the subset that should be deleted to keep only keepN files.
-export function selectFilesToDelete(files: string[], keepN: number): string[] {
-  if (files.length <= keepN) return [];
-  return files.slice(0, files.length - keepN);
-}

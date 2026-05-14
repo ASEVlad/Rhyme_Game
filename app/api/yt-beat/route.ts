@@ -125,7 +125,7 @@ async function generateTitle(
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 30,
+      max_tokens: 128,
       tools: [TITLE_TOOL],
       tool_choice: { type: 'tool', name: 'beat_title' },
       messages: [{
