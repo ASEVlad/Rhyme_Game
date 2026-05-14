@@ -37,19 +37,20 @@ export type LanguageId = 'uk' | 'en' | 'es' | 'de' | 'pl';
 
 export type Language = {
   id: LanguageId;
-  label: string;        // native name, e.g. "Українська"
-  flag: string;         // emoji shown in the picker
+  label: string;        // native name shown in the picker, e.g. "Українська"
   promptTemplate: (count: number) => string;
 };
 
-export const LANGUAGES: readonly Language[];
+export const LANGUAGES: readonly Language[];               // ordered list for the picker
 export const DEFAULT_LANGUAGE: LanguageId = 'uk';
 
+// All id-based access goes through this. Never index LANGUAGES or
+// FALLBACK_GROUPS_BY_LANGUAGE directly — getLanguage guarantees a
+// valid Language for any input.
 export function getLanguage(id: string | null | undefined): Language;
-// Returns the matching Language, or LANGUAGES[uk] if id is missing/unknown.
 ```
 
-`label` and `flag` are the only display fields used in the picker. Adding a new language is a single entry plus a fallback-groups entry.
+`LANGUAGES` is an ordered array (the picker iterates it). Lookups by id always go through `getLanguage`, which returns the matching entry or the `uk` entry for missing / unknown / malformed input. `label` is the native-name string shown in the picker (e.g. `Українська`, `English`, `Español`, `Deutsch`, `Polski`); no flag emojis are used. Adding a new language is a single entry plus a fallback-groups entry.
 
 ### Fallback groups per language
 
@@ -61,7 +62,7 @@ export type RhymeGroup = { ending: string; words: string[] };
 export const FALLBACK_GROUPS_BY_LANGUAGE: Record<LanguageId, RhymeGroup[]>;
 ```
 
-The existing Ukrainian list moves under the `uk` key unchanged. Each of `en`, `es`, `de`, `pl` gets ≥ 10 hand-authored groups of common, age-appropriate words, mirroring the editorial guidance in the existing prompt: simple nouns, verbs, adjectives; nothing rare, archaic, or vulgar; 3–4 words per group; minimum 2 to survive validation.
+The existing Ukrainian list moves under the `uk` key unchanged. Each of `en`, `es`, `de`, `pl` gets 10 hand-authored groups of common, age-appropriate words, mirroring the editorial guidance in the existing prompt: simple nouns, verbs, adjectives; nothing rare, archaic, or vulgar; 3–4 words per group; minimum 2 to survive validation.
 
 Backwards compatibility: callers that previously imported `FALLBACK_GROUPS` are updated to import `FALLBACK_GROUPS_BY_LANGUAGE[lang]` instead. No re-export shim — the old symbol is removed.
 
@@ -81,10 +82,10 @@ export type FetchOpts = {
 
 Behavior changes:
 
-- The prompt is built from `LANGUAGES[language].promptTemplate(count)` instead of a hardcoded Ukrainian string.
-- The tool description becomes `Return groups of common <language label> words that rhyme.` (the language label is interpolated so Claude has clear context).
-- On any failure path (no client, network error, malformed tool response), the function returns `FALLBACK_GROUPS_BY_LANGUAGE[language]` — not the Ukrainian list.
-- An unknown / missing `language` resolves through `getLanguage(...)` to `uk`.
+- Resolve `const lang = getLanguage(opts.language)` once at the top of the function. All downstream reads use `lang.id` and `lang.promptTemplate`. The maps are never indexed directly.
+- The prompt is built from `lang.promptTemplate(count)` instead of a hardcoded Ukrainian string.
+- The tool definition becomes a `buildTool(lang: Language)` helper called per request. The returned tool's `name` stays `rhyme_groups`; only the `description` is interpolated: `Return groups of common ${lang.label} words that rhyme.` The previous module-level `TOOL` constant is removed.
+- On any failure path (no client, network error, malformed tool response), the function returns `FALLBACK_GROUPS_BY_LANGUAGE[lang.id]` — not the Ukrainian list.
 
 Each language's `promptTemplate` follows the same editorial structure as today's Ukrainian prompt:
 
@@ -137,15 +138,15 @@ type Props = {
 };
 ```
 
-Renders a row of pill buttons, each showing `flag` and `label`. Selected pill is highlighted with the existing app accent. Keyboard-accessible via standard button focus.
+Renders a row of pill buttons, each showing the `label` (native language name) only. Selected pill is highlighted with the existing app accent and carries `aria-pressed="true"`. Keyboard-accessible via standard button focus.
 
 ### `components/Setup.tsx`
 
-- Adds `languageId` state alongside `beatId`.
-- On mount: read `rhyme-language` from `localStorage`. If absent or invalid, sniff `navigator.language` (split on `-`, take the prefix). If still not a supported id, use `DEFAULT_LANGUAGE`. Wrap in try/catch so SSR / private mode silently falls through.
-- On `setLanguageId`: write `rhyme-language` to `localStorage` (best-effort).
+- Adds `languageId` state alongside `beatId`. State is initialized to `DEFAULT_LANGUAGE` (a stable value safe for SSR). A `useEffect` runs after mount and reconciles the state from `loadLanguage()` (see Persistence below). Initialization is **not** done via a lazy `useState` initializer, to avoid an SSR / hydration mismatch.
+- On `setLanguageId`: call `saveLanguage(id)`.
 - `LanguagePicker` is rendered below `BeatPicker`.
 - The `onPlay` callback signature becomes `(beatId: string, languageId: LanguageId) => void`.
+- The existing Space / Enter keyboard handler is updated to call `onPlay(beatId, languageId)`.
 
 ### `components/Game.tsx`
 
@@ -156,10 +157,18 @@ Renders a row of pill buttons, each showing `flag` and `label`. Selected pill is
 
 ## Persistence
 
+A new client-only module `lib/language-storage.ts` owns localStorage access. Keeping it separate from `lib/languages.ts` matters because `lib/languages.ts` is imported by `lib/rhymes.ts`, which runs in the Node.js API route — a shared types module shouldn't carry browser-only code.
+
+```ts
+// lib/language-storage.ts
+export function loadLanguage(): LanguageId;   // localStorage → navigator.language prefix → DEFAULT_LANGUAGE
+export function saveLanguage(id: LanguageId): void;  // best-effort; swallows storage errors
+```
+
 - localStorage key: `rhyme-language`.
 - Value: a `LanguageId` string (`"uk"`, `"en"`, etc.).
-- Reads and writes go through a small helper in `lib/languages.ts` that swallows storage errors.
-- First-visit default order: localStorage → `navigator.language` prefix match → `DEFAULT_LANGUAGE` (`uk`).
+- Resolution order on read: localStorage → `navigator.language` prefix match (split on `-`, lowercase) → `DEFAULT_LANGUAGE` (`uk`).
+- Both functions wrap storage access in try/catch so SSR / private mode silently falls through.
 
 ## Edge cases
 
@@ -177,7 +186,7 @@ Renders a row of pill buttons, each showing `flag` and `label`. Selected pill is
   - Unknown / missing language resolves to `uk` in both prompt and fallback paths.
 - `lib/languages.test.ts` (new):
   - Every entry in `LANGUAGES` has a matching key in `FALLBACK_GROUPS_BY_LANGUAGE`.
-  - Each fallback list has ≥ 8 groups (slight safety margin under the authored ≥ 10).
+  - Each fallback list has ≥ 10 groups (matches the authoring requirement; deliberate deletions force a test update).
   - Every group has ≥ 2 words and a non-empty ending.
   - `getLanguage` returns `uk` for `null`, `undefined`, `""`, and unknown ids.
 - Manual smoke test: pick each of the five languages on Setup, start a session, confirm bars render in that language and the beat still plays.
