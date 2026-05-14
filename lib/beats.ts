@@ -15,6 +15,7 @@ export type Beat = {
   startOffset?: number;  // seconds before beat 1; omit or 0 = file starts on beat 1
   category: BeatCategory;
   source?: 'youtube';    // present only for YT-downloaded beats
+  previewOffset?: number; // seconds from file start to begin preview playback; defaults derived from startOffset
 };
 
 export const BEATS: Beat[] = [
