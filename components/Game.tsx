@@ -168,17 +168,15 @@ export function Game() {
 
   // playing
   const activeColor = bars[tick.currentBar]?.color;
-  const pulseBackground = activeColor
-    ? `radial-gradient(ellipse at 50% 35%, ${PULSE_COLOR[activeColor]} 0%, transparent 70%)`
-    : 'transparent';
+  const pulseColor = activeColor ? PULSE_COLOR[activeColor] : 'transparent';
 
   return (
     <main className="relative min-h-screen p-4 flex flex-col">
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: pulseBackground, transition: 'background 400ms ease', zIndex: 0 }}
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{ backgroundColor: pulseColor, transition: 'background-color 400ms ease' }}
       />
-      <div className="relative" style={{ zIndex: 1 }}>
+      <div className="relative z-10">
         <div className="flex justify-between mb-2" style={{ opacity: 0.18 }}>
           <button
             onClick={() => { if (confirm('End session?')) quitToSetup(); }}
