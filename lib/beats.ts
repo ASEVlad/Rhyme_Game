@@ -14,6 +14,7 @@ export type Beat = {
   barsPerLoop: number;
   startOffset?: number;  // seconds before beat 1; omit or 0 = file starts on beat 1
   category: BeatCategory;
+  source?: 'youtube';    // present only for YT-downloaded beats
 };
 
 export const BEATS: Beat[] = [
