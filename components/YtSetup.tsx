@@ -1,7 +1,7 @@
 // components/YtSetup.tsx
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Beat, BeatCategory } from '@/lib/beats';
 import { LANGUAGES, DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
@@ -25,6 +25,8 @@ type Props = {
   onLogout: () => void;
 };
 
+const VALID_CATEGORIES = new Set<string>(['boom-bap', 'trap', 'jazz', 'lo-fi', 'drill', 'other']);
+
 export function buildYtBeat(json: {
   id: string;
   src: string;
@@ -34,13 +36,17 @@ export function buildYtBeat(json: {
   category?: string;
   source?: string;
 }): Beat {
+  const category: BeatCategory =
+    json.category !== undefined && VALID_CATEGORIES.has(json.category)
+      ? (json.category as BeatCategory)
+      : 'other';
   return {
     id: json.id,
     src: json.src,
     title: json.title,
     bpm: json.bpm,
     barsPerLoop: json.barsPerLoop,
-    category: (json.category ?? 'other') as BeatCategory,
+    category,
     ...(json.source === 'youtube' && { source: 'youtube' as const }),
   };
 }
@@ -54,17 +60,19 @@ export function YtSetup({ onPlay, onLogout }: Props) {
   const [ytBeats, setYtBeats] = useState<Beat[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
+  const loadAbortRef = useRef<AbortController | null>(null);
 
   const fetchCatalog = useCallback(() => {
     fetch('/beats/yt-catalog.json')
       .then(r => r.ok ? r.json() : [])
       .then((data: Beat[]) => setYtBeats(data))
-      .catch(() => {});
+      .catch((err) => { if (process.env.NODE_ENV !== 'production') console.error('catalog fetch failed', err); });
   }, []);
 
   useEffect(() => {
     setLanguageId(loadLanguage());
     fetchCatalog();
+    return () => { loadAbortRef.current?.abort(); };
   }, [fetchCatalog]);
 
   function chooseLanguage(id: LanguageId) {
@@ -73,12 +81,16 @@ export function YtSetup({ onPlay, onLogout }: Props) {
   }
 
   async function loadYtBeat() {
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     setYtState({ status: 'loading' });
     try {
       const res = await fetch('/api/yt-beat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ url: ytUrl }),
+        signal: controller.signal,
       });
       const json = await res.json();
       if (!res.ok) {
@@ -93,7 +105,8 @@ export function YtSetup({ onPlay, onLogout }: Props) {
       setSelectedCatalogId(null);
       setYtState({ status: 'loaded', beat: buildYtBeat(json), bpmFallback: json.bpmFallback });
       fetchCatalog();
-    } catch {
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return;
       setYtState({ status: 'error', message: 'Network error' });
     }
   }
@@ -152,6 +165,7 @@ export function YtSetup({ onPlay, onLogout }: Props) {
               <button
                 onClick={loadYtBeat}
                 disabled={!canLoad}
+                aria-label="Load YouTube beat"
                 className="rounded-xl bg-white/20 px-3 py-2 text-sm disabled:opacity-40"
               >Load</button>
             </div>
