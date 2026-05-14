@@ -78,6 +78,7 @@ describe('flattenBars — alternating scheme', () => {
     ];
     const bars = flattenBars(groups, getRhymeScheme('alternating'));
     expect(bars.map(b => b.word)).toEqual(['a0', 'b0', 'a1', 'b1', 'c0', 'c1']);
+    expect(bars.slice(4).map(b => b.color)).toEqual(['orange', 'orange']);
   });
 
   it('does not crash on empty groups', () => {
