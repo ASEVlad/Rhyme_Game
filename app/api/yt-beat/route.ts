@@ -1,5 +1,5 @@
 import { execFileSync } from 'child_process';
-import { existsSync, readdirSync, statSync, unlinkSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { isYouTubeUrl, hashUrl, selectFilesToDelete } from '@/lib/yt-beat';
@@ -12,6 +12,10 @@ const KEEP_N = 20; // keep last 20 downloaded YT beats
 
 function beatPath(id: string) {
   return join(BEATS_DIR, `${YT_PREFIX}${id}.mp3`);
+}
+
+function titlePath(id: string) {
+  return join(BEATS_DIR, `${YT_PREFIX}${id}.txt`);
 }
 
 function estimateBarsPerLoop(bpm: number, durationSec: number): number {
@@ -98,6 +102,18 @@ export async function POST(req: NextRequest) {
     }
 
     cleanupOldBeats();
+
+    // fetch and persist title so cache hits don't need a network call
+    let savedTitle = 'YouTube Beat';
+    try {
+      savedTitle = execFileSync('yt-dlp', [
+        '--print', 'title',
+        '--no-download',
+        '--no-playlist',
+        url,
+      ], { encoding: 'utf8', timeout: 15_000 }).trim().slice(0, 80);
+    } catch { /* use default */ }
+    try { writeFileSync(titlePath(id), savedTitle, 'utf8'); } catch { /* ignore */ }
   }
 
   const { bpm, bpmFallback } = detectBpm(filepath);
@@ -114,14 +130,7 @@ export async function POST(req: NextRequest) {
   } catch { /* use default 64 */ }
 
   let title = 'YouTube Beat';
-  try {
-    title = execFileSync('yt-dlp', [
-      '--print', 'title',
-      '--no-download',
-      '--no-playlist',
-      url,
-    ], { encoding: 'utf8', timeout: 15_000 }).trim().slice(0, 80);
-  } catch { /* use default title */ }
+  try { title = readFileSync(titlePath(id), 'utf8').trim(); } catch { /* use default */ }
 
   return NextResponse.json({
     id,

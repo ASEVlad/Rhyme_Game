@@ -92,13 +92,15 @@ export function Game() {
   }
 
   if (phase === 'setup') {
+    const isYtBeat = activeBeat !== null && !BEATS.some(b => b.id === activeBeat.id);
     return (
       <>
         {loadError && (
           <div className="bg-rhyme-red/30 text-center py-2">{loadError}</div>
         )}
         <Setup
-          initialBeatId={activeBeat?.id ?? null}
+          initialBeatId={isYtBeat ? null : (activeBeat?.id ?? null)}
+          initialYtBeat={isYtBeat ? activeBeat : undefined}
           initialLanguageId={languageId}
           onPlay={handlePlay}
           onLogout={logout}

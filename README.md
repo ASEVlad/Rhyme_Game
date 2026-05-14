@@ -24,6 +24,17 @@ bpm = barsPerLoop * 4 * 60 / audioDurationSeconds
 3. Set env vars: `APP_PASSWORD`, `AUTH_SECRET`, `ANTHROPIC_API_KEY`.
 4. Deploy.
 
+### YouTube Beat Support
+
+The YouTube URL feature requires `yt-dlp` and `ffmpeg` to be installed on the server:
+
+```bash
+pip install yt-dlp   # or: sudo apt install yt-dlp
+# ffmpeg is usually available via: sudo apt install ffmpeg
+```
+
+This feature does not work on serverless platforms (Vercel, etc.) since it requires persistent filesystem writes to `public/beats/` and shell binaries. Use a VPS or local deployment.
+
 ## Tests
 
 ```bash

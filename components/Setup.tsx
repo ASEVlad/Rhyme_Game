@@ -16,16 +16,21 @@ type YtState =
 
 type Props = {
   initialBeatId: string | null;
+  initialYtBeat?: Beat;
   initialLanguageId: LanguageId;
   onPlay: (beat: Beat, languageId: LanguageId) => void;
   onLogout: () => void;
 };
 
-export function Setup({ initialBeatId, initialLanguageId, onPlay, onLogout }: Props) {
-  const [beatId, setBeatId] = useState<string | null>(initialBeatId ?? BEATS[0]?.id ?? null);
+export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay, onLogout }: Props) {
+  const [beatId, setBeatId] = useState<string | null>(
+    initialYtBeat ? null : (initialBeatId ?? BEATS[0]?.id ?? null)
+  );
   const [languageId, setLanguageId] = useState<LanguageId>(initialLanguageId);
   const [ytUrl, setYtUrl] = useState('');
-  const [ytState, setYtState] = useState<YtState>({ status: 'idle' });
+  const [ytState, setYtState] = useState<YtState>(
+    initialYtBeat ? { status: 'loaded', beat: initialYtBeat } : { status: 'idle' }
+  );
 
   useEffect(() => {
     const resolved = loadLanguage();
