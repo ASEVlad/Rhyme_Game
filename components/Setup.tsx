@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BEATS, pickBeat } from '@/lib/beats';
-import type { Beat } from '@/lib/beats';
+import { BEATS, pickBeat, type Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
 import { BeatPicker } from './BeatPicker';
@@ -18,7 +17,8 @@ type Props = {
 export function Setup({ initialBeatId, initialLanguageId, onPlay, onLogout }: Props) {
   const [beatId, setBeatId] = useState<string | null>(initialBeatId ?? BEATS[0]?.id ?? null);
   const [languageId, setLanguageId] = useState<LanguageId>(initialLanguageId);
-  const canPlay = beatId !== null;
+  const selectedBeat = beatId ? (pickBeat(beatId) ?? null) : null;
+  const canPlay = selectedBeat !== null;
 
   // Reconcile language from localStorage / navigator after mount.
   // Done in useEffect (not a lazy state initializer) to avoid SSR/hydration mismatch.
@@ -41,10 +41,7 @@ export function Setup({ initialBeatId, initialLanguageId, onPlay, onLogout }: Pr
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
         <h1 className="text-4xl font-extrabold">The Rhyme Game</h1>
         <button
-          onClick={() => {
-            const beat = beatId ? pickBeat(beatId) : undefined;
-            if (beat) onPlay(beat, languageId);
-          }}
+          onClick={() => selectedBeat && onPlay(selectedBeat, languageId)}
           disabled={!canPlay}
           className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50"
         >
