@@ -90,7 +90,12 @@ function makeSessionTimer(audio: HTMLAudioElement, startOffset = 0) {
 ### Step-by-step flow
 
 **Step 1 — Load a beat file**
-A text input accepts a path relative to `public/` (e.g. `beats/night-trap.mp3`). A **Load** button fetches the file via `fetch()`, decodes it with `AudioContext.decodeAudioData()`, starts looped playback through an `HTMLAudioElement`, and passes the resulting `AudioBuffer` to `music-tempo` for BPM analysis. This works for any file in `public/beats/` — the beat does not need to exist in `beats.ts` yet. The `id` and `title` fields in the output default to the filename stem (e.g. `night-trap`) and can be edited inline before copying.
+A text input accepts a path relative to `public/` (e.g. `beats/night-trap.mp3`). Clicking **Load** triggers two independent operations in parallel:
+
+- **Playback:** an `HTMLAudioElement` is created with `src = '/' + entered path` and set to loop. This is the element used for all subsequent `audio.currentTime` reads.
+- **Analysis:** the same URL is fetched via `fetch()`, the response body converted to an `ArrayBuffer`, and decoded with `AudioContext.decodeAudioData()`. The resulting `AudioBuffer` is passed to `music-tempo` for BPM detection.
+
+This works for any file in `public/beats/` — the beat does not need to exist in `beats.ts` yet. The `id` and `title` fields in the output default to the filename stem (e.g. `night-trap` from `beats/night-trap.mp3`) and can be edited inline before copying. The `src` field in the output is always `'/' + entered path` (e.g. `/beats/night-trap.mp3`).
 
 **Step 2 — Measure BPM (auto + manual correction)**
 `music-tempo` analyses the decoded `AudioBuffer` synchronously and returns a BPM estimate. This value pre-fills the BPM field. A **TAP** button is also shown: the user can tap along to the beat (8+ taps) and the page computes the average inter-tap interval as an override. A **Reset taps** link clears the tap history. The final BPM is whichever was set last (auto or tap). A confidence indicator shows how many taps have been collected (stabilises at 8+).
@@ -116,7 +121,7 @@ Once BPM, category, and startOffset are all set, the output panel shows the comp
 },
 ```
 
-`barsPerLoop` is always left as `/* fill in */` — it cannot be reliably inferred and must be set manually by the developer (count the musical bars in the loop by ear or from the source). A **Copy to clipboard** button copies the block.
+`barsPerLoop` is always left as `/* fill in */` — it cannot be reliably inferred and must be set manually by the developer (count the musical bars in the loop by ear or from the source). `startOffset` is always included in the output even when `0`, making it clear the field was calibrated and not accidentally omitted. A **Copy to clipboard** button copies the block.
 
 ---
 
@@ -136,9 +141,25 @@ Once BPM, category, and startOffset are all set, the output panel shows the comp
 ```
 
 **Server logic:**
-1. Call Claude (`claude-haiku-4-5-20251001`) with tool-use, requesting a `beat_category` tool output.
-2. Prompt: *"Given a beat titled '{title}' with a detected BPM of {bpm}, suggest the most likely genre category. Choose from: boom-bap, trap, jazz, lo-fi, drill, other."*
-3. Validate response against `BeatCategory` union.
+1. Call Claude (`claude-haiku-4-5-20251001`) with tool-use using the following tool schema:
+   ```ts
+   {
+     name: 'beat_category',
+     description: 'Return the most likely genre category for a beat.',
+     input_schema: {
+       type: 'object',
+       properties: {
+         category: {
+           type: 'string',
+           enum: ['boom-bap', 'trap', 'jazz', 'lo-fi', 'drill', 'other'],
+         },
+       },
+       required: ['category'],
+     },
+   }
+   ```
+2. Prompt: *"Given a beat titled '{title}' with a detected BPM of {bpm}, suggest the most likely genre category."*
+3. Validate the returned `category` value is a member of `BeatCategory`.
 4. On any failure, return `{ category: 'other' }` — never error the client.
 
 **Response:**
