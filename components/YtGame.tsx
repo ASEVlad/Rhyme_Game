@@ -11,7 +11,7 @@ import { EndScreen } from './EndScreen';
 export function YtGame() {
   const router = useRouter();
   const {
-    phase, activeBeat, bars, tick, pulseColor,
+    phase, activeBeat, bars, tick, pulseColor, loadError,
     handlePlay, quitToSetup, playAgain, goToSetup,
   } = useGamePhases();
 
@@ -22,7 +22,7 @@ export function YtGame() {
   }
 
   if (phase === 'setup') {
-    return <YtSetup onPlay={handlePlay} onLogout={logout} />;
+    return <YtSetup onPlay={handlePlay} onLogout={logout} errorMessage={loadError} />;
   }
 
   if (phase === 'loading') {

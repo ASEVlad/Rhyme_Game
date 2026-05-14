@@ -23,6 +23,7 @@ type YtState =
 type Props = {
   onPlay: (beat: Beat, lang: LanguageId, difficulty: DifficultyId, scheme: RhymeSchemeId) => void;
   onLogout: () => void;
+  errorMessage?: string | null;
 };
 
 const VALID_CATEGORIES = new Set<string>(['boom-bap', 'trap', 'jazz', 'lo-fi', 'drill', 'other']);
@@ -51,7 +52,7 @@ export function buildYtBeat(json: {
   };
 }
 
-export function YtSetup({ onPlay, onLogout }: Props) {
+export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
   const [languageId, setLanguageId] = useState<LanguageId>(DEFAULT_LANGUAGE);
   const [difficultyId, setDifficultyId] = useState<DifficultyId>(DEFAULT_DIFFICULTY);
   const [schemeId, setSchemeId] = useState<RhymeSchemeId>(DEFAULT_SCHEME);
@@ -136,6 +137,11 @@ export function YtSetup({ onPlay, onLogout }: Props) {
 
       <div className="flex flex-1 flex-col items-center justify-center gap-6 mt-6">
         <h1 className="text-4xl font-extrabold">YouTube Mode</h1>
+        {errorMessage && (
+          <div className="w-full max-w-sm rounded-xl bg-red-500/20 px-3 py-2 text-sm text-red-400">
+            {errorMessage}
+          </div>
+        )}
 
         {/* URL input / loading state / loaded chip */}
         <div className="w-full max-w-sm space-y-1">
