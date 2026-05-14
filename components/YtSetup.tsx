@@ -26,7 +26,7 @@ type Props = {
   errorMessage?: string | null;
 };
 
-const VALID_CATEGORIES = new Set<string>(['boom-bap', 'trap', 'jazz', 'lo-fi', 'drill', 'other']);
+const VALID_CATEGORIES = new Set<BeatCategory>(['boom-bap', 'trap', 'jazz', 'lo-fi', 'drill', 'other']);
 
 export function buildYtBeat(json: {
   id: string;
@@ -38,7 +38,7 @@ export function buildYtBeat(json: {
   source?: string;
 }): Beat {
   const category: BeatCategory =
-    json.category !== undefined && VALID_CATEGORIES.has(json.category)
+    json.category !== undefined && VALID_CATEGORIES.has(json.category as BeatCategory)
       ? (json.category as BeatCategory)
       : 'other';
   return {
@@ -150,7 +150,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
           ) : ytState.status === 'loaded' ? (
             <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-sm">
               <span className="truncate">
-                {ytState.beat.title} · {ytState.beat.bpm} BPM
+                {ytState.beat.title} · {ytState.beat.bpm.toFixed(1)} BPM
                 {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
               </span>
               <button
@@ -203,7 +203,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
                   }`}
                 >
                   <span className="truncate">{b.title}</span>
-                  <span className="text-white/40 ml-2 shrink-0">{b.bpm} BPM</span>
+                  <span className="text-white/40 ml-2 shrink-0">{b.bpm.toFixed(1)} BPM</span>
                 </button>
               ))}
               {ytBeats.length > 5 && !showAll && (

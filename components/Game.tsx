@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BEATS } from '@/lib/beats';
 import { useGamePhases } from '@/hooks/useGamePhases';
 import { Setup } from './Setup';
 import { WordGrid } from './WordGrid';
@@ -22,7 +21,7 @@ export function Game() {
   }
 
   if (phase === 'setup') {
-    const isYtBeat = activeBeat !== null && !BEATS.some(b => b.id === activeBeat.id);
+    const isYtBeat = activeBeat?.source === 'youtube';
     return (
       <>
         {loadError && (
