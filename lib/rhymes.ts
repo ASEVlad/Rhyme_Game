@@ -67,8 +67,8 @@ export async function fetchRhymeGroups(opts: FetchOpts = {}): Promise<RhymeGroup
   try {
     const tool = buildTool(lang);
     const response: any = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
+      model: 'claude-opus-4-7',
+      max_tokens: 2048,
       tools: [tool],
       tool_choice: { type: 'tool', name: TOOL_NAME },
       messages: [{ role: 'user', content: lang.promptTemplate(count) }],
