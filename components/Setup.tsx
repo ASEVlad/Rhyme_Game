@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BEATS } from '@/lib/beats';
+import { BEATS, pickBeat } from '@/lib/beats';
+import type { Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
 import { BeatPicker } from './BeatPicker';
@@ -10,7 +11,7 @@ import { LanguagePicker } from './LanguagePicker';
 type Props = {
   initialBeatId: string | null;
   initialLanguageId: LanguageId;
-  onPlay: (beatId: string, languageId: LanguageId) => void;
+  onPlay: (beat: Beat, languageId: LanguageId) => void;
   onLogout: () => void;
 };
 
@@ -40,7 +41,10 @@ export function Setup({ initialBeatId, initialLanguageId, onPlay, onLogout }: Pr
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
         <h1 className="text-4xl font-extrabold">The Rhyme Game</h1>
         <button
-          onClick={() => beatId && onPlay(beatId, languageId)}
+          onClick={() => {
+            const beat = beatId ? pickBeat(beatId) : undefined;
+            if (beat) onPlay(beat, languageId);
+          }}
           disabled={!canPlay}
           className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50"
         >

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BEATS, pickBeat } from '@/lib/beats';
+import { BEATS } from '@/lib/beats';
+import type { Beat } from '@/lib/beats';
 import type { Bar } from '@/lib/flatten-bars';
 import { DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
 import { useBeat } from '@/hooks/useBeat';
@@ -17,20 +18,19 @@ type Phase = 'setup' | 'loading' | 'playing' | 'ended';
 export function Game() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('setup');
-  const [beatId, setBeatId] = useState<string | null>(BEATS[0]?.id ?? null);
+  const [activeBeat, setActiveBeat] = useState<Beat | null>(BEATS[0] ?? null);
   const [languageId, setLanguageId] = useState<LanguageId>(DEFAULT_LANGUAGE);
   const [bars, setBars] = useState<Bar[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const beat = pickBeat(beatId ?? undefined);
-  const beatHandle = useBeat(beat);
+  const beatHandle = useBeat(activeBeat ?? undefined);
 
   const tick = useGameLoop({
     audio: phase === 'playing' ? beatHandle.audio : null,
-    bpm: beat?.bpm ?? 90,
+    bpm: activeBeat?.bpm ?? 90,
     totalBars: bars.length,
     active: phase === 'playing',
-    startOffset: beat?.startOffset ?? 0,
+    startOffset: activeBeat?.startOffset ?? 0,
     onEnd: () => {
       beatHandle.stop();
       setPhase('ended');
@@ -38,7 +38,7 @@ export function Game() {
   });
 
   useEffect(() => {
-    if (phase !== 'loading' || !beat) return;
+    if (phase !== 'loading' || !activeBeat) return;
     let cancelled = false;
     (async () => {
       try {
@@ -79,8 +79,8 @@ export function Game() {
     router.refresh();
   }
 
-  function handlePlay(id: string, lang: LanguageId) {
-    setBeatId(id);
+  function handlePlay(beat: Beat, lang: LanguageId) {
+    setActiveBeat(beat);
     setLanguageId(lang);
     setLoadError(null);
     setPhase('loading');
@@ -98,7 +98,7 @@ export function Game() {
           <div className="bg-rhyme-red/30 text-center py-2">{loadError}</div>
         )}
         <Setup
-          initialBeatId={beatId}
+          initialBeatId={activeBeat?.id ?? null}
           initialLanguageId={languageId}
           onPlay={handlePlay}
           onLogout={logout}
@@ -132,7 +132,7 @@ export function Game() {
           if (confirm('End session?')) quitToSetup();
         }} aria-label="Quit" className="text-white/70 text-xl">←</button>
         <div className="text-white/60 text-sm">
-          {beat?.title} · {beat?.bpm.toFixed(1)} BPM
+          {activeBeat?.title} · {activeBeat?.bpm.toFixed(1)} BPM
         </div>
       </div>
       <BouncingBall x={tick.ballX} yDip={tick.ballYDip} />
