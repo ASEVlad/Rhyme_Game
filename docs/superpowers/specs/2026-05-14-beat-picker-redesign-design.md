@@ -28,8 +28,8 @@ Replace the current single-beat ◀ ▶ stepper in `components/BeatPicker.tsx` w
 - A standalone integration test for `Game.handlePlay → addRecentBeat` (covered manually + by the `recent-beats.ts` unit tests).
 - Theme / level / category control for rhymes (handled in the next spec).
 - Building out the `/yt` page itself (this spec only adds the navigation button and a placeholder route).
-- Unifying YouTube beats into the BrowseBeats modal or into the recently-played store (intentionally deferred to the future `/yt` spec).
-- Removing the existing inline YouTube URL input from Setup — kept verbatim so the working feature does not regress before `/yt` replaces it.
+- Removing the existing inline YouTube URL input from Setup — kept verbatim. The catalog beats it produces remain visible inside the modal; the URL entry point itself moves to `/yt` in a future spec.
+- Redesigning the YT catalog merge (Setup's `fetchCatalog`) — that pipeline is the source of `allBeats` and remains as-is.
 
 ## Stack
 
@@ -53,7 +53,7 @@ No additions. Same Next.js 14 + TypeScript + Tailwind + HTML5 `<audio>` foundati
   Header: "Browse beats"            ✕
   Search:  ▢ Search by title…
   BPM:     [All BPM] [<85] [85-100] [>100]
-  Cat:     [all categories] [boom-bap] [trap] [jazz] [lo-fi] [other]
+  Cat:     [all categories] [boom-bap] [trap] [jazz] [lo-fi] [other] [YouTube]
   ★ Recently played   (hidden if empty after filter)
     90  Medicate         boom-bap  ▶
     84  Bliss            lo-fi     ▶
@@ -84,8 +84,8 @@ app/
 
 lib/
   beat-filters.ts    # NEW — pure filterBeats(), bpmBucket(), availableCategories()
-  recent-beats.ts    # NEW — localStorage-backed recent IDs (BUNDLED beats only),
-                     # mirrors language-storage.ts
+  recent-beats.ts    # NEW — localStorage-backed recent IDs (any persistent beat:
+                     # bundled or yt-catalog); mirrors language-storage.ts
   beats.ts           # MODIFIED — add optional `previewOffset?: number` field
 ```
 
@@ -95,9 +95,13 @@ The summary card on Setup is intentionally **inline** in `Setup.tsx` (≈10 line
 
 ### Relationship to the YouTube beat feature
 
-`<BrowseBeats />` handles only the bundled `BEATS` array. The existing YouTube URL input block remains in `Setup.tsx` untouched — same component code, same mutual-exclusivity logic with the bundled-beat selection (loading a YT beat sets `beatId = null`; picking a bundled beat clears the YT pill). The new summary card on Setup represents the bundled-beat selection only; when a YT beat is the active beat (Setup's `activeBeat`), the existing YT pill displays alongside the summary card (the YT pill is already mutually exclusive with the YT input field — same pattern, no change).
+A **YouTube beat catalog** already exists in the project: Setup mounts and fetches `/beats/yt-catalog.json`, then merges it with the static `BEATS` array as `allBeats = [...BEATS, ...ytBeats]`. Each catalog entry is a fully persisted `Beat` (downloaded to `public/beats/`, stable ID, optional `source: 'youtube'`). The current `BeatPicker` already accepts this merged list and already has a "youtube" chip filter.
 
-Recently played stores **bundled beat IDs only.** YouTube beats have hash IDs that are never in `BEATS`, are cached only as ephemeral `/tmp` files (evicted after the 3 most-recent), and are scheduled to be redesigned around a future `/yt` route. Adding them to recents now would create dead entries; surfacing them there is intentionally deferred.
+`<BrowseBeats />` therefore receives `allBeats` (bundled + catalog), not just `BEATS`. The list is the same merged list the current picker already gets. The "youtube" chip is offered as a category-row option whenever any beat in `beats` has `source === 'youtube'` (logic carried over from the current `availableCategories`).
+
+The existing inline **YouTube URL input** block in `Setup.tsx` remains untouched — same component code, same mutual-exclusivity logic with the picker selection (loading a YT beat sets `beatId = null`; picking from the modal clears the YT pill). After a URL is loaded, the YT beat is appended to the catalog server-side and surfaces in the picker on the next mount. The "Try YouTube mode →" link added in this spec points to a **future** dedicated YT gameplay route (`/yt`); the catalog flow is orthogonal and remains in Setup.
+
+Recently played stores any beat ID present in `allBeats` at session start — bundled or catalog YT. Stale IDs (e.g., a catalog beat that was later deleted) are filtered out at render time by the existing `.map(...).filter(Boolean)` pipeline.
 
 ## Component contracts
 
@@ -105,14 +109,14 @@ Recently played stores **bundled beat IDs only.** YouTube beats have hash IDs th
 
 ```ts
 type Props = {
-  beats: Beat[];                       // typically BEATS
+  beats: Beat[];                       // typically allBeats = [...BEATS, ...ytCatalog]
   selectedId: string | null;
   onChange: (id: string) => void;      // called immediately on row tap (live select)
   onClose: () => void;                 // called on ✕, Done button, or Esc key
 };
 ```
 
-Internal state: `query` (string), `bucket` (`BpmBucket`), `category` (`BeatCategory | 'all'`), `previewingId` (string | null). All four reset to defaults on each mount — filter state is **not** preserved across modal opens by design.
+Internal state: `query` (string), `bucket` (`BpmBucket`), `category` (`FilterCategory | 'all'`), `previewingId` (string | null). All four reset to defaults on each mount — filter state is **not** preserved across modal opens by design.
 
 The `<audio>` element is created once via `useRef` and reused for all previews.
 
@@ -142,11 +146,14 @@ export type BpmBucket = 'all' | 'slow' | 'mid' | 'fast';
 // Boundary values 85 and 100 both land in `mid`.
 export function bpmBucket(bpm: number): Exclude<BpmBucket, 'all'>;
 
-export function availableCategories(beats: Beat[]): BeatCategory[];
+// 'youtube' is appended as a virtual chip whenever any beat has source === 'youtube'.
+// Logic carried over from the current components/BeatPicker.tsx availableCategories.
+export type FilterCategory = BeatCategory | 'youtube';
+export function availableCategories(beats: Beat[]): FilterCategory[];
 
 export type FilterCriteria = {
   bucket: BpmBucket;
-  category: BeatCategory | 'all';
+  category: FilterCategory | 'all';
   query: string;            // whitespace-trimmed before matching
 };
 
@@ -158,8 +165,9 @@ export function filterBeats(beats: Beat[], c: FilterCriteria): Beat[];
 - Match is case-insensitive `String.prototype.includes` on `beat.title`.
 - Result is sorted by `bpm` ascending. Ties keep input order (stable sort).
 - `bucket: 'all'` and `category: 'all'` are no-ops.
+- `category: 'youtube'` matches `beat.source === 'youtube'` (NOT `beat.category`). All other category values match `beat.category` directly.
 
-The "All BPM" / "all categories" chips are themselves selectable; the four BPM chips and the (1 + N) category chips are each a mutually-exclusive group.
+The "All BPM" / "all categories" chips are themselves selectable; the four BPM chips and the (1 + N) category chips are each a mutually-exclusive group. The "youtube" chip is rendered with display label "YouTube" (preserving the current BeatPicker's casing).
 
 ## Recently played
 
@@ -189,7 +197,7 @@ In `<BrowseBeats />`, the recents list is computed as:
 
 ```ts
 const recentBeats = loadRecentBeats()
-  .map(id => beats.find(b => b.id === id))      // drop stale IDs (no longer in BEATS)
+  .map(id => beats.find(b => b.id === id))      // drop stale IDs (no longer in beats prop)
   .filter((b): b is Beat => Boolean(b));
 
 const recentsAfterFilter = filterBeats(recentBeats, criteria);
@@ -288,14 +296,10 @@ iOS autoplay: the ▶ tap is a user gesture, which unlocks audio. Subsequent pre
 - Server-rendered page. Title: "YouTube Mode". Body: "Coming soon." plus a `← Back` link to `/`.
 - Protected by the same middleware as `/` (no auth changes needed; the existing matcher already covers it).
 
-`components/Game.tsx`, in `handlePlay` (the current signature already takes a `Beat` thanks to the YouTube feature):
+`components/Game.tsx`, in `handlePlay` (the current signature already takes a `Beat` thanks to the YouTube feature). Every beat handed to `handlePlay` originates from Setup's `allBeats` (bundled or catalog YT) or the inline-URL YT pill — all three sources have stable persistent IDs, so we record unconditionally:
 ```ts
 function handlePlay(beat: Beat, lang: LanguageId) {
-  // Only record bundled beats. YT beats use hash IDs that aren't in BEATS,
-  // and their gameplay will move to /yt in a future spec.
-  if (BEATS.some(b => b.id === beat.id)) {
-    addRecentBeat(beat.id);       // NEW
-  }
+  addRecentBeat(beat.id);         // NEW
   setActiveBeat(beat);
   setLanguageId(lang);
   setLoadError(null);
