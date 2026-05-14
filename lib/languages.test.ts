@@ -42,9 +42,9 @@ describe('getLanguage', () => {
 });
 
 describe('Language theme pool', () => {
-  it('every language has at least 8 themes', () => {
+  it('every language has at least 12 themes', () => {
     for (const lang of LANGUAGES) {
-      expect(lang.themes.length).toBeGreaterThanOrEqual(8);
+      expect(lang.themes.length).toBeGreaterThanOrEqual(12);
     }
   });
 

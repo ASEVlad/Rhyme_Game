@@ -1,12 +1,12 @@
 export type LanguageId = 'uk' | 'en' | 'es' | 'de' | 'pl';
 
-export type Exclude = { words: string[]; endings: string[] };
+export type RhymeExclusion = { words: string[]; endings: string[] };
 
 export type Language = {
   id: LanguageId;
   label: string;
   themes: string[];
-  promptTemplate: (count: number, theme: string, exclude?: Exclude) => string;
+  promptTemplate: (count: number, theme: string, exclude?: RhymeExclusion) => string;
 };
 
 function joinLines(lines: string[]): string {
