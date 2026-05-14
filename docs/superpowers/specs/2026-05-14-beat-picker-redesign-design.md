@@ -14,7 +14,8 @@ Replace the current single-beat ◀ ▶ stepper in `components/BeatPicker.tsx` w
 - Let the user preview a ~8-second snippet without starting a session.
 - Show BPM prominently per row.
 - Auto-track "recently played" so common picks come back to the top.
-- No regression to the rest of Setup (language picker, PLAY button, logout).
+- No regression to the rest of Setup (language picker, PLAY button, logout, YouTube URL block).
+- Plant a forward-pointer button on Setup that links to a future dedicated YouTube gameplay page at `/yt` (the page itself is stubbed; full design comes in a follow-up spec).
 
 ## Non-goals (out of scope for this spec)
 
@@ -26,6 +27,9 @@ Replace the current single-beat ◀ ▶ stepper in `components/BeatPicker.tsx` w
 - Auto-defaulting Setup's selected beat to most-recent on first load (stays `BEATS[0]`).
 - A standalone integration test for `Game.handlePlay → addRecentBeat` (covered manually + by the `recent-beats.ts` unit tests).
 - Theme / level / category control for rhymes (handled in the next spec).
+- Building out the `/yt` page itself (this spec only adds the navigation button and a placeholder route).
+- Unifying YouTube beats into the BrowseBeats modal or into the recently-played store (intentionally deferred to the future `/yt` spec).
+- Removing the existing inline YouTube URL input from Setup — kept verbatim so the working feature does not regress before `/yt` replaces it.
 
 ## Stack
 
@@ -38,6 +42,8 @@ No additions. Same Next.js 14 + TypeScript + Tailwind + HTML5 `<audio>` foundati
   ┌──────────────────────────────────┐
   │ Medicate              90 BPM ›   │ ← tappable summary (replaces ◀ ▶ stepper)
   └──────────────────────────────────┘
+  [YouTube URL block]                     (unchanged — existing inline flow)
+  [▶ Try YouTube mode →]                  (NEW — links to /yt)
   [Language picker]                       (unchanged)
   [PLAY]                                  (unchanged)
         │
@@ -69,17 +75,29 @@ No additions. Same Next.js 14 + TypeScript + Tailwind + HTML5 `<audio>` foundati
 ```
 components/
   Setup.tsx          # renders summary card (inline) + <BrowseBeats /> when open
+                     # keeps existing YouTube URL block verbatim
+                     # adds a "Try YouTube mode" link to /yt
   BrowseBeats.tsx    # NEW — full-screen modal: filters, list, preview audio
+
+app/
+  yt/page.tsx        # NEW — placeholder "Coming soon" route for future YouTube gameplay
 
 lib/
   beat-filters.ts    # NEW — pure filterBeats(), bpmBucket(), availableCategories()
-  recent-beats.ts    # NEW — localStorage-backed recent IDs, mirrors language-storage.ts
+  recent-beats.ts    # NEW — localStorage-backed recent IDs (BUNDLED beats only),
+                     # mirrors language-storage.ts
   beats.ts           # MODIFIED — add optional `previewOffset?: number` field
 ```
 
 Deleted: `components/BeatPicker.tsx` and `components/BeatPicker.test.tsx`. The `availableCategories` helper moves into `lib/beat-filters.ts`.
 
 The summary card on Setup is intentionally **inline** in `Setup.tsx` (≈10 lines of JSX) rather than its own component file — a separate file would be premature abstraction.
+
+### Relationship to the YouTube beat feature
+
+`<BrowseBeats />` handles only the bundled `BEATS` array. The existing YouTube URL input block remains in `Setup.tsx` untouched — same component code, same mutual-exclusivity logic with the bundled-beat selection (loading a YT beat sets `beatId = null`; picking a bundled beat clears the YT pill). The new summary card on Setup represents the bundled-beat selection only; when a YT beat is the active beat (Setup's `activeBeat`), the existing YT pill displays alongside the summary card (the YT pill is already mutually exclusive with the YT input field — same pattern, no change).
+
+Recently played stores **bundled beat IDs only.** YouTube beats have hash IDs that are never in `BEATS`, are cached only as ephemeral `/tmp` files (evicted after the 3 most-recent), and are scheduled to be redesigned around a future `/yt` route. Adding them to recents now would create dead entries; surfacing them there is intentionally deferred.
 
 ## Component contracts
 
@@ -263,12 +281,22 @@ iOS autoplay: the ▶ tap is a user gesture, which unlocks audio. Subsequent pre
 - Add inline summary card + `useState<boolean>(false)` for `browseOpen`.
 - Render `<BrowseBeats ... />` conditionally when `browseOpen`.
 - `BEATS` import already present, reused.
+- The YouTube URL block (the `ytState` machine, the input/Load button, the loaded pill, the error text) is **unchanged**. The summary card sits where `<BeatPicker />` sat; the YT block stays where it is below.
+- Add a small "Try YouTube mode →" `next/link` to `/yt` directly under the YT block (or wherever it fits visually). Renders as a muted text link, not a primary button.
 
-`components/Game.tsx`, in `handlePlay`:
+`app/yt/page.tsx` (NEW):
+- Server-rendered page. Title: "YouTube Mode". Body: "Coming soon." plus a `← Back` link to `/`.
+- Protected by the same middleware as `/` (no auth changes needed; the existing matcher already covers it).
+
+`components/Game.tsx`, in `handlePlay` (the current signature already takes a `Beat` thanks to the YouTube feature):
 ```ts
-function handlePlay(id: string, lang: LanguageId) {
-  addRecentBeat(id);              // NEW
-  setBeatId(id);
+function handlePlay(beat: Beat, lang: LanguageId) {
+  // Only record bundled beats. YT beats use hash IDs that aren't in BEATS,
+  // and their gameplay will move to /yt in a future spec.
+  if (BEATS.some(b => b.id === beat.id)) {
+    addRecentBeat(beat.id);       // NEW
+  }
+  setActiveBeat(beat);
   setLanguageId(lang);
   setLoadError(null);
   setPhase('loading');
@@ -317,10 +345,12 @@ NEW:
   lib/beat-filters.test.ts
   lib/recent-beats.ts
   lib/recent-beats.test.ts
+  app/yt/page.tsx               # "Coming soon" placeholder
 
 MODIFIED:
-  components/Setup.tsx          # inline summary card + BrowseBeats render
-  components/Game.tsx           # addRecentBeat call in handlePlay
+  components/Setup.tsx          # inline summary card + BrowseBeats render + /yt link;
+                                # existing YouTube URL block unchanged
+  components/Game.tsx           # addRecentBeat call in handlePlay, bundled-only guard
   lib/beats.ts                  # add optional previewOffset field to Beat
 
 DELETED:
