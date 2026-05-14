@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BEATS, pickBeat, type Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
+import { DIFFICULTIES, DEFAULT_DIFFICULTY, type DifficultyId } from '@/lib/difficulties';
+import { RHYME_SCHEMES, DEFAULT_SCHEME, type RhymeSchemeId } from '@/lib/rhyme-schemes';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
 import { isYouTubeUrl } from '@/lib/yt-beat';
 import Link from 'next/link';
 import { BrowseBeats } from './BrowseBeats';
 import { LanguagePicker } from './LanguagePicker';
+import { DifficultyPicker } from './DifficultyPicker';
+import { RhymeSchemePicker } from './RhymeSchemePicker';
 
 type YtState =
   | { status: 'idle' }
@@ -19,7 +23,7 @@ type Props = {
   initialBeatId: string | null;
   initialYtBeat?: Beat;
   initialLanguageId: LanguageId;
-  onPlay: (beat: Beat, languageId: LanguageId) => void;
+  onPlay: (beat: Beat, languageId: LanguageId, difficultyId: DifficultyId, schemeId: RhymeSchemeId) => void;
   onLogout: () => void;
 };
 
@@ -28,6 +32,8 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
     initialYtBeat ? null : (initialBeatId ?? BEATS[0]?.id ?? null)
   );
   const [languageId, setLanguageId] = useState<LanguageId>(initialLanguageId);
+  const [difficultyId, setDifficultyId] = useState<DifficultyId>(DEFAULT_DIFFICULTY);
+  const [schemeId, setSchemeId] = useState<RhymeSchemeId>(DEFAULT_SCHEME);
   const [ytUrl, setYtUrl] = useState('');
   const [ytState, setYtState] = useState<YtState>(
     initialYtBeat ? { status: 'loaded', beat: initialYtBeat } : { status: 'idle' }
@@ -58,7 +64,6 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
     saveLanguage(id);
   }
 
-  // Picking from BeatPicker clears any loaded YT beat.
   function chooseBeat(id: string | null) {
     setBeatId(id);
     setYtUrl('');
@@ -92,7 +97,6 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
         category: json.category ?? 'other',
         ...(json.source === 'youtube' && { source: 'youtube' as const }),
       };
-      // Loading a YT beat deselects the BeatPicker.
       setBeatId(null);
       setYtState({ status: 'loaded', beat, bpmFallback: json.bpmFallback });
       fetchCatalog();
@@ -106,7 +110,6 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   const selectedBundled: Beat | null =
     beatId ? (pickBeat(beatId) ?? allBeats.find(b => b.id === beatId) ?? null) : null;
 
-  // Active beat: YT beat takes priority, then BrowseBeats selection (static or catalog).
   const activeBeat: Beat | null =
     ytState.status === 'loaded' ? ytState.beat : selectedBundled;
 
@@ -121,7 +124,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
         <h1 className="text-4xl font-extrabold">The Rhyme Game</h1>
         <button
-          onClick={() => activeBeat && onPlay(activeBeat, languageId)}
+          onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
           disabled={!canPlay}
           className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50"
         >
@@ -194,6 +197,18 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
             languages={LANGUAGES}
             selectedId={languageId}
             onChange={chooseLanguage}
+          />
+
+          <DifficultyPicker
+            difficulties={DIFFICULTIES}
+            selectedId={difficultyId}
+            onChange={setDifficultyId}
+          />
+
+          <RhymeSchemePicker
+            schemes={RHYME_SCHEMES}
+            selectedId={schemeId}
+            onChange={setSchemeId}
           />
         </div>
       </div>

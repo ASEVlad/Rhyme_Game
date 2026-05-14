@@ -7,6 +7,8 @@ import type { Beat } from '@/lib/beats';
 import type { Bar } from '@/lib/flatten-bars';
 import { flattenBars } from '@/lib/flatten-bars';
 import { DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
+import { DEFAULT_DIFFICULTY, type DifficultyId } from '@/lib/difficulties';
+import { DEFAULT_SCHEME, getRhymeScheme, type RhymeSchemeId } from '@/lib/rhyme-schemes';
 import { sampleGroups } from '@/lib/rhymes';
 import type { RhymeGroup } from '@/lib/fallback-groups';
 import { useBeat } from '@/hooks/useBeat';
@@ -27,6 +29,8 @@ export function Game() {
   const [phase, setPhase] = useState<Phase>('setup');
   const [activeBeat, setActiveBeat] = useState<Beat | null>(BEATS[0] ?? null);
   const [languageId, setLanguageId] = useState<LanguageId>(DEFAULT_LANGUAGE);
+  const [difficultyId, setDifficultyId] = useState<DifficultyId>(DEFAULT_DIFFICULTY);
+  const [schemeId, setSchemeId] = useState<RhymeSchemeId>(DEFAULT_SCHEME);
   const [bars, setBars] = useState<Bar[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const usedWordsRef = useRef<string[]>([]);
@@ -56,6 +60,8 @@ export function Game() {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             language: languageId,
+            difficultyId,
+            schemeId,
             exclude: {
               words: usedWordsRef.current,
               endings: usedEndingsRef.current,
@@ -66,9 +72,10 @@ export function Game() {
         const json = await res.json();
         if (cancelled) return;
 
+        const scheme = getRhymeScheme(schemeId);
         const allGroups: RhymeGroup[] = json.groups ?? [];
-        const picked = sampleGroups(allGroups, 10);
-        const newBars = flattenBars(picked);
+        const picked = sampleGroups(allGroups, scheme.groupCount);
+        const newBars = flattenBars(picked, scheme);
 
         const roundWords = picked.flatMap(g => g.words);
         const roundEndings = picked.map(g => g.ending);
@@ -110,10 +117,12 @@ export function Game() {
     router.refresh();
   }
 
-  function handlePlay(beat: Beat, lang: LanguageId) {
+  function handlePlay(beat: Beat, lang: LanguageId, difficulty: DifficultyId, scheme: RhymeSchemeId) {
     addRecentBeat(beat.id);
     setActiveBeat(beat);
     setLanguageId(lang);
+    setDifficultyId(difficulty);
+    setSchemeId(scheme);
     setLoadError(null);
     setPhase('loading');
   }
@@ -158,7 +167,6 @@ export function Game() {
     );
   }
 
-  // playing
   return (
     <main className="min-h-screen p-4 flex flex-col">
       <div className="flex justify-between mb-2">
