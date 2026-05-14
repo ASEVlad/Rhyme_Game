@@ -27,7 +27,8 @@ export function BeatPicker({ beats, selectedId, onChange }: Props) {
   }
 
   const cats = availableCategories(beats);
-  const filtered = activeCat === 'all' ? beats : beats.filter(b => b.category === activeCat);
+  const rawFiltered = activeCat === 'all' ? beats : beats.filter(b => b.category === activeCat);
+  const filtered = rawFiltered.length > 0 ? rawFiltered : beats;
 
   function handleCatChange(cat: BeatCategory | 'all') {
     setActiveCat(cat);
