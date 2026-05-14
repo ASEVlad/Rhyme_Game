@@ -1,11 +1,11 @@
 // components/BrowseBeats.tsx
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Beat } from '@/lib/beats';
 import {
   buildSectionLists, availableCategories,
-  type BpmBucket, type CategoryChip, type FilterCriteria,
+  type BpmBucket, type CategoryChip,
 } from '@/lib/beat-filters';
 import { loadRecentBeats } from '@/lib/recent-beats';
 
@@ -55,18 +55,17 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const criteria: FilterCriteria = { bucket, category, query };
   const { recents, main, emptyAfterFilter } = useMemo(
-    () => buildSectionLists(beats, recentIds, criteria),
+    () => buildSectionLists(beats, recentIds, { bucket, category, query }),
     [beats, recentIds, bucket, category, query],
   );
   const cats = useMemo(() => availableCategories(beats), [beats]);
 
-  function stopPreview() {
+  const stopPreview = useCallback(() => {
     if (audioRef.current) { audioRef.current.pause(); }
     if (stopTimerRef.current) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
     setPreviewingId(null);
-  }
+  }, []);
 
   function startPreview(beat: Beat) {
     stopPreview();
@@ -74,7 +73,6 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
     const audio = audioRef.current;
     audio.src = beat.src;
     const onMeta = () => {
-      audio.removeEventListener('loadedmetadata', onMeta);
       audio.currentTime = computePreviewStart(beat, audio.duration || 0);
       audio.play().catch(() => {
         console.warn('[BrowseBeats] preview play failed');
@@ -82,7 +80,7 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
       });
       stopTimerRef.current = setTimeout(stopPreview, AUTO_STOP_MS);
     };
-    audio.addEventListener('loadedmetadata', onMeta);
+    audio.addEventListener('loadedmetadata', onMeta, { once: true });
     audio.addEventListener('error', () => {
       console.warn('[BrowseBeats] preview audio error');
       setPreviewingId(null);
