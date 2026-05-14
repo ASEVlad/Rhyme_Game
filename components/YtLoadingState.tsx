@@ -77,12 +77,12 @@ export function YtLoadingState({ className }: { className?: string }) {
                   }}
                 />
               ) : (
-                <span className="text-white/30 w-4 text-center leading-none">○</span>
+                <span className="text-white/40 w-4 text-center leading-none">○</span>
               )}
               <span className={
                 done   ? 'text-white/40' :
                 active ? 'text-rhyme-yellow font-medium' :
-                         'text-white/30'
+                         'text-white/40'
               }>
                 {label}
               </span>
