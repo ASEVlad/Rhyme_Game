@@ -141,6 +141,22 @@ describe('fetchRhymeGroups', () => {
     const groups2 = await fetchRhymeGroups({ language: 'ru' as any });
     expect(groups2).toEqual(FALLBACK_GROUPS_BY_LANGUAGE.uk);
   });
+
+  it('passes expert difficultyHint to the prompt when difficultyId is expert', async () => {
+    const client = mockClient('good');
+    await fetchRhymeGroups({ client, language: 'en', difficultyId: 'expert' });
+    const call = client.messages.create.mock.calls[0][0];
+    const msg: string = call.messages[0].content;
+    expect(msg).toContain('rare, abstract, or sophisticated vocabulary');
+  });
+
+  it('requests 8 groups when schemeId is bar4', async () => {
+    const client = mockClient('good');
+    await fetchRhymeGroups({ client, language: 'en', schemeId: 'bar4' });
+    const call = client.messages.create.mock.calls[0][0];
+    const msg: string = call.messages[0].content;
+    expect(msg).toContain('8 groups');
+  });
 });
 
 describe('sampleGroups', () => {
