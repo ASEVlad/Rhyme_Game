@@ -11,4 +11,5 @@ tsconfig.tsbuildinfo
 
 # YouTube-downloaded beats (persistent but not committed)
 public/beats/yt-*.mp3
+public/beats/yt-*.txt
 public/beats/yt-catalog.json

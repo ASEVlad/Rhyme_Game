@@ -98,15 +98,15 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
     }
   }
 
-  // Active beat: YT beat takes priority, then BeatPicker selection.
+  const allBeats = [...BEATS, ...ytBeats];
+
+  // Active beat: YT beat takes priority, then BeatPicker selection (static or catalog).
   const activeBeat: Beat | null =
     ytState.status === 'loaded' ? ytState.beat :
-    beatId ? (pickBeat(beatId) ?? null) : null;
+    beatId ? (pickBeat(beatId) ?? allBeats.find(b => b.id === beatId) ?? null) : null;
 
   const canLoad = ytState.status !== 'loading' && isYouTubeUrl(ytUrl);
   const canPlay = activeBeat !== null;
-
-  const allBeats = [...BEATS, ...ytBeats];
 
   return (
     <main className="flex min-h-screen flex-col p-6">
