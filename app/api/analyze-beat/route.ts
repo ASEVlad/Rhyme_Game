@@ -26,6 +26,12 @@ const TOOL = {
 };
 
 export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({}));
+  const { bpm, title } = body as { bpm?: unknown; title?: unknown };
+  if (typeof bpm !== 'number' || !Number.isFinite(bpm) || bpm <= 0 || typeof title !== 'string') {
+    return NextResponse.json({ category: 'other' });
+  }
+
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
   const now = Date.now();
   const recent = (callsByIp.get(ip) ?? []).filter(t => now - t < RATE_WINDOW_MS);
@@ -33,12 +39,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ category: 'other' }, { status: 429 });
   }
   callsByIp.set(ip, [...recent, now]);
-
-  const body = await req.json().catch(() => ({}));
-  const { bpm, title } = body as { bpm?: unknown; title?: unknown };
-  if (typeof bpm !== 'number' || typeof title !== 'string') {
-    return NextResponse.json({ category: 'other' });
-  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return NextResponse.json({ category: 'other' });
