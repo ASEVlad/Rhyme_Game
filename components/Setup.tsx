@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BEATS, pickBeat, type Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
@@ -33,12 +33,12 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   );
   const [ytBeats, setYtBeats] = useState<Beat[]>([]);
 
-  const fetchCatalog = () => {
+  const fetchCatalog = useCallback(() => {
     fetch('/beats/yt-catalog.json')
       .then(r => r.ok ? r.json() : [])
       .then((data: Beat[]) => setYtBeats(data))
       .catch(() => {});
-  };
+  }, []);
 
   useEffect(() => {
     const resolved = loadLanguage();
@@ -48,8 +48,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
 
   useEffect(() => {
     fetchCatalog();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchCatalog]);
 
   function chooseLanguage(id: LanguageId) {
     setLanguageId(id);
