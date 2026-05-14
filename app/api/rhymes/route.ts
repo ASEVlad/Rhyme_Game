@@ -3,6 +3,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { fetchRhymeGroups } from '@/lib/rhymes';
 import { getLanguage } from '@/lib/languages';
 import type { RhymeExclusion } from '@/lib/languages';
+import type { DifficultyId } from '@/lib/difficulties';
+import type { RhymeSchemeId } from '@/lib/rhyme-schemes';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -41,8 +43,8 @@ export async function POST(request: Request) {
     client,
     language: lang.id,
     exclude,
-    difficultyId: rawDifficultyId ?? undefined,
-    schemeId: rawSchemeId ?? undefined,
+    difficultyId: (rawDifficultyId ?? undefined) as DifficultyId | undefined,
+    schemeId: (rawSchemeId ?? undefined) as RhymeSchemeId | undefined,
   });
   return NextResponse.json({ groups });
 }
