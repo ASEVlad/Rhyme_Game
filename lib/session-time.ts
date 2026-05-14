@@ -1,6 +1,6 @@
 export type AudioLike = { currentTime: number; duration: number };
 
-export function makeSessionTimer(audio: AudioLike): () => number {
+export function makeSessionTimer(audio: AudioLike, startOffset = 0): () => number {
   let loops = 0;
   let lastT = audio.currentTime;
   return () => {
@@ -9,6 +9,6 @@ export function makeSessionTimer(audio: AudioLike): () => number {
     if (t < lastT - 0.5) loops += 1;
     lastT = t;
     const dur = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
-    return loops * dur + t;
+    return Math.max(0, loops * dur + t - startOffset);
   };
 }

@@ -41,4 +41,18 @@ describe('makeSessionTimer', () => {
     a.currentTime = 12.299; // jitter
     expect(sessionTime()).toBe(12.299); // no loop added
   });
+
+  it('holds session time at 0 during the silent prefix when startOffset is set', () => {
+    const a = fakeAudio(0, 30);
+    const sessionTime = makeSessionTimer(a, 0.5);
+    a.currentTime = 0.3; // still in the silent prefix
+    expect(sessionTime()).toBe(0); // clamped
+  });
+
+  it('counts from 0 once currentTime exceeds startOffset', () => {
+    const a = fakeAudio(0, 30);
+    const sessionTime = makeSessionTimer(a, 0.5);
+    a.currentTime = 0.8;
+    expect(sessionTime()).toBeCloseTo(0.3);
+  });
 });
