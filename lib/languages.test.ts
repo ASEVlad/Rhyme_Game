@@ -13,7 +13,7 @@ describe('LANGUAGES', () => {
     for (const l of LANGUAGES) {
       expect(l.label.length).toBeGreaterThan(0);
       expect(typeof l.promptTemplate).toBe('function');
-      const prompt = l.promptTemplate(7);
+      const prompt = l.promptTemplate(7, l.themes[0]);
       expect(prompt.length).toBeGreaterThan(0);
       expect(prompt).toContain('7');
     }
