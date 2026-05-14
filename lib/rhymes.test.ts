@@ -53,7 +53,7 @@ describe('fetchRhymeGroups', () => {
     const call = client.messages.create.mock.calls[0][0];
     const userMessage = call.messages[0].content;
     expect(userMessage).toContain('English');
-    expect(userMessage).toContain('10'); // free scheme groupCount
+    expect(userMessage).toContain('10 groups'); // free scheme groupCount
   });
 
   it('includes a theme word in the prompt', async () => {
@@ -207,5 +207,14 @@ describe('buildPrompt', () => {
   it('does not include the hardcoded teenager line when difficultyHint is provided', () => {
     const p = buildPrompt(lang, 4, 'nature', 'expert vocabulary');
     expect(p).not.toContain('teenager');
+  });
+
+  it('includes excluded words from the exclude argument', () => {
+    const p = buildPrompt(lang, 4, 'nature', undefined, undefined, {
+      words: ['cat', 'bat'],
+      endings: ['-at'],
+    });
+    expect(p).toContain('cat');
+    expect(p).toContain('-at');
   });
 });
