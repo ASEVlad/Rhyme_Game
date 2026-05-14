@@ -1,6 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { FALLBACK_GROUPS_BY_LANGUAGE, type RhymeGroup } from './fallback-groups';
-import { getLanguage, type Language, type LanguageId } from './languages';
+import { getLanguage, type Language, type LanguageId, type RhymeExclusion } from './languages';
 
 const TOOL_NAME = 'rhyme_groups';
 
@@ -37,6 +37,7 @@ export type FetchOpts = {
   count?: number;
   client?: Pick<Anthropic, 'messages'>;
   language?: LanguageId;
+  exclude?: RhymeExclusion;
 };
 
 function parseGroups(content: unknown): RhymeGroup[] | null {
@@ -58,20 +59,31 @@ function parseGroups(content: unknown): RhymeGroup[] | null {
   return null;
 }
 
+export function sampleGroups(groups: RhymeGroup[], n: number): RhymeGroup[] {
+  const copy = [...groups];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
+
 export async function fetchRhymeGroups(opts: FetchOpts = {}): Promise<RhymeGroup[]> {
-  const count = opts.count ?? 10;
+  const count = opts.count ?? 20;
   const lang = getLanguage(opts.language);
   const fallback = FALLBACK_GROUPS_BY_LANGUAGE[lang.id];
   const client = opts.client;
   if (!client) return fallback;
+  const theme = lang.themes[Math.floor(Math.random() * lang.themes.length)];
   try {
     const tool = buildTool(lang);
     const response: any = await client.messages.create({
       model: 'claude-opus-4-7',
-      max_tokens: 2048,
+      max_tokens: 4096,
+      temperature: 1,
       tools: [tool],
       tool_choice: { type: 'tool', name: TOOL_NAME },
-      messages: [{ role: 'user', content: lang.promptTemplate(count) }],
+      messages: [{ role: 'user', content: lang.promptTemplate(count, theme, opts.exclude) }],
     });
     const parsed = parseGroups(response?.content);
     return parsed ?? fallback;

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchRhymeGroups } from './rhymes';
+import { fetchRhymeGroups, sampleGroups } from './rhymes';
 import { FALLBACK_GROUPS_BY_LANGUAGE } from './fallback-groups';
+import type { RhymeGroup } from './fallback-groups';
 
 type Behavior = 'good' | 'malformed' | 'throws' | 'empty';
 
@@ -54,6 +55,50 @@ describe('fetchRhymeGroups', () => {
     expect(userMessage).toContain('3');
   });
 
+  it('includes a theme word in the prompt', async () => {
+    const client = mockClient('good');
+    await fetchRhymeGroups({ count: 3, client, language: 'en' });
+    const call = client.messages.create.mock.calls[0][0];
+    const userMessage: string = call.messages[0].content;
+    const themes = ['nature','city life','emotions','movement','food','school','sport','music','family','animals','weather','travel'];
+    expect(themes.some(t => userMessage.includes(t))).toBe(true);
+  });
+
+  it('sets temperature to 1', async () => {
+    const client = mockClient('good');
+    await fetchRhymeGroups({ count: 2, client, language: 'uk' });
+    const call = client.messages.create.mock.calls[0][0];
+    expect(call.temperature).toBe(1);
+  });
+
+  it('includes excluded words in the prompt', async () => {
+    const client = mockClient('good');
+    await fetchRhymeGroups({
+      count: 2,
+      client,
+      language: 'uk',
+      exclude: { words: ['кіт', 'хата'], endings: [] },
+    });
+    const call = client.messages.create.mock.calls[0][0];
+    const msg: string = call.messages[0].content;
+    expect(msg).toContain('кіт');
+    expect(msg).toContain('хата');
+  });
+
+  it('includes excluded endings in the prompt', async () => {
+    const client = mockClient('good');
+    await fetchRhymeGroups({
+      count: 2,
+      client,
+      language: 'en',
+      exclude: { words: [], endings: ['-ay', '-ight'] },
+    });
+    const call = client.messages.create.mock.calls[0][0];
+    const msg: string = call.messages[0].content;
+    expect(msg).toContain('-ay');
+    expect(msg).toContain('-ight');
+  });
+
   it("interpolates the language label into the tool description", async () => {
     const client = mockClient('good');
     await fetchRhymeGroups({ count: 1, client, language: 'es' });
@@ -99,5 +144,38 @@ describe('fetchRhymeGroups', () => {
 
     const groups2 = await fetchRhymeGroups({ count: 2, language: 'ru' as any });
     expect(groups2).toEqual(FALLBACK_GROUPS_BY_LANGUAGE.uk);
+  });
+});
+
+describe('sampleGroups', () => {
+  const pool: RhymeGroup[] = Array.from({ length: 20 }, (_, i) => ({
+    ending: `-end${i}`,
+    words: [`word${i}a`, `word${i}b`],
+  }));
+
+  it('returns exactly n groups', () => {
+    expect(sampleGroups(pool, 10).length).toBe(10);
+  });
+
+  it('returns all items when n >= pool size', () => {
+    expect(sampleGroups(pool, 20).length).toBe(20);
+    expect(sampleGroups(pool, 99).length).toBe(20);
+  });
+
+  it('returns a subset of the original pool', () => {
+    const sample = sampleGroups(pool, 10);
+    for (const g of sample) {
+      expect(pool).toContainEqual(g);
+    }
+  });
+
+  it('does not mutate the original pool', () => {
+    const original = [...pool];
+    sampleGroups(pool, 10);
+    expect(pool).toEqual(original);
+  });
+
+  it('returns 0 items for n=0', () => {
+    expect(sampleGroups(pool, 0)).toEqual([]);
   });
 });
