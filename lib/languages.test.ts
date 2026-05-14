@@ -91,6 +91,32 @@ describe('promptTemplate with theme and exclusions', () => {
     const emptyExclude = lang.promptTemplate(5, 'nature', { words: [], endings: [] });
     expect(noExclude).toBe(emptyExclude);
   });
+
+  it('uses exact word count when wordsPerGroup is provided', () => {
+    const lang = getLanguage('en');
+    const p = lang.promptTemplate(5, 'nature', undefined, undefined, 4);
+    expect(p).toContain('Each group must have exactly 4 words.');
+    expect(p).not.toContain('3–4 words');
+  });
+
+  it('uses native fallback group-size text when wordsPerGroup is null', () => {
+    const lang = getLanguage('en');
+    const p = lang.promptTemplate(5, 'nature', undefined, undefined, null);
+    expect(p).toContain('3–4 words per group.');
+  });
+
+  it('injects difficultyHint as English vocabulary label', () => {
+    const lang = getLanguage('uk');
+    const p = lang.promptTemplate(5, 'природа', undefined, 'B2');
+    expect(p).toContain('Vocabulary level: B2.');
+    expect(p).not.toContain('підліток');
+  });
+
+  it('uses native fallback vocab text when difficultyHint is absent', () => {
+    const lang = getLanguage('de');
+    const p = lang.promptTemplate(5, 'Natur');
+    expect(p).toContain('Jugendlicher');
+  });
 });
 
 describe('FALLBACK_GROUPS_BY_LANGUAGE', () => {
