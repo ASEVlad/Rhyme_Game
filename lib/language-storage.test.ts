@@ -67,4 +67,13 @@ describe('saveLanguage', () => {
     vi.stubGlobal('localStorage', undefined);
     expect(() => saveLanguage('en')).not.toThrow();
   });
+
+  it('silently no-ops when setItem throws (e.g. QuotaExceededError)', () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => null,
+      setItem: () => { throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' }); },
+      removeItem: () => {},
+    });
+    expect(() => saveLanguage('en')).not.toThrow();
+  });
 });

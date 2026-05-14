@@ -1,3 +1,5 @@
+// Client-only. Do not import from Server Components or API routes — SSR will
+// always return DEFAULT_LANGUAGE and produce a hydration mismatch.
 import { DEFAULT_LANGUAGE, getLanguage, type LanguageId } from './languages';
 
 const STORAGE_KEY = 'rhyme-language';
