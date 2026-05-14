@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { LANGUAGES, DEFAULT_LANGUAGE, getLanguage, type LanguageId } from './languages';
+import { FALLBACK_GROUPS_BY_LANGUAGE } from './fallback-groups';
 
 const EXPECTED_IDS: LanguageId[] = ['uk', 'en', 'es', 'de', 'pl'];
 
@@ -37,5 +38,32 @@ describe('getLanguage', () => {
     expect(getLanguage('').id).toBe('uk');
     expect(getLanguage('ru').id).toBe('uk');
     expect(getLanguage('xx-YY').id).toBe('uk');
+  });
+});
+
+describe('FALLBACK_GROUPS_BY_LANGUAGE', () => {
+  it('has an entry for every supported language', () => {
+    for (const id of EXPECTED_IDS) {
+      expect(FALLBACK_GROUPS_BY_LANGUAGE[id]).toBeDefined();
+    }
+  });
+
+  it('each language has at least 10 fallback groups', () => {
+    for (const id of EXPECTED_IDS) {
+      expect(FALLBACK_GROUPS_BY_LANGUAGE[id].length).toBeGreaterThanOrEqual(10);
+    }
+  });
+
+  it('every group has a non-empty ending and at least 2 words', () => {
+    for (const id of EXPECTED_IDS) {
+      for (const group of FALLBACK_GROUPS_BY_LANGUAGE[id]) {
+        expect(group.ending.length).toBeGreaterThan(0);
+        expect(group.words.length).toBeGreaterThanOrEqual(2);
+        for (const word of group.words) {
+          expect(typeof word).toBe('string');
+          expect(word.length).toBeGreaterThan(0);
+        }
+      }
+    }
   });
 });
