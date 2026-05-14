@@ -86,7 +86,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
           return (
             <div
               key={index}
-              style={{ opacity, position: 'relative' }}
+              style={{ opacity, position: 'relative', transition: 'opacity 300ms ease' }}
             >
               <div
                 style={{
@@ -105,10 +105,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
         return (
           <div
             key={index}
-            style={{
-              opacity,
-              transition: isPast ? 'opacity 300ms ease' : undefined,
-            }}
+            style={{ opacity, transition: 'opacity 300ms ease' }}
           >
             {rowContent}
           </div>
