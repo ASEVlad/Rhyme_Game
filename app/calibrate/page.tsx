@@ -16,6 +16,7 @@ export default function CalibratePage() {
   const [id, setId] = useState('');
   const [title, setTitle] = useState('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const loadGenRef = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -25,6 +26,7 @@ export default function CalibratePage() {
 
   async function handleLoad() {
     if (!path) return;
+    const gen = ++loadGenRef.current;
     setLoaded(false);
     setLoading(true);
     setBpm(null);
@@ -56,6 +58,7 @@ export default function CalibratePage() {
         const MusicTempo = (await import('music-tempo')).default;
         const mt = new MusicTempo(buffer.getChannelData(0));
         const detectedBpm = Math.round(mt.tempo * 10) / 10;
+        if (gen !== loadGenRef.current) return;
         setBpm(detectedBpm);
 
         // Claude category suggestion
@@ -75,6 +78,7 @@ export default function CalibratePage() {
       console.error('[calibrate] analysis failed', e);
     }
 
+    if (gen !== loadGenRef.current) return;
     setLoading(false);
     setLoaded(true);
   }

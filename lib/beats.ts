@@ -29,5 +29,5 @@ export const BEATS: Beat[] = [
 
 export function pickBeat(id: string | undefined): Beat | undefined {
   if (!id) return BEATS[0];
-  return BEATS.find((b) => b.id === id);
+  return BEATS.find((b) => b.id === id); // undefined if id not found — caller decides fallback
 }

@@ -10,7 +10,7 @@ type Props = {
 };
 
 // Derives ordered unique categories present in the beats array.
-function availableCategories(beats: Beat[]): BeatCategory[] {
+export function availableCategories(beats: Beat[]): BeatCategory[] {
   const seen = new Set<BeatCategory>();
   const result: BeatCategory[] = [];
   for (const b of beats) {
