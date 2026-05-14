@@ -46,10 +46,26 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
     };
   }, []);
 
-  // Esc closes the modal.
+  // Esc closes the modal; Tab is trapped inside.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab') return;
+      const dialog = document.querySelector('[role="dialog"]') as HTMLElement | null;
+      if (!dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter(el => !el.hasAttribute('disabled'));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -248,8 +264,12 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
                 {recents.map(renderRow)}
               </>
             )}
-            <div className="text-[10px] uppercase tracking-wider text-white/40 mt-4 mb-2">All beats — sorted by BPM</div>
-            {main.map(renderRow)}
+            {main.length > 0 && (
+              <>
+                <div className="text-[10px] uppercase tracking-wider text-white/40 mt-4 mb-2">All beats — sorted by BPM</div>
+                {main.map(renderRow)}
+              </>
+            )}
           </>
         )}
       </div>

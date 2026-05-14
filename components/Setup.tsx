@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { BEATS, pickBeat, type Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
@@ -34,6 +34,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   );
   const [ytBeats, setYtBeats] = useState<Beat[]>([]);
   const [browseOpen, setBrowseOpen] = useState(false);
+  const browseButtonRef = useRef<HTMLButtonElement>(null);
 
   const fetchCatalog = useCallback(() => {
     fetch('/beats/yt-catalog.json')
@@ -128,6 +129,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
         </button>
         <div className="w-full max-w-sm space-y-3">
           <button
+            ref={browseButtonRef}
             type="button"
             onClick={() => setBrowseOpen(true)}
             className="w-full flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-left"
@@ -200,7 +202,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
           beats={allBeats}
           selectedId={beatId}
           onChange={(id) => { chooseBeat(id); }}
-          onClose={() => setBrowseOpen(false)}
+          onClose={() => { setBrowseOpen(false); browseButtonRef.current?.focus(); }}
         />
       )}
     </main>
