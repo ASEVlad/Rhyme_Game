@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchRhymeGroups, sampleGroups } from './rhymes';
+import { fetchRhymeGroups, sampleGroups, buildPrompt } from './rhymes';
 import { FALLBACK_GROUPS_BY_LANGUAGE } from './fallback-groups';
 import type { RhymeGroup } from './fallback-groups';
 import { getLanguage } from './languages';
@@ -40,7 +40,7 @@ function mockClient(behavior: Behavior) {
 describe('fetchRhymeGroups', () => {
   it('returns groups from a successful tool-use response', async () => {
     const client = mockClient('good');
-    const groups = await fetchRhymeGroups({ count: 2, client, language: 'uk' });
+    const groups = await fetchRhymeGroups({ client, language: 'uk' });
     expect(groups).toEqual([
       { ending: '-іт', words: ['кіт', 'літ', 'піт'] },
       { ending: '-ата', words: ['хата', 'лата'] },
@@ -49,16 +49,16 @@ describe('fetchRhymeGroups', () => {
 
   it("uses the requested language's prompt template", async () => {
     const client = mockClient('good');
-    await fetchRhymeGroups({ count: 3, client, language: 'en' });
+    await fetchRhymeGroups({ client, language: 'en' });
     const call = client.messages.create.mock.calls[0][0];
     const userMessage = call.messages[0].content;
     expect(userMessage).toContain('English');
-    expect(userMessage).toContain('3');
+    expect(userMessage).toContain('10'); // free scheme groupCount
   });
 
   it('includes a theme word in the prompt', async () => {
     const client = mockClient('good');
-    await fetchRhymeGroups({ count: 3, client, language: 'en' });
+    await fetchRhymeGroups({ client, language: 'en' });
     const call = client.messages.create.mock.calls[0][0];
     const userMessage: string = call.messages[0].content;
     const themes = getLanguage('en').themes;
@@ -67,7 +67,7 @@ describe('fetchRhymeGroups', () => {
 
   it('sets temperature to 1', async () => {
     const client = mockClient('good');
-    await fetchRhymeGroups({ count: 2, client, language: 'uk' });
+    await fetchRhymeGroups({ client, language: 'uk' });
     const call = client.messages.create.mock.calls[0][0];
     expect(call.temperature).toBe(1);
   });
@@ -75,7 +75,6 @@ describe('fetchRhymeGroups', () => {
   it('includes excluded words in the prompt', async () => {
     const client = mockClient('good');
     await fetchRhymeGroups({
-      count: 2,
       client,
       language: 'uk',
       exclude: { words: ['кіт', 'хата'], endings: [] },
@@ -89,7 +88,6 @@ describe('fetchRhymeGroups', () => {
   it('includes excluded endings in the prompt', async () => {
     const client = mockClient('good');
     await fetchRhymeGroups({
-      count: 2,
       client,
       language: 'en',
       exclude: { words: [], endings: ['-ay', '-ight'] },
@@ -102,14 +100,13 @@ describe('fetchRhymeGroups', () => {
 
   it("interpolates the language label into the tool description", async () => {
     const client = mockClient('good');
-    await fetchRhymeGroups({ count: 1, client, language: 'es' });
+    await fetchRhymeGroups({ client, language: 'es' });
     const call = client.messages.create.mock.calls[0][0];
     expect(call.tools[0].description).toContain('Español');
   });
 
   it('falls back to the requested language groups when the API throws', async () => {
     const groups = await fetchRhymeGroups({
-      count: 2,
       client: mockClient('throws'),
       language: 'de',
     });
@@ -118,7 +115,6 @@ describe('fetchRhymeGroups', () => {
 
   it('falls back when no tool-use block is returned', async () => {
     const groups = await fetchRhymeGroups({
-      count: 2,
       client: mockClient('malformed'),
       language: 'pl',
     });
@@ -127,7 +123,6 @@ describe('fetchRhymeGroups', () => {
 
   it('falls back when groups array is empty', async () => {
     const groups = await fetchRhymeGroups({
-      count: 2,
       client: mockClient('empty'),
       language: 'en',
     });
@@ -135,15 +130,15 @@ describe('fetchRhymeGroups', () => {
   });
 
   it("falls back to the requested language's groups when no client is provided", async () => {
-    const groups = await fetchRhymeGroups({ count: 2, language: 'es' });
+    const groups = await fetchRhymeGroups({ language: 'es' });
     expect(groups).toEqual(FALLBACK_GROUPS_BY_LANGUAGE.es);
   });
 
   it('defaults to uk when language is missing or unknown', async () => {
-    const groups = await fetchRhymeGroups({ count: 2 });
+    const groups = await fetchRhymeGroups();
     expect(groups).toEqual(FALLBACK_GROUPS_BY_LANGUAGE.uk);
 
-    const groups2 = await fetchRhymeGroups({ count: 2, language: 'ru' as any });
+    const groups2 = await fetchRhymeGroups({ language: 'ru' as any });
     expect(groups2).toEqual(FALLBACK_GROUPS_BY_LANGUAGE.uk);
   });
 });
@@ -178,5 +173,39 @@ describe('sampleGroups', () => {
 
   it('returns 0 items for n=0', () => {
     expect(sampleGroups(pool, 0)).toEqual([]);
+  });
+});
+
+describe('buildPrompt', () => {
+  const lang = getLanguage('en');
+
+  it('includes the group count in the output', () => {
+    const p = buildPrompt(lang, 8, 'nature');
+    expect(p).toContain('8');
+  });
+
+  it('uses "3–4 words" when wordsPerGroup is null', () => {
+    const p = buildPrompt(lang, 4, 'nature', undefined, null);
+    expect(p).toContain('3–4 words');
+  });
+
+  it('uses "3–4 words" when wordsPerGroup is undefined', () => {
+    const p = buildPrompt(lang, 4, 'nature');
+    expect(p).toContain('3–4 words');
+  });
+
+  it('uses exact count when wordsPerGroup is a number', () => {
+    const p = buildPrompt(lang, 4, 'nature', undefined, 2);
+    expect(p).toContain('exactly 2 words');
+  });
+
+  it('includes difficultyHint in the output', () => {
+    const p = buildPrompt(lang, 4, 'nature', 'rare, abstract, or sophisticated vocabulary');
+    expect(p).toContain('rare, abstract, or sophisticated vocabulary');
+  });
+
+  it('does not include the hardcoded teenager line when difficultyHint is provided', () => {
+    const p = buildPrompt(lang, 4, 'nature', 'expert vocabulary');
+    expect(p).not.toContain('teenager');
   });
 });

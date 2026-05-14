@@ -33,6 +33,6 @@ export async function POST(request: Request) {
     console.warn('[rhymes] ANTHROPIC_API_KEY not set — using fallback groups');
   }
   const client = apiKey ? new Anthropic({ apiKey }) : undefined;
-  const groups = await fetchRhymeGroups({ count: 20, client, language: lang.id, exclude });
+  const groups = await fetchRhymeGroups({ client, language: lang.id, exclude });
   return NextResponse.json({ groups });
 }
