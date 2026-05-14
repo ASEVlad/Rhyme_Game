@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BEATS, pickBeat } from '@/lib/beats';
 import type { Bar } from '@/lib/flatten-bars';
+import { DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
 import { useBeat } from '@/hooks/useBeat';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { Setup } from './Setup';
@@ -17,6 +18,7 @@ export function Game() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('setup');
   const [beatId, setBeatId] = useState<string | null>(BEATS[0]?.id ?? null);
+  const [languageId, setLanguageId] = useState<LanguageId>(DEFAULT_LANGUAGE);
   const [bars, setBars] = useState<Bar[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -40,14 +42,15 @@ export function Game() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/rhymes', { method: 'POST' });
+        const res = await fetch('/api/rhymes', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ language: languageId }),
+        });
         if (!res.ok) throw new Error('rhymes-failed');
         const json = await res.json();
         if (cancelled) return;
         setBars(json.bars);
-        // play() returns a Promise that resolves when playback actually starts;
-        // the browser will buffer first if needed. If the file fails to load
-        // or autoplay is blocked, the promise rejects and we go back to Setup.
         try {
           await beatHandle.play();
         } catch {
@@ -76,8 +79,9 @@ export function Game() {
     router.refresh();
   }
 
-  function handlePlay(id: string) {
+  function handlePlay(id: string, lang: LanguageId) {
     setBeatId(id);
+    setLanguageId(lang);
     setLoadError(null);
     setPhase('loading');
   }
@@ -93,7 +97,12 @@ export function Game() {
         {loadError && (
           <div className="bg-rhyme-red/30 text-center py-2">{loadError}</div>
         )}
-        <Setup initialBeatId={beatId} onPlay={handlePlay} onLogout={logout} />
+        <Setup
+          initialBeatId={beatId}
+          initialLanguageId={languageId}
+          onPlay={handlePlay}
+          onLogout={logout}
+        />
       </>
     );
   }
