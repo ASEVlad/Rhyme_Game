@@ -4,3 +4,11 @@
 
 html, body { background: #080808; color: white; min-height: 100%; }
 body { font-family: var(--font-manrope), system-ui, sans-serif; }
+
+@keyframes yt-bar {
+  0%, 100% { transform: scaleY(0.25); }
+  50%       { transform: scaleY(1); }
+}
+@keyframes yt-spin {
+  to { transform: rotate(360deg); }
+}

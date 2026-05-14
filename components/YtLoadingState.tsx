@@ -34,21 +34,11 @@ export function YtLoadingState({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <style>{`
-        @keyframes yt-bar {
-          0%, 100% { transform: scaleY(0.25); }
-          50%       { transform: scaleY(1); }
-        }
-        @keyframes yt-spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-
       {/* Waveform */}
       <div className="flex items-end justify-center gap-1 mb-4" style={{ height: '32px' }}>
-        {[0, 0.15, 0.30, 0.45, 0.60, 0.75, 0.90].map((offset, i) => (
+        {[0, 0.15, 0.30, 0.45, 0.60, 0.75, 0.90].map((offset) => (
           <div
-            key={i}
+            key={`bar-${offset}`}
             className="w-2 rounded-sm bg-rhyme-yellow"
             style={{
               height: '32px',
@@ -65,7 +55,7 @@ export function YtLoadingState({ className }: { className?: string }) {
           const done = i < activeStage;
           const active = i === activeStage;
           return (
-            <div key={i} className="flex items-center gap-3 text-sm">
+            <div key={label} className="flex items-center gap-3 text-sm">
               {done ? (
                 <span className="text-green-400 w-4 text-center leading-none">✓</span>
               ) : active ? (
