@@ -5,6 +5,7 @@ import { BEATS, pickBeat, type Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
 import { isYouTubeUrl } from '@/lib/yt-beat';
+import Link from 'next/link';
 import { BrowseBeats } from './BrowseBeats';
 import { LanguagePicker } from './LanguagePicker';
 
@@ -179,6 +180,13 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
               <p className="text-xs text-red-400">{ytState.message}</p>
             )}
           </div>
+
+          <Link
+            href="/yt"
+            className="block text-center text-xs text-white/50 hover:text-white/80 underline"
+          >
+            Try YouTube mode →
+          </Link>
 
           <LanguagePicker
             languages={LANGUAGES}
