@@ -88,7 +88,7 @@ describe('fetchRhymeGroups', () => {
     expect(groups).toEqual(FALLBACK_GROUPS_BY_LANGUAGE.en);
   });
 
-  it('falls back to uk when no client is provided', async () => {
+  it("falls back to the requested language's groups when no client is provided", async () => {
     const groups = await fetchRhymeGroups({ count: 2, language: 'es' });
     expect(groups).toEqual(FALLBACK_GROUPS_BY_LANGUAGE.es);
   });
