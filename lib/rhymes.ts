@@ -1,49 +1,43 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { FALLBACK_GROUPS, type RhymeGroup } from './fallback-groups';
+import { FALLBACK_GROUPS_BY_LANGUAGE, type RhymeGroup } from './fallback-groups';
+import { getLanguage, type Language, type LanguageId } from './languages';
 
 const TOOL_NAME = 'rhyme_groups';
 
-const TOOL = {
-  name: TOOL_NAME,
-  description: 'Return groups of common Ukrainian words that rhyme.',
-  input_schema: {
-    type: 'object' as const,
-    properties: {
-      groups: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            ending: { type: 'string', description: 'Shared ending (e.g. "-іт")' },
-            words: {
-              type: 'array',
-              items: { type: 'string' },
-              minItems: 2,
-              maxItems: 5,
+function buildTool(lang: Language) {
+  return {
+    name: TOOL_NAME,
+    description: `Return groups of common ${lang.label} words that rhyme.`,
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        groups: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              ending: { type: 'string', description: 'Shared ending (e.g. "-іт")' },
+              words: {
+                type: 'array',
+                items: { type: 'string' },
+                minItems: 2,
+                maxItems: 5,
+              },
             },
+            required: ['ending', 'words'],
           },
-          required: ['ending', 'words'],
         },
       },
+      required: ['groups'],
     },
-    required: ['groups'],
-  },
-};
+  };
+}
 
 export type FetchOpts = {
   count?: number;
   client?: Pick<Anthropic, 'messages'>;
+  language?: LanguageId;
 };
-
-function buildPrompt(count: number): string {
-  return [
-    `Згенеруй ${count} груп поширених українських слів, які римуються між собою.`,
-    'Кожна група повинна мати спільне закінчення (від наголошеного голосного до кінця слова).',
-    'У кожній групі — 3–4 слова. Уникай рідкісних, архаїчних або вульгарних слів.',
-    'Перевага — простим іменникам, дієсловам та прикметникам, які впізнає підліток або початківець.',
-    'Виведи результат через інструмент rhyme_groups.',
-  ].join(' ');
-}
 
 function parseGroups(content: unknown): RhymeGroup[] | null {
   if (!Array.isArray(content)) return null;
@@ -66,20 +60,23 @@ function parseGroups(content: unknown): RhymeGroup[] | null {
 
 export async function fetchRhymeGroups(opts: FetchOpts = {}): Promise<RhymeGroup[]> {
   const count = opts.count ?? 10;
+  const lang = getLanguage(opts.language);
+  const fallback = FALLBACK_GROUPS_BY_LANGUAGE[lang.id];
   const client = opts.client;
-  if (!client) return FALLBACK_GROUPS;
+  if (!client) return fallback;
   try {
+    const tool = buildTool(lang);
     const response: any = await client.messages.create({
-      model: 'claude-opus-4-7',
-      max_tokens: 2048,
-      tools: [TOOL],
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      tools: [tool],
       tool_choice: { type: 'tool', name: TOOL_NAME },
-      messages: [{ role: 'user', content: buildPrompt(count) }],
+      messages: [{ role: 'user', content: lang.promptTemplate(count) }],
     });
     const parsed = parseGroups(response?.content);
-    return parsed ?? FALLBACK_GROUPS;
+    return parsed ?? fallback;
   } catch (err) {
     console.error('[rhymes] fetch failed, using fallback', err);
-    return FALLBACK_GROUPS;
+    return fallback;
   }
 }
