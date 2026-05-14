@@ -41,6 +41,58 @@ describe('getLanguage', () => {
   });
 });
 
+describe('Language theme pool', () => {
+  it('every language has at least 8 themes', () => {
+    for (const lang of LANGUAGES) {
+      expect(lang.themes.length).toBeGreaterThanOrEqual(8);
+    }
+  });
+
+  it('themes are non-empty strings', () => {
+    for (const lang of LANGUAGES) {
+      for (const t of lang.themes) {
+        expect(typeof t).toBe('string');
+        expect(t.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe('promptTemplate with theme and exclusions', () => {
+  it('includes the theme in the uk prompt', () => {
+    const lang = getLanguage('uk');
+    const p = lang.promptTemplate(10, 'природа');
+    expect(p).toContain('природа');
+  });
+
+  it('includes the theme in the en prompt', () => {
+    const lang = getLanguage('en');
+    const p = lang.promptTemplate(10, 'nature');
+    expect(p).toContain('nature');
+  });
+
+  it('appends excluded words when provided', () => {
+    const lang = getLanguage('uk');
+    const p = lang.promptTemplate(10, 'природа', { words: ['кіт', 'хата'], endings: [] });
+    expect(p).toContain('кіт');
+    expect(p).toContain('хата');
+  });
+
+  it('appends excluded endings when provided', () => {
+    const lang = getLanguage('en');
+    const p = lang.promptTemplate(5, 'nature', { words: [], endings: ['-ay', '-ight'] });
+    expect(p).toContain('-ay');
+    expect(p).toContain('-ight');
+  });
+
+  it('does not add exclusion text when lists are empty', () => {
+    const lang = getLanguage('en');
+    const noExclude = lang.promptTemplate(5, 'nature');
+    const emptyExclude = lang.promptTemplate(5, 'nature', { words: [], endings: [] });
+    expect(noExclude).toBe(emptyExclude);
+  });
+});
+
 describe('FALLBACK_GROUPS_BY_LANGUAGE', () => {
   it('has an entry for every supported language', () => {
     for (const id of EXPECTED_IDS) {
