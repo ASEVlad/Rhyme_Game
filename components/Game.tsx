@@ -28,6 +28,7 @@ export function Game() {
     bpm: beat?.bpm ?? 90,
     totalBars: bars.length,
     active: phase === 'playing',
+    startOffset: beat?.startOffset ?? 0,
     onEnd: () => {
       beatHandle.stop();
       setPhase('ended');

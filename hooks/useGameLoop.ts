@@ -16,15 +16,16 @@ export function useGameLoop(args: {
   totalBars: number;
   active: boolean;
   onEnd: () => void;
+  startOffset?: number;
 }): GameTick {
-  const { audio, bpm, totalBars, active, onEnd } = args;
+  const { audio, bpm, totalBars, active, onEnd, startOffset = 0 } = args;
   const [tick, setTick] = useState<GameTick>({ ballX: 0, ballYDip: 0, currentBar: 0, beatInBar: 0 });
   const onEndRef = useRef(onEnd);
   onEndRef.current = onEnd;
 
   useEffect(() => {
     if (!active || !audio) return;
-    const sessionTime = makeSessionTimer(audio);
+    const sessionTime = makeSessionTimer(audio, startOffset);
     let raf = 0;
     let ended = false;
     const beatsPerSecond = bpm / 60;
