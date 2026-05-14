@@ -9,30 +9,39 @@ type Props = {
   onChange: (id: string) => void;
 };
 
-// Derives ordered unique categories present in the beats array.
-export function availableCategories(beats: Beat[]): BeatCategory[] {
+// Derives ordered unique categories present in the beats array, plus 'youtube' chip if any beat has source === 'youtube'.
+export function availableCategories(beats: Beat[]): Array<BeatCategory | 'youtube'> {
   const seen = new Set<BeatCategory>();
-  const result: BeatCategory[] = [];
+  const result: Array<BeatCategory | 'youtube'> = [];
   for (const b of beats) {
     if (!seen.has(b.category)) { seen.add(b.category); result.push(b.category); }
+  }
+  if (beats.some(b => b.source === 'youtube')) {
+    result.push('youtube');
   }
   return result;
 }
 
 export function BeatPicker({ beats, selectedId, onChange }: Props) {
-  const [activeCat, setActiveCat] = useState<BeatCategory | 'all'>('all');
+  const [activeCat, setActiveCat] = useState<BeatCategory | 'youtube' | 'all'>('all');
 
   if (beats.length === 0) {
     return <div className="text-white/60 text-center">No beats added yet</div>;
   }
 
   const cats = availableCategories(beats);
-  const rawFiltered = activeCat === 'all' ? beats : beats.filter(b => b.category === activeCat);
+  const rawFiltered =
+    activeCat === 'all'     ? beats :
+    activeCat === 'youtube' ? beats.filter(b => b.source === 'youtube') :
+                              beats.filter(b => b.category === activeCat);
   const filtered = rawFiltered.length > 0 ? rawFiltered : beats;
 
-  function handleCatChange(cat: BeatCategory | 'all') {
+  function handleCatChange(cat: BeatCategory | 'youtube' | 'all') {
     setActiveCat(cat);
-    const newFiltered = cat === 'all' ? beats : beats.filter(b => b.category === cat);
+    const newFiltered =
+      cat === 'all'     ? beats :
+      cat === 'youtube' ? beats.filter(b => b.source === 'youtube') :
+                          beats.filter(b => b.category === cat);
     if (newFiltered.length > 0 && !newFiltered.find(b => b.id === selectedId)) {
       onChange(newFiltered[0].id);
     }
@@ -69,7 +78,7 @@ export function BeatPicker({ beats, selectedId, onChange }: Props) {
                   : 'bg-white/5 text-white/40',
               ].join(' ')}
             >
-              {cat}
+              {cat === 'youtube' ? 'YouTube' : cat}
             </button>
           ))}
         </div>
