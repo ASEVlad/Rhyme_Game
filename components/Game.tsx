@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { BEATS } from '@/lib/beats';
 import type { Beat } from '@/lib/beats';
 import type { Bar } from '@/lib/flatten-bars';
+import { flattenBars } from '@/lib/flatten-bars';
 import { DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
+import { sampleGroups } from '@/lib/rhymes';
+import type { RhymeGroup } from '@/lib/fallback-groups';
 import { useBeat } from '@/hooks/useBeat';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { addRecentBeat } from '@/lib/recent-beats';
@@ -13,6 +16,9 @@ import { Setup } from './Setup';
 import { WordGrid } from './WordGrid';
 import { BouncingBall } from './BouncingBall';
 import { EndScreen } from './EndScreen';
+
+const MAX_EXCLUDED_WORDS = 60;
+const MAX_EXCLUDED_ENDINGS = 20;
 
 type Phase = 'setup' | 'loading' | 'playing' | 'ended';
 
@@ -23,6 +29,8 @@ export function Game() {
   const [languageId, setLanguageId] = useState<LanguageId>(DEFAULT_LANGUAGE);
   const [bars, setBars] = useState<Bar[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const usedWordsRef = useRef<string[]>([]);
+  const usedEndingsRef = useRef<string[]>([]);
 
   const beatHandle = useBeat(activeBeat ?? undefined);
 
@@ -46,12 +54,34 @@ export function Game() {
         const res = await fetch('/api/rhymes', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ language: languageId }),
+          body: JSON.stringify({
+            language: languageId,
+            exclude: {
+              words: usedWordsRef.current,
+              endings: usedEndingsRef.current,
+            },
+          }),
         });
         if (!res.ok) throw new Error('rhymes-failed');
         const json = await res.json();
         if (cancelled) return;
-        setBars(json.bars);
+
+        const allGroups: RhymeGroup[] = json.groups ?? [];
+        const picked = sampleGroups(allGroups, 10);
+        const newBars = flattenBars(picked);
+
+        const roundWords = picked.flatMap(g => g.words);
+        const roundEndings = picked.map(g => g.ending);
+        usedWordsRef.current = [
+          ...usedWordsRef.current,
+          ...roundWords,
+        ].slice(-MAX_EXCLUDED_WORDS);
+        usedEndingsRef.current = [
+          ...usedEndingsRef.current,
+          ...roundEndings,
+        ].slice(-MAX_EXCLUDED_ENDINGS);
+
+        setBars(newBars);
         try {
           await beatHandle.play();
         } catch {
