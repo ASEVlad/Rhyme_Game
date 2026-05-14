@@ -31,10 +31,23 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   const [ytState, setYtState] = useState<YtState>(
     initialYtBeat ? { status: 'loaded', beat: initialYtBeat } : { status: 'idle' }
   );
+  const [ytBeats, setYtBeats] = useState<Beat[]>([]);
+
+  const fetchCatalog = () => {
+    fetch('/beats/yt-catalog.json')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Beat[]) => setYtBeats(data))
+      .catch(() => {});
+  };
 
   useEffect(() => {
     const resolved = loadLanguage();
     if (resolved !== languageId) setLanguageId(resolved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    fetchCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -74,11 +87,13 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
         title: json.title,
         bpm: json.bpm,
         barsPerLoop: json.barsPerLoop,
-        category: 'other',
+        category: json.category ?? 'other',
+        ...(json.source === 'youtube' && { source: 'youtube' as const }),
       };
       // Loading a YT beat deselects the BeatPicker.
       setBeatId(null);
       setYtState({ status: 'loaded', beat, bpmFallback: json.bpmFallback });
+      fetchCatalog();
     } catch {
       setYtState({ status: 'error', message: 'Network error' });
     }
@@ -91,6 +106,8 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
 
   const canLoad = ytState.status !== 'loading' && isYouTubeUrl(ytUrl);
   const canPlay = activeBeat !== null;
+
+  const allBeats = [...BEATS, ...ytBeats];
 
   return (
     <main className="flex min-h-screen flex-col p-6">
@@ -107,7 +124,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
           PLAY
         </button>
         <div className="w-full max-w-sm space-y-3">
-          <BeatPicker beats={BEATS} selectedId={beatId} onChange={chooseBeat} />
+          <BeatPicker beats={allBeats} selectedId={beatId} onChange={chooseBeat} />
 
           <div className="space-y-1">
             {ytState.status === 'loaded' ? (
