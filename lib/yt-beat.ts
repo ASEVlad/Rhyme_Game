@@ -1,6 +1,6 @@
 // hashUrl uses require('crypto') lazily so this file is safe to import in client components.
 export function isYouTubeUrl(url: string): boolean {
-  return /^https?:\/\/(www\.)?(youtube\.com\/watch\?.*v=|youtu\.be\/)/.test(url.trim());
+  return /^https?:\/\/(www\.)?(youtube\.com\/watch\?([^&]*&)*v=|youtu\.be\/[^&?\s]+)/.test(url.trim());
 }
 
 export function hashUrl(url: string): string {

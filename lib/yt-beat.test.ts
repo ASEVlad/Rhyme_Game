@@ -17,6 +17,12 @@ describe('isYouTubeUrl', () => {
   it('rejects plain text', () => {
     expect(isYouTubeUrl('not a url')).toBe(false);
   });
+  it('rejects youtu.be with no video id', () => {
+    expect(isYouTubeUrl('https://youtu.be/')).toBe(false);
+  });
+  it('rejects malformed v param prefix', () => {
+    expect(isYouTubeUrl('https://www.youtube.com/watch?xv=abc')).toBe(false);
+  });
 });
 
 describe('hashUrl', () => {
@@ -47,5 +53,8 @@ describe('selectFilesToDelete', () => {
   it('returns single file when one over limit', () => {
     expect(selectFilesToDelete(['old.mp3', 'keep1.mp3', 'keep2.mp3', 'keep3.mp3'], 3))
       .toEqual(['old.mp3']);
+  });
+  it('returns all files when keepN is 0', () => {
+    expect(selectFilesToDelete(['a', 'b', 'c'], 0)).toEqual(['a', 'b', 'c']);
   });
 });
