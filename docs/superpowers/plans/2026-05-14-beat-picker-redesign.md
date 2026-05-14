@@ -914,7 +914,7 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
               category === cat ? 'bg-white/20 text-white' : 'bg-white/[0.04] text-white/50',
             ].join(' ')}
           >
-            {cat}
+            {cat === 'youtube' ? 'YouTube' : cat}
           </button>
         ))}
       </div>
@@ -1023,15 +1023,35 @@ In the component body, after the existing `useState` declarations:
 const [browseOpen, setBrowseOpen] = useState(false);
 ```
 
-- [ ] **Step 4: Replace the `<BeatPicker .../>` line with the summary card**
+- [ ] **Step 4: Derive `selectedBundled` and replace the `<BeatPicker .../>` line with the summary card**
 
-Replace:
+The summary card must reflect the **picker selection** (bundled or catalog), independent of any loaded YT-URL beat in `ytState`. Otherwise, the card duplicates the YT pill below and points at a beat the modal won't highlight.
+
+First, refactor the existing `activeBeat` derivation to expose `selectedBundled` separately. Find:
+
+```tsx
+const activeBeat: Beat | null =
+  ytState.status === 'loaded' ? ytState.beat :
+  beatId ? (pickBeat(beatId) ?? allBeats.find(b => b.id === beatId) ?? null) : null;
+```
+
+Replace with:
+
+```tsx
+const selectedBundled: Beat | null =
+  beatId ? (pickBeat(beatId) ?? allBeats.find(b => b.id === beatId) ?? null) : null;
+
+const activeBeat: Beat | null =
+  ytState.status === 'loaded' ? ytState.beat : selectedBundled;
+```
+
+Then replace:
 
 ```tsx
 <BeatPicker beats={allBeats} selectedId={beatId} onChange={chooseBeat} />
 ```
 
-with:
+with the summary card driven by `selectedBundled`:
 
 ```tsx
 <button
@@ -1039,9 +1059,9 @@ with:
   onClick={() => setBrowseOpen(true)}
   className="w-full flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-left"
 >
-  <span className="font-bold truncate">{activeBeat?.title ?? 'Pick a beat'}</span>
+  <span className="font-bold truncate">{selectedBundled?.title ?? 'Pick a beat'}</span>
   <span className="flex items-center gap-2 text-white/60 text-sm">
-    {activeBeat ? `${Number.isInteger(activeBeat.bpm) ? activeBeat.bpm : activeBeat.bpm.toFixed(1)} BPM` : ''}
+    {selectedBundled ? `${Number.isInteger(selectedBundled.bpm) ? selectedBundled.bpm : selectedBundled.bpm.toFixed(1)} BPM` : ''}
     <span aria-hidden="true">›</span>
   </span>
 </button>
