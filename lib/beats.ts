@@ -1,9 +1,19 @@
+export type BeatCategory =
+  | 'boom-bap'
+  | 'trap'
+  | 'jazz'
+  | 'lo-fi'
+  | 'drill'
+  | 'other';
+
 export type Beat = {
   id: string;
-  src: string; // path under /public, e.g. /beats/calm-bap.mp3
+  src: string;
   title: string;
-  bpm: number; // derived from real file duration, see spec
-  barsPerLoop: number; // 8 or 16 typically
+  bpm: number;
+  barsPerLoop: number;
+  startOffset?: number;  // seconds before beat 1; omit or 0 = file starts on beat 1
+  category: BeatCategory;
 };
 
 export const BEATS: Beat[] = [
@@ -13,6 +23,7 @@ export const BEATS: Beat[] = [
     title: 'Click 90',
     bpm: 90,
     barsPerLoop: 8,
+    category: 'other',
   },
 ];
 
