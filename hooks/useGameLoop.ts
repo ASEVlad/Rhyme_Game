@@ -5,7 +5,6 @@ import { makeSessionTimer } from '@/lib/session-time';
 
 export type GameTick = {
   ballX: number;        // 0..1 across the 4 cells of the active row
-  ballYDip: number;     // 0..1, sine bounce
   currentBar: number;   // 0..totalBars (counts up)
   beatInBar: number;    // 0..4 (continuous)
 };
@@ -19,7 +18,7 @@ export function useGameLoop(args: {
   startOffset?: number;
 }): GameTick {
   const { audio, bpm, totalBars, active, onEnd, startOffset = 0 } = args;
-  const [tick, setTick] = useState<GameTick>({ ballX: 0, ballYDip: 0, currentBar: 0, beatInBar: 0 });
+  const [tick, setTick] = useState<GameTick>({ ballX: 0, currentBar: 0, beatInBar: 0 });
   const onEndRef = useRef(onEnd);
   onEndRef.current = onEnd;
 
@@ -36,10 +35,7 @@ export function useGameLoop(args: {
       const currentBar = Math.floor(currentBeat / 4);
       const beatInBar = currentBeat % 4;
       const ballX = beatInBar / 4;
-      // Sine dip — ball is "lower" between beats, "higher" on each beat.
-      const phase = (beatInBar % 1) * Math.PI;
-      const ballYDip = Math.sin(phase);
-      setTick({ ballX, ballYDip, currentBar, beatInBar });
+      setTick({ ballX, currentBar, beatInBar });
       if (currentBar >= totalBars && !ended) {
         ended = true;
         onEndRef.current();

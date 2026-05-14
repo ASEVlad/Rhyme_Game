@@ -12,7 +12,6 @@ export default {
           orange: '#ff8a3c',
           red:    '#e44d4d',
         },
-        ball: '#ff9d2a',
       },
       fontFamily: {
         sans: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
