@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#0e1330',
+        bg: '#080808',
         rhyme: {
           yellow: '#ffd447',
           blue:   '#3aa3ff',
