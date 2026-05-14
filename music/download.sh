@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+YT="$HOME/.local/bin/yt-dlp"
+OUT="/home/asevlad/program_files/github_asevlad/Rhyme_Game/public/beats"
+mkdir -p "$OUT"
+
+URLS=(
+  "https://youtu.be/o0YCubdS6Mk"
+  "https://www.youtube.com/watch?v=zc5aYr7rMqs"
+  "https://www.youtube.com/watch?v=Q_owjFp2TZc"
+  "https://www.youtube.com/watch?v=IHjEiIDepjo"
+  "https://www.youtube.com/watch?v=JBg6TG3L0RU"
+  "https://www.youtube.com/watch?v=ihQVuYYuY5A"
+  "https://www.youtube.com/watch?v=hrSvoxARLy0"
+  "https://www.youtube.com/watch?v=G40s9L2OlVw"
+  "https://www.youtube.com/watch?v=D5GfTj3pv6U"
+  "https://www.youtube.com/watch?v=TLpg5cpN-oc"
+  "https://www.youtube.com/watch?v=PyV0ZT0StG0"
+  "https://www.youtube.com/watch?v=fVx7U6r7PEE"
+  "https://www.youtube.com/watch?v=1q5AZaplEZ8"
+  "https://www.youtube.com/watch?v=Bad46A7tvnI"
+  "https://www.youtube.com/watch?v=rZAiviiEuPk"
+  "https://www.youtube.com/watch?v=lFwy0-9ryS8"
+  "https://www.youtube.com/watch?v=wRFUsF99Sqk"
+  "https://www.youtube.com/watch?v=vWg_YGj7eTU"
+  "https://www.youtube.com/watch?v=9N9x4rM5J0U"
+  "https://www.youtube.com/watch?v=0piTG2umjBY"
+  "https://www.youtube.com/watch?v=tEu9kZLGx_E"
+  "https://www.youtube.com/watch?v=3ieXm5oA8kQ"
+  "https://www.youtube.com/watch?v=-UfI1X-MSig"
+  "https://www.youtube.com/watch?v=oP2kSTLmr-8"
+  "https://www.youtube.com/watch?v=ntR6aoL53rY"
+  "https://www.youtube.com/watch?v=RKmCA0BpxR0"
+  "https://www.youtube.com/watch?v=2C9JeSiiSOg"
+  "https://www.youtube.com/watch?v=kQ4Vp-4ucos"
+  "https://www.youtube.com/watch?v=9Zkv9BdZ-ck"
+  "https://www.youtube.com/watch?v=HQeL-zapjvo"
+  "https://www.youtube.com/watch?v=jWQGDyOrHyc"
+  "https://www.youtube.com/watch?v=Po54WB5qae4"
+  "https://www.youtube.com/watch?v=KuuhG1Pe8hA"
+  "https://www.youtube.com/watch?v=gytmVM3NGKc"
+  "https://www.youtube.com/watch?v=mN3LHTQYQV8"
+  "https://www.youtube.com/watch?v=Yu33lpgqGNI"
+  "https://www.youtube.com/watch?v=pq6B157QaoU"
+  "https://www.youtube.com/watch?v=Za_gx2CW3OQ"
+  "https://www.youtube.com/watch?v=C6TOfzGZrkM"
+  "https://www.youtube.com/watch?v=bwmRiFSHVEg"
+  "https://www.youtube.com/watch?v=j6Hvdb8NKyM"
+  "https://www.youtube.com/watch?v=sObU28rmxC4"
+  "https://www.youtube.com/watch?v=bXIIOZ5lrmI"
+  "https://www.youtube.com/watch?v=jpcP1qUZB3M"
+  "https://www.youtube.com/watch?v=N8N2YNksXN4"
+  "https://www.youtube.com/watch?v=AeYbGjQWPCg"
+)
+
+for url in "${URLS[@]}"; do
+  echo "[downloading] $url"
+  "$YT" --extract-audio --audio-format mp3 --audio-quality 0 --no-playlist \
+      -o "$OUT/%(title)s.%(ext)s" "$url" || echo "[FAILED] $url"
+done
+
+echo ""
+echo "=== Done ==="
+ls "$OUT"/*.mp3 | wc -l
