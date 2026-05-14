@@ -23,12 +23,7 @@ Auth is handled by middleware — `/yt` is protected automatically. No auth logi
 
 Extracts everything in `Game.tsx` that is not the setup-phase JSX:
 
-**Input:**
-```ts
-type GamePhasesOpts = {
-  onQuit?: () => void;          // called when user quits from playing phase
-};
-```
+The hook takes no arguments.
 
 **Returns:**
 ```ts
@@ -49,7 +44,7 @@ type GamePhasesReturn = {
 };
 ```
 
-Contains: all `useState` declarations, `usedWordsRef`/`usedEndingsRef`, `useBeat`, `useGameLoop`, the loading `useEffect`, `handlePlay`, `quitToSetup`, `logout`, and the `pulseColor` computation.
+Contains: all `useState` declarations, `usedWordsRef`/`usedEndingsRef`, `useBeat`, `useGameLoop`, the loading `useEffect`, `handlePlay`, `quitToSetup`, and the `pulseColor` computation.
 
 **Does not contain:** setup-phase JSX, loading-screen JSX, playing-screen JSX, or end-screen JSX — those stay in the component.
 
@@ -107,7 +102,9 @@ Layout (top → bottom):
 State:
 - `ytUrl: string`
 - `ytState: YtState` (same union type as in `Setup.tsx`)
-- `languageId`, `difficultyId`, `schemeId` — same defaults as main game, no persistence between sessions
+- `languageId` — reads localStorage on mount via `loadLanguage()`; writes on change via `saveLanguage()` (same as `Setup.tsx`)
+- `difficultyId` — defaults to `DEFAULT_DIFFICULTY`, not persisted
+- `schemeId` — defaults to `DEFAULT_SCHEME`, not persisted
 - `ytBeats: Beat[]` — fetched from catalog on mount; re-fetched after a successful URL load
 - `showAll: boolean` — controls catalog list expansion
 
