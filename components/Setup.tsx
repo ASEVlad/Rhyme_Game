@@ -5,7 +5,7 @@ import { BEATS, pickBeat, type Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
 import { isYouTubeUrl } from '@/lib/yt-beat';
-import { BeatPicker } from './BeatPicker';
+import { BrowseBeats } from './BrowseBeats';
 import { LanguagePicker } from './LanguagePicker';
 
 type YtState =
@@ -32,6 +32,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
     initialYtBeat ? { status: 'loaded', beat: initialYtBeat } : { status: 'idle' }
   );
   const [ytBeats, setYtBeats] = useState<Beat[]>([]);
+  const [browseOpen, setBrowseOpen] = useState(false);
 
   const fetchCatalog = useCallback(() => {
     fetch('/beats/yt-catalog.json')
@@ -100,10 +101,12 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
 
   const allBeats = [...BEATS, ...ytBeats];
 
-  // Active beat: YT beat takes priority, then BeatPicker selection (static or catalog).
-  const activeBeat: Beat | null =
-    ytState.status === 'loaded' ? ytState.beat :
+  const selectedBundled: Beat | null =
     beatId ? (pickBeat(beatId) ?? allBeats.find(b => b.id === beatId) ?? null) : null;
+
+  // Active beat: YT beat takes priority, then BrowseBeats selection (static or catalog).
+  const activeBeat: Beat | null =
+    ytState.status === 'loaded' ? ytState.beat : selectedBundled;
 
   const canLoad = ytState.status !== 'loading' && isYouTubeUrl(ytUrl);
   const canPlay = activeBeat !== null;
@@ -123,7 +126,17 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
           PLAY
         </button>
         <div className="w-full max-w-sm space-y-3">
-          <BeatPicker beats={allBeats} selectedId={beatId} onChange={chooseBeat} />
+          <button
+            type="button"
+            onClick={() => setBrowseOpen(true)}
+            className="w-full flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-left"
+          >
+            <span className="font-bold truncate">{selectedBundled?.title ?? 'Pick a beat'}</span>
+            <span className="flex items-center gap-2 text-white/60 text-sm">
+              {selectedBundled ? `${Number.isInteger(selectedBundled.bpm) ? selectedBundled.bpm : selectedBundled.bpm.toFixed(1)} BPM` : ''}
+              <span aria-hidden="true">›</span>
+            </span>
+          </button>
 
           <div className="space-y-1">
             {ytState.status === 'loaded' ? (
@@ -174,6 +187,14 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
           />
         </div>
       </div>
+      {browseOpen && (
+        <BrowseBeats
+          beats={allBeats}
+          selectedId={beatId}
+          onChange={(id) => { chooseBeat(id); }}
+          onClose={() => setBrowseOpen(false)}
+        />
+      )}
     </main>
   );
 }
