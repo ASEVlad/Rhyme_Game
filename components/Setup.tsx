@@ -4,8 +4,15 @@ import { useEffect, useState } from 'react';
 import { BEATS, pickBeat, type Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
+import { isYouTubeUrl } from '@/lib/yt-beat';
 import { BeatPicker } from './BeatPicker';
 import { LanguagePicker } from './LanguagePicker';
+
+type YtState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'loaded'; beat: Beat; bpmFallback?: boolean }
+  | { status: 'error'; message: string };
 
 type Props = {
   initialBeatId: string | null;
@@ -17,11 +24,9 @@ type Props = {
 export function Setup({ initialBeatId, initialLanguageId, onPlay, onLogout }: Props) {
   const [beatId, setBeatId] = useState<string | null>(initialBeatId ?? BEATS[0]?.id ?? null);
   const [languageId, setLanguageId] = useState<LanguageId>(initialLanguageId);
-  const selectedBeat = beatId ? (pickBeat(beatId) ?? null) : null;
-  const canPlay = selectedBeat !== null;
+  const [ytUrl, setYtUrl] = useState('');
+  const [ytState, setYtState] = useState<YtState>({ status: 'idle' });
 
-  // Reconcile language from localStorage / navigator after mount.
-  // Done in useEffect (not a lazy state initializer) to avoid SSR/hydration mismatch.
   useEffect(() => {
     const resolved = loadLanguage();
     if (resolved !== languageId) setLanguageId(resolved);
@@ -33,6 +38,55 @@ export function Setup({ initialBeatId, initialLanguageId, onPlay, onLogout }: Pr
     saveLanguage(id);
   }
 
+  // Picking from BeatPicker clears any loaded YT beat.
+  function chooseBeat(id: string | null) {
+    setBeatId(id);
+    setYtUrl('');
+    setYtState({ status: 'idle' });
+  }
+
+  async function loadYtBeat() {
+    setYtState({ status: 'loading' });
+    try {
+      const res = await fetch('/api/yt-beat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: ytUrl }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const message =
+          json.error === 'ytdlp-not-found' ? 'yt-dlp is not installed on this server' :
+          json.error === 'invalid-url'      ? 'Not a valid YouTube URL' :
+          json.error === 'download-failed'  ? `Download failed: ${json.detail ?? ''}` :
+          'Failed to load beat';
+        setYtState({ status: 'error', message });
+        return;
+      }
+      const beat: Beat = {
+        id: json.id,
+        src: json.src,
+        title: json.title,
+        bpm: json.bpm,
+        barsPerLoop: json.barsPerLoop,
+        category: 'other',
+      };
+      // Loading a YT beat deselects the BeatPicker.
+      setBeatId(null);
+      setYtState({ status: 'loaded', beat, bpmFallback: json.bpmFallback });
+    } catch {
+      setYtState({ status: 'error', message: 'Network error' });
+    }
+  }
+
+  // Active beat: YT beat takes priority, then BeatPicker selection.
+  const activeBeat: Beat | null =
+    ytState.status === 'loaded' ? ytState.beat :
+    beatId ? (pickBeat(beatId) ?? null) : null;
+
+  const canLoad = ytState.status !== 'loading' && isYouTubeUrl(ytUrl);
+  const canPlay = activeBeat !== null;
+
   return (
     <main className="flex min-h-screen flex-col p-6">
       <div className="flex justify-end">
@@ -41,14 +95,56 @@ export function Setup({ initialBeatId, initialLanguageId, onPlay, onLogout }: Pr
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
         <h1 className="text-4xl font-extrabold">The Rhyme Game</h1>
         <button
-          onClick={() => selectedBeat && onPlay(selectedBeat, languageId)}
+          onClick={() => activeBeat && onPlay(activeBeat, languageId)}
           disabled={!canPlay}
           className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50"
         >
           PLAY
         </button>
         <div className="w-full max-w-sm space-y-3">
-          <BeatPicker beats={BEATS} selectedId={beatId} onChange={setBeatId} />
+          <BeatPicker beats={BEATS} selectedId={beatId} onChange={chooseBeat} />
+
+          <div className="space-y-1">
+            {ytState.status === 'loaded' ? (
+              <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-sm">
+                <span className="truncate">
+                  {ytState.beat.title} · {ytState.beat.bpm} BPM
+                  {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
+                </span>
+                <button
+                  onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
+                  className="ml-2 shrink-0 text-white/60 hover:text-white"
+                  aria-label="Clear YouTube beat"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder="YouTube URL"
+                  value={ytUrl}
+                  onChange={e => {
+                    setYtUrl(e.target.value);
+                    setYtState({ status: 'idle' });
+                  }}
+                  className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm placeholder:text-white/40 outline-none"
+                />
+                <button
+                  onClick={loadYtBeat}
+                  disabled={!canLoad}
+                  className="rounded-xl bg-white/20 px-3 py-2 text-sm disabled:opacity-40"
+                >
+                  {ytState.status === 'loading' ? '…' : 'Load'}
+                </button>
+              </div>
+            )}
+            {ytState.status === 'error' && (
+              <p className="text-xs text-red-400">{ytState.message}</p>
+            )}
+          </div>
+
           <LanguagePicker
             languages={LANGUAGES}
             selectedId={languageId}
