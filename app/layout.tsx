@@ -9,13 +9,13 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: 'Римова Гра',
-  description: 'Українська гра для тренування фристайлу',
+  title: 'The Rhyme Game',
+  description: 'A web game for freestyle rap practice',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uk" className={manrope.variable}>
+    <html lang="en" className={manrope.variable}>
       <body>{children}</body>
     </html>
   );

@@ -23,10 +23,10 @@ export default function LoginPage() {
         router.push('/');
         router.refresh();
       } else {
-        setError('Неправильний пароль');
+        setError('Wrong password');
       }
     } catch {
-      setError("Помилка з'єднання");
+      setError('Connection error');
     } finally {
       setSubmitting(false);
     }
@@ -35,16 +35,16 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4">
-        <h1 className="text-3xl font-extrabold text-center">Римова Гра</h1>
-        <p className="text-center text-white/60">Введіть пароль</p>
+        <h1 className="text-3xl font-extrabold text-center">The Rhyme Game</h1>
+        <p className="text-center text-white/60">Enter password</p>
         <input
           type="password"
-          aria-label="Пароль"
+          aria-label="Password"
           value={password}
           onChange={e => setPassword(e.target.value)}
           autoFocus
           className="w-full rounded-xl bg-white/10 px-4 py-3 text-lg outline-none focus:bg-white/15"
-          placeholder="Пароль"
+          placeholder="Enter password"
         />
         {error && (
           <p role="alert" className="text-rhyme-red text-center">{error}</p>
@@ -54,7 +54,7 @@ export default function LoginPage() {
           disabled={submitting || !password}
           className="w-full rounded-xl bg-rhyme-yellow text-bg font-bold py-3 text-lg disabled:opacity-50"
         >
-          {submitting ? 'Перевірка...' : 'Увійти'}
+          {submitting ? 'Checking…' : 'Log in'}
         </button>
       </form>
     </main>

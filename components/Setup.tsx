@@ -16,16 +16,16 @@ export function Setup({ initialBeatId, onPlay, onLogout }: Props) {
   return (
     <main className="flex min-h-screen flex-col p-6">
       <div className="flex justify-end">
-        <button onClick={onLogout} className="text-white/60 hover:text-white">Вийти</button>
+        <button onClick={onLogout} className="text-white/60 hover:text-white">Log out</button>
       </div>
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
-        <h1 className="text-4xl font-extrabold">Римова Гра</h1>
+        <h1 className="text-4xl font-extrabold">The Rhyme Game</h1>
         <button
           onClick={() => beatId && onPlay(beatId)}
           disabled={!canPlay}
           className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50"
         >
-          ГРАТИ
+          PLAY
         </button>
         <div className="w-full max-w-sm">
           <BeatPicker beats={BEATS} selectedId={beatId} onChange={setBeatId} />

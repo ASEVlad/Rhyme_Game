@@ -23,7 +23,7 @@ export function BeatPicker({ beats, selectedId, onChange }: Props) {
   const [activeCat, setActiveCat] = useState<BeatCategory | 'all'>('all');
 
   if (beats.length === 0) {
-    return <div className="text-white/60 text-center">Біти ще не додано</div>;
+    return <div className="text-white/60 text-center">No beats added yet</div>;
   }
 
   const cats = availableCategories(beats);
@@ -75,7 +75,7 @@ export function BeatPicker({ beats, selectedId, onChange }: Props) {
         </div>
       )}
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/5 px-3 py-3">
-        <button onClick={prev} aria-label="Попередній біт"
+        <button onClick={prev} aria-label="Previous beat"
                 className="h-10 w-10 rounded-full bg-white/10 text-xl">◀</button>
         <div className="text-center">
           <div className="font-bold">{current.title}</div>
@@ -83,7 +83,7 @@ export function BeatPicker({ beats, selectedId, onChange }: Props) {
             {Number.isInteger(current.bpm) ? current.bpm : current.bpm.toFixed(1)} BPM
           </div>
         </div>
-        <button onClick={next} aria-label="Наступний біт"
+        <button onClick={next} aria-label="Next beat"
                 className="h-10 w-10 rounded-full bg-white/10 text-xl">▶</button>
       </div>
     </div>

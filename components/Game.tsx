@@ -59,8 +59,8 @@ export function Game() {
         if (!cancelled) {
           setLoadError(
             err instanceof Error && err.message === 'audio-failed'
-              ? 'Не вдалося відтворити біт'
-              : 'Не вдалося завантажити рими'
+              ? "Couldn't play beat"
+              : "Couldn't load rhymes"
           );
           setPhase('setup');
         }
@@ -101,7 +101,7 @@ export function Game() {
   if (phase === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center text-xl">
-        Завантаження...
+        Loading…
       </div>
     );
   }
@@ -120,8 +120,8 @@ export function Game() {
     <main className="min-h-screen p-4 flex flex-col">
       <div className="flex justify-between mb-2">
         <button onClick={() => {
-          if (confirm('Завершити сесію?')) quitToSetup();
-        }} aria-label="Вийти" className="text-white/70 text-xl">←</button>
+          if (confirm('End session?')) quitToSetup();
+        }} aria-label="Quit" className="text-white/70 text-xl">←</button>
         <div className="text-white/60 text-sm">
           {beat?.title} · {beat?.bpm.toFixed(1)} BPM
         </div>
