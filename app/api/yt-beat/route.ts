@@ -6,19 +6,19 @@ import { isYouTubeUrl, hashUrl, selectFilesToDelete } from '@/lib/yt-beat';
 
 export const runtime = 'nodejs';
 
-const TMP_DIR = '/tmp';
-const TMP_PREFIX = 'rhyme-game-yt-';
-const KEEP_N = 3;
+const BEATS_DIR = join(process.cwd(), 'public', 'beats');
+const YT_PREFIX = 'yt-';
+const KEEP_N = 20; // keep last 20 downloaded YT beats
 
-function tmpMp3Path(id: string) {
-  return join(TMP_DIR, `${TMP_PREFIX}${id}.mp3`);
+function beatPath(id: string) {
+  return join(BEATS_DIR, `${YT_PREFIX}${id}.mp3`);
 }
 
 function estimateBarsPerLoop(bpm: number, durationSec: number): number {
   const raw = (bpm * durationSec) / 240;
   const candidates = [4, 8, 16, 32, 64];
   return candidates.reduce((best, c) =>
-    Math.abs(c - raw) < Math.abs(best - raw) ? c : best, 8);
+    Math.abs(c - raw) < Math.abs(best - raw) ? c : best, candidates[0]);
 }
 
 function detectBpm(filepath: string): { bpm: number; bpmFallback: boolean } {
@@ -34,9 +34,10 @@ function detectBpm(filepath: string): { bpm: number; bpmFallback: boolean } {
       '-loglevel', 'error',
       '-',
     ], { maxBuffer: 50 * 1024 * 1024 });
-    const samples = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
+    const samples = new Float32Array(raw.buffer, raw.byteOffset, Math.floor(raw.byteLength / 4));
     const mt = new MusicTempo(samples, { minBPM: 60, maxBPM: 200 });
     let bpm: number = mt.tempo;
+    if (!bpm || bpm < 1) throw new Error('invalid bpm');
     // music-tempo often returns 2× BPM for slow hip-hop; halve if plausible
     if (bpm > 130 && bpm / 2 >= 70) bpm = bpm / 2;
     return { bpm: Math.round(bpm * 10) / 10, bpmFallback: false };
@@ -45,14 +46,16 @@ function detectBpm(filepath: string): { bpm: number; bpmFallback: boolean } {
   }
 }
 
-function cleanupOldFiles() {
-  const files = readdirSync(TMP_DIR)
-    .filter(f => f.startsWith(TMP_PREFIX) && f.endsWith('.mp3'))
-    .map(f => join(TMP_DIR, f))
-    .sort((a, b) => statSync(a).mtimeMs - statSync(b).mtimeMs); // oldest first
-  for (const f of selectFilesToDelete(files, KEEP_N)) {
-    try { unlinkSync(f); } catch { /* ignore */ }
-  }
+function cleanupOldBeats() {
+  try {
+    const files = readdirSync(BEATS_DIR)
+      .filter(f => f.startsWith(YT_PREFIX) && f.endsWith('.mp3'))
+      .map(f => join(BEATS_DIR, f))
+      .sort((a, b) => statSync(a).mtimeMs - statSync(b).mtimeMs); // oldest first
+    for (const f of selectFilesToDelete(files, KEEP_N)) {
+      try { unlinkSync(f); } catch { /* ignore */ }
+    }
+  } catch { /* ignore if BEATS_DIR unreadable */ }
 }
 
 export async function POST(req: NextRequest) {
@@ -67,12 +70,10 @@ export async function POST(req: NextRequest) {
   }
 
   const id = hashUrl(url);
-  const filepath = tmpMp3Path(id);
+  const filepath = beatPath(id);
 
   if (!existsSync(filepath)) {
-    // yt-dlp output template: %(ext)s expands to "mp3" after extraction,
-    // producing the same path as tmpMp3Path(id).
-    const outputTemplate = join(TMP_DIR, `${TMP_PREFIX}${id}.%(ext)s`);
+    const outputTemplate = join(BEATS_DIR, `${YT_PREFIX}${id}.%(ext)s`);
     try {
       execFileSync('yt-dlp', [
         '--extract-audio',
@@ -91,7 +92,12 @@ export async function POST(req: NextRequest) {
         detail: String((e as any)?.message ?? '').slice(0, 200),
       }, { status: 500 });
     }
-    cleanupOldFiles();
+
+    if (!existsSync(filepath)) {
+      return NextResponse.json({ error: 'download-failed', detail: 'expected .mp3 not found after yt-dlp' }, { status: 500 });
+    }
+
+    cleanupOldBeats();
   }
 
   const { bpm, bpmFallback } = detectBpm(filepath);
@@ -123,7 +129,7 @@ export async function POST(req: NextRequest) {
     bpm,
     barsPerLoop,
     ...(bpmFallback && { bpmFallback: true }),
-    src: `/api/yt-audio/${id}`,
+    src: `/beats/${YT_PREFIX}${id}.mp3`,
     category: 'other',
   });
 }
