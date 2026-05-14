@@ -44,14 +44,14 @@ export type Beat = {
   title: string;
   bpm: number;
   barsPerLoop: number;
-  startOffset: number;   // seconds before beat 1 lands; 0 = file starts on beat 1
+  startOffset?: number;  // seconds before beat 1 lands; omit or 0 = file starts on beat 1
   category: BeatCategory;
 };
 ```
 
-**Migration:** The existing `click-90` entry gets `startOffset: 0, category: 'other'`. No runtime behaviour changes for that beat.
+**Migration:** The existing `click-90` entry gets `category: 'other'`. `startOffset` is optional and defaults to `0`, so no change to the existing entry is required.
 
-**`startOffset` semantics:** Represents the duration of silence or musical intro before the first downbeat of the loop. The value only matters for the initial play — since audio loops from `currentTime = 0`, the silence replays on every loop iteration. This is mathematically correct (session time formula handles it) but means files with large offsets will sound slightly awkward on each loop boundary. The recommended practice is to export beat files trimmed to start on beat 1 and leave `startOffset: 0`; use the offset only as a workaround for files you can't re-export.
+**`startOffset` semantics:** Represents the duration of silence or musical intro before the first downbeat of the loop. Since audio loops from `currentTime = 0`, the silence replays on every loop iteration. This is mathematically correct (the session time formula handles it) but means files with large offsets will sound slightly awkward on each loop boundary. The recommended practice is to export beat files trimmed to start on beat 1 and leave `startOffset` unset; use it only as a workaround for files you can't re-export.
 
 ---
 
@@ -77,7 +77,7 @@ function makeSessionTimer(audio: HTMLAudioElement, startOffset = 0) {
 
 `hooks/useGameLoop.ts` — receives `startOffset: number` and passes it to `makeSessionTimer`.
 
-`components/Game.tsx` — passes `beat.startOffset ?? 0` to `useGameLoop`.
+`components/Game.tsx` — passes `beat.startOffset ?? 0` to `useGameLoop` (the `?? 0` handles the optional field).
 
 ---
 
@@ -89,11 +89,11 @@ function makeSessionTimer(audio: HTMLAudioElement, startOffset = 0) {
 
 ### Step-by-step flow
 
-**Step 1 — Select beat**
-Dropdown lists every entry in `BEATS`. Selecting one starts playback on loop.
+**Step 1 — Load a beat file**
+A text input accepts a path relative to `public/` (e.g. `beats/night-trap.mp3`). A **Load** button fetches the file via `fetch()`, decodes it with `AudioContext.decodeAudioData()`, starts looped playback through an `HTMLAudioElement`, and passes the resulting `AudioBuffer` to `music-tempo` for BPM analysis. This works for any file in `public/beats/` — the beat does not need to exist in `beats.ts` yet. The `id` and `title` fields in the output default to the filename stem (e.g. `night-trap`) and can be edited inline before copying.
 
 **Step 2 — Measure BPM (auto + manual correction)**
-On load, the `music-tempo` npm package analyses the audio buffer and returns a BPM estimate. This value pre-fills the BPM field. A **TAP** button is also shown: the user can tap along to the beat (8+ taps) and the page computes average inter-tap interval as an override. A **Reset taps** link clears the tap history. The final BPM shown is whichever was set last (auto or tap). A confidence bar shows how many taps have been collected (locks at 8+).
+`music-tempo` analyses the decoded `AudioBuffer` synchronously and returns a BPM estimate. This value pre-fills the BPM field. A **TAP** button is also shown: the user can tap along to the beat (8+ taps) and the page computes the average inter-tap interval as an override. A **Reset taps** link clears the tap history. The final BPM is whichever was set last (auto or tap). A confidence indicator shows how many taps have been collected (stabilises at 8+).
 
 **Step 3 — Suggest category (Claude)**
 Immediately after auto-detection completes, the page calls `POST /api/analyze-beat` with `{ bpm, title }`. Claude returns a suggested `category`. The result pre-selects one of the category chips; the user can override by clicking a different chip.
@@ -102,7 +102,7 @@ Immediately after auto-detection completes, the page calls `POST /api/analyze-be
 A single large button: **▼ MARK BEAT 1**. When clicked, the page records `audio.currentTime` as `startOffset`. The user listens for the first downbeat of the loop and taps the button exactly on it. The button can be clicked repeatedly; the last value wins. The page shows the recorded offset in seconds.
 
 **Step 5 — Copy output**
-Once BPM, category, and startOffset are all set, Step 3 panel shows the complete `beats.ts` entry:
+Once BPM, category, and startOffset are all set, the output panel shows the complete `beats.ts` entry:
 
 ```ts
 {
@@ -110,13 +110,13 @@ Once BPM, category, and startOffset are all set, Step 3 panel shows the complete
   src: '/beats/night-trap.mp3',
   title: 'Night Trap',
   bpm: 94.0,
-  barsPerLoop: 8,       // ← user fills this in manually
+  barsPerLoop: /* fill in */,
   startOffset: 0.24,
   category: 'trap',
 },
 ```
 
-`barsPerLoop` is left as a comment placeholder `/* fill in */` — it cannot be reliably inferred and must be set manually. A **Copy to clipboard** button copies the block.
+`barsPerLoop` is always left as `/* fill in */` — it cannot be reliably inferred and must be set manually by the developer (count the musical bars in the loop by ear or from the source). A **Copy to clipboard** button copies the block.
 
 ---
 
@@ -128,7 +128,7 @@ Once BPM, category, and startOffset are all set, Step 3 panel shows the complete
 
 **Auth:** required (existing middleware)
 
-**Rate limit:** same in-memory 1-per-60s-per-IP guard as `/api/rhymes`.
+**Rate limit:** 10-per-60s-per-IP (more lenient than `/api/rhymes` since this is a dev tool called once per beat, not per game session).
 
 **Request body:**
 ```ts
@@ -158,13 +158,13 @@ Once BPM, category, and startOffset are all set, Step 3 panel shows the complete
 - If the currently selected beat is not in the new filtered set, the picker moves to the first beat in that category.
 - Default selection: **All**.
 
-The chip row is visually identical to the design reviewed in brainstorming (Option A: chips above the `◀ title ▶` row).
+The chip row matches the design reviewed in brainstorming (Option A: chips above the `◀ title ▶` row).
 
 ---
 
 ## New dependency
 
-`music-tempo` (MIT licence, ~12 kB gzipped) — client-side BPM detection via Web Audio API. Added to `package.json`. Only loaded on the `/calibrate` page (dynamic import), so it does not affect the main game bundle.
+`music-tempo` (MIT licence, ~12 kB gzipped) — client-side BPM detection via Web Audio API. Added to `package.json`. Only imported inside `app/calibrate/page.tsx` (not the main game bundle).
 
 ---
 
@@ -172,10 +172,10 @@ The chip row is visually identical to the design reviewed in brainstorming (Opti
 
 ```
 lib/
-  beats.ts                    updated — BeatCategory type, startOffset + category on Beat
+  beats.ts                    updated — BeatCategory type, optional startOffset + required category on Beat
   session-time.ts             updated — startOffset param in makeSessionTimer
 hooks/
-  useGameLoop.ts              updated — pass startOffset to makeSessionTimer
+  useGameLoop.ts              updated — accept + pass startOffset to makeSessionTimer
 components/
   Game.tsx                    updated — pass beat.startOffset ?? 0 to useGameLoop
   BeatPicker.tsx              updated — category chip row, filtered navigation
@@ -189,6 +189,6 @@ package.json                  updated — add music-tempo
 
 ## Testing
 
-- Unit test `makeSessionTimer` with `startOffset > 0`: verify session time is 0 during the silent prefix and counts correctly after offset.
-- Unit test `BeatPicker` chip filtering: selecting a category hides beats of other categories; selecting All restores all.
-- Manual smoke test: calibrate one real beat file, paste entry into `beats.ts`, play a full session and verify ball lands on downbeats.
+- Unit test `makeSessionTimer` with `startOffset > 0`: verify session time is `0` during the silent prefix and counts correctly after.
+- Unit test `BeatPicker` chip filtering: selecting a category shows only matching beats; selecting All restores all; chips with 0 beats are absent.
+- Manual smoke test: calibrate one real beat file, paste entry into `beats.ts`, play a full session and verify the ball lands on downbeats throughout.
