@@ -8,6 +8,7 @@ import type { Bar } from '@/lib/flatten-bars';
 import { DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
 import { useBeat } from '@/hooks/useBeat';
 import { useGameLoop } from '@/hooks/useGameLoop';
+import { addRecentBeat } from '@/lib/recent-beats';
 import { Setup } from './Setup';
 import { WordGrid } from './WordGrid';
 import { BouncingBall } from './BouncingBall';
@@ -80,6 +81,7 @@ export function Game() {
   }
 
   function handlePlay(beat: Beat, lang: LanguageId) {
+    addRecentBeat(beat.id);
     setActiveBeat(beat);
     setLanguageId(lang);
     setLoadError(null);
