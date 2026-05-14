@@ -125,11 +125,12 @@ export function Setup({ initialBeatId, initialLanguageId, onPlay, onLogout }: Pr
                   type="url"
                   placeholder="YouTube URL"
                   value={ytUrl}
+                  disabled={ytState.status === 'loading'}
                   onChange={e => {
                     setYtUrl(e.target.value);
                     setYtState({ status: 'idle' });
                   }}
-                  className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm placeholder:text-white/40 outline-none"
+                  className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm placeholder:text-white/40 outline-none disabled:opacity-40"
                 />
                 <button
                   onClick={loadYtBeat}
