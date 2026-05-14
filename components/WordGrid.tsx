@@ -52,16 +52,15 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
               const cellActive  = isActive && col === activeCol;
 
               if (isWordCell && bar && index >= introRows) {
-                const isActiveWord = isActive;
                 return (
                   <div
                     key={col}
                     className={[
                       'rounded-2xl py-5 text-center text-xl font-black',
                       COLOR_BG[bar.color],
-                      isActiveWord ? 'ring-2 ring-white/80' : '',
+                      isActive ? 'ring-2 ring-white/80' : '',
                     ].join(' ')}
-                    style={isActiveWord ? { boxShadow: COLOR_SHADOW[bar.color] } : undefined}
+                    style={isActive ? { boxShadow: COLOR_SHADOW[bar.color] } : undefined}
                   >
                     {bar.word}
                   </div>
