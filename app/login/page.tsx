@@ -101,7 +101,7 @@ function LoginContent() {
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
-              <div className="rounded-2xl py-5 bg-rhyme-red" />
+              <div className="rounded-2xl py-5 bg-rhyme-yellow" />
             </div>
           </div>
 
