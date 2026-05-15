@@ -167,7 +167,7 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Browse beats"
-      className="fixed inset-0 z-50 bg-bg text-white flex flex-col"
+      className="bg-bg text-white flex flex-col h-full"
     >
       <div className="flex items-center px-4 pt-4">
         <strong className="text-lg">Browse beats</strong>

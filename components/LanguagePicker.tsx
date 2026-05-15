@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import type { Language, LanguageId } from '@/lib/languages';
 
 type Props = {
@@ -32,16 +33,18 @@ export function LanguagePicker({
       {languages.map((lang) => {
         const selected = lang.id === selectedId;
         return (
-          <button
+          <motion.button
             key={lang.id}
             type="button"
             role="radio"
             aria-checked={selected}
+            whileTap={{ scale: 0.96 }}
+            transition={{ duration: 0.08 }}
             onClick={() => onChange(lang.id)}
             className={selected ? (activeClassName ?? DEFAULT_ACTIVE) : (inactiveClassName ?? DEFAULT_INACTIVE)}
           >
             {lang.label}
-          </button>
+          </motion.button>
         );
       })}
     </div>

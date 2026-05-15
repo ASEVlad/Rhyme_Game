@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import type { Difficulty, DifficultyId } from '@/lib/difficulties';
 
 type Props = {
@@ -32,16 +33,18 @@ export function DifficultyPicker({
       {difficulties.map((d) => {
         const selected = d.id === selectedId;
         return (
-          <button
+          <motion.button
             key={d.id}
             type="button"
             role="radio"
             aria-checked={selected}
+            whileTap={{ scale: 0.96 }}
+            transition={{ duration: 0.08 }}
             onClick={() => onChange(d.id)}
             className={selected ? (activeClassName ?? DEFAULT_ACTIVE) : (inactiveClassName ?? DEFAULT_INACTIVE)}
           >
             {d.label}
-          </button>
+          </motion.button>
         );
       })}
     </div>

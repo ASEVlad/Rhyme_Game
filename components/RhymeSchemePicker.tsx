@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import type { RhymeScheme, RhymeSchemeId } from '@/lib/rhyme-schemes';
 
 type Props = {
@@ -32,16 +33,18 @@ export function RhymeSchemePicker({
       {schemes.map((s) => {
         const selected = s.id === selectedId;
         return (
-          <button
+          <motion.button
             key={s.id}
             type="button"
             role="radio"
             aria-checked={selected}
+            whileTap={{ scale: 0.96 }}
+            transition={{ duration: 0.08 }}
             onClick={() => onChange(s.id)}
             className={selected ? (activeClassName ?? DEFAULT_ACTIVE) : (inactiveClassName ?? DEFAULT_INACTIVE)}
           >
             {s.label}
-          </button>
+          </motion.button>
         );
       })}
     </div>

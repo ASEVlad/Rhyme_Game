@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { BEATS, pickBeat, type Beat } from '@/lib/beats';
 import { LANGUAGES, type LanguageId } from '@/lib/languages';
 import { DIFFICULTIES, DEFAULT_DIFFICULTY, type DifficultyId } from '@/lib/difficulties';
@@ -12,6 +13,7 @@ import { LanguagePicker } from './LanguagePicker';
 import { DifficultyPicker } from './DifficultyPicker';
 import { RhymeSchemePicker } from './RhymeSchemePicker';
 import { YtLoadingState } from './YtLoadingState';
+import { fadePanel } from '@/lib/motion-variants';
 
 type YtState =
   | { status: 'idle' }
@@ -187,129 +189,131 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
             </div>
 
             {/* Beat area — switches based on beatSource */}
-            {beatSource === 'local' ? (
-              <>
-                {/* Mobile: opens full BrowseBeats modal */}
-                <button
-                  ref={browseButtonRef}
-                  type="button"
-                  onClick={() => setBrowseOpen(true)}
-                  className="md:hidden w-full flex items-center justify-between rounded-2xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.14)] px-4 py-3 text-left"
-                >
-                  <span className="font-bold truncate">{selectedBundled?.title ?? 'Pick a beat'}</span>
-                  <span className="flex items-center gap-2 text-[rgba(94,200,255,0.5)] text-sm">
-                    {selectedBundled ? `${Number.isInteger(selectedBundled.bpm) ? selectedBundled.bpm : selectedBundled.bpm.toFixed(1)} BPM` : ''}
-                    <span aria-hidden="true">›</span>
-                  </span>
-                </button>
-
-                {/* Desktop: inline scrollable list + Browse all button */}
-                <div className="hidden md:block rounded-2xl bg-[rgba(94,200,255,0.04)] border border-[rgba(94,200,255,0.10)] overflow-hidden">
-                  <div className="max-h-72 overflow-y-auto">
-                    {allBeats.map(b => (
-                      <button
-                        key={b.id}
-                        type="button"
-                        onClick={() => chooseBeat(b.id)}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left hover:bg-[rgba(94,200,255,0.06)] transition-colors ${
-                          b.id === beatId && beatSource === 'local'
-                            ? 'bg-[rgba(94,200,255,0.12)] text-white'
-                            : 'text-white/70'
-                        }`}
-                      >
-                        <span className="truncate">{b.title}</span>
-                        <span className="text-white/40 ml-2 shrink-0 text-xs">
-                          {Number.isInteger(b.bpm) ? b.bpm : b.bpm.toFixed(1)} BPM
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+            <AnimatePresence mode="wait">
+              {beatSource === 'local' ? (
+                <motion.div key="local" {...fadePanel}>
+                  {/* Mobile: opens full BrowseBeats modal */}
                   <button
+                    ref={browseButtonRef}
                     type="button"
                     onClick={() => setBrowseOpen(true)}
-                    className="w-full px-4 py-2.5 text-xs text-[rgba(94,200,255,0.5)] hover:text-[rgba(94,200,255,0.8)] border-t border-[rgba(94,200,255,0.10)] text-left transition-colors"
+                    className="md:hidden w-full flex items-center justify-between rounded-2xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.14)] px-4 py-3 text-left"
                   >
-                    Browse all / search…
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-2">
-                {/* URL input / loading / loaded chip */}
-                {ytState.status === 'loading' ? (
-                  <YtLoadingState className="py-2" />
-                ) : ytState.status === 'loaded' ? (
-                  <div className="flex items-center justify-between rounded-xl bg-[rgba(94,200,255,0.12)] border border-[rgba(94,200,255,0.25)] px-3 py-2 text-sm">
-                    <span className="truncate">
-                      {ytState.beat.title} · {ytState.beat.bpm.toFixed(1)} BPM
-                      {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
+                    <span className="font-bold truncate">{selectedBundled?.title ?? 'Pick a beat'}</span>
+                    <span className="flex items-center gap-2 text-[rgba(94,200,255,0.5)] text-sm">
+                      {selectedBundled ? `${Number.isInteger(selectedBundled.bpm) ? selectedBundled.bpm : selectedBundled.bpm.toFixed(1)} BPM` : ''}
+                      <span aria-hidden="true">›</span>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
-                      className="ml-2 shrink-0 text-white/60 hover:text-white"
-                      aria-label="Clear YouTube beat"
-                    >✕</button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      placeholder="Paste YouTube URL…"
-                      value={ytUrl}
-                      onChange={e => { setYtUrl(e.target.value); setYtState({ status: 'idle' }); }}
-                      className="flex-1 rounded-xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.30)] px-3 py-2 text-sm placeholder:text-white/40 outline-none disabled:opacity-40"
-                    />
-                    <button
-                      type="button"
-                      onClick={loadYtBeat}
-                      disabled={!canLoad}
-                      aria-label="Load YouTube beat"
-                      className="rounded-xl px-3 py-2 text-sm font-bold text-[#060c14] disabled:opacity-40"
-                      style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
-                    >Load</button>
-                  </div>
-                )}
-                {ytState.status === 'error' && (
-                  <p className="text-xs text-red-400">{ytState.message}</p>
-                )}
+                  </button>
 
-                {/* Inline catalog */}
-                {ytBeats.length > 0 && (
-                  <div className="space-y-1 pt-1">
-                    <p className="text-[10px] text-[rgba(94,200,255,0.45)] uppercase tracking-wider">Recent</p>
-                    {ytBeats.map((b, i) => (
-                      <button
-                        key={b.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCatalogId(b.id);
-                          setYtUrl('');
-                          setYtState({ status: 'idle' });
-                        }}
-                        className={[
-                          'w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-left',
-                          selectedCatalogId === b.id && ytState.status !== 'loaded'
-                            ? 'bg-[rgba(94,200,255,0.12)] border border-[rgba(94,200,255,0.25)] text-white'
-                            : 'bg-[rgba(94,200,255,0.04)] text-white/70 hover:bg-[rgba(94,200,255,0.08)]',
-                          !showAll && i >= 5 ? 'hidden md:flex' : 'flex',
-                        ].join(' ')}
-                      >
-                        <span className="truncate">{b.title}</span>
-                        <span className="text-white/40 ml-2 shrink-0">{b.bpm.toFixed(1)} BPM</span>
-                      </button>
-                    ))}
-                    {ytBeats.length > 5 && !showAll && (
-                      <button
-                        type="button"
-                        onClick={() => setShowAll(true)}
-                        className="md:hidden w-full text-center text-xs text-white/40 hover:text-white/70 py-1"
-                      >Show all ({ytBeats.length}) →</button>
-                    )}
+                  {/* Desktop: inline scrollable list + Browse all button */}
+                  <div className="hidden md:block rounded-2xl bg-[rgba(94,200,255,0.04)] border border-[rgba(94,200,255,0.10)] overflow-hidden">
+                    <div className="max-h-72 overflow-y-auto">
+                      {allBeats.map(b => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => chooseBeat(b.id)}
+                          className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left hover:bg-[rgba(94,200,255,0.06)] transition-colors ${
+                            b.id === beatId && beatSource === 'local'
+                              ? 'bg-[rgba(94,200,255,0.12)] text-white'
+                              : 'text-white/70'
+                          }`}
+                        >
+                          <span className="truncate">{b.title}</span>
+                          <span className="text-white/40 ml-2 shrink-0 text-xs">
+                            {Number.isInteger(b.bpm) ? b.bpm : b.bpm.toFixed(1)} BPM
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setBrowseOpen(true)}
+                      className="w-full px-4 py-2.5 text-xs text-[rgba(94,200,255,0.5)] hover:text-[rgba(94,200,255,0.8)] border-t border-[rgba(94,200,255,0.10)] text-left transition-colors"
+                    >
+                      Browse all / search…
+                    </button>
                   </div>
-                )}
-              </div>
-            )}
+                </motion.div>
+              ) : (
+                <motion.div key="youtube" {...fadePanel} className="space-y-2">
+                  {/* URL input / loading / loaded chip */}
+                  {ytState.status === 'loading' ? (
+                    <YtLoadingState className="py-2" />
+                  ) : ytState.status === 'loaded' ? (
+                    <div className="flex items-center justify-between rounded-xl bg-[rgba(94,200,255,0.12)] border border-[rgba(94,200,255,0.25)] px-3 py-2 text-sm">
+                      <span className="truncate">
+                        {ytState.beat.title} · {ytState.beat.bpm.toFixed(1)} BPM
+                        {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
+                        className="ml-2 shrink-0 text-white/60 hover:text-white"
+                        aria-label="Clear YouTube beat"
+                      >✕</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        placeholder="Paste YouTube URL…"
+                        value={ytUrl}
+                        onChange={e => { setYtUrl(e.target.value); setYtState({ status: 'idle' }); }}
+                        className="flex-1 rounded-xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.30)] px-3 py-2 text-sm placeholder:text-white/40 outline-none disabled:opacity-40"
+                      />
+                      <button
+                        type="button"
+                        onClick={loadYtBeat}
+                        disabled={!canLoad}
+                        aria-label="Load YouTube beat"
+                        className="rounded-xl px-3 py-2 text-sm font-bold text-[#060c14] disabled:opacity-40"
+                        style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
+                      >Load</button>
+                    </div>
+                  )}
+                  {ytState.status === 'error' && (
+                    <p className="text-xs text-red-400">{ytState.message}</p>
+                  )}
+
+                  {/* Inline catalog */}
+                  {ytBeats.length > 0 && (
+                    <div className="space-y-1 pt-1">
+                      <p className="text-[10px] text-[rgba(94,200,255,0.45)] uppercase tracking-wider">Recent</p>
+                      {ytBeats.map((b, i) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCatalogId(b.id);
+                            setYtUrl('');
+                            setYtState({ status: 'idle' });
+                          }}
+                          className={[
+                            'w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-left',
+                            selectedCatalogId === b.id && ytState.status !== 'loaded'
+                              ? 'bg-[rgba(94,200,255,0.12)] border border-[rgba(94,200,255,0.25)] text-white'
+                              : 'bg-[rgba(94,200,255,0.04)] text-white/70 hover:bg-[rgba(94,200,255,0.08)]',
+                            !showAll && i >= 5 ? 'hidden md:flex' : 'flex',
+                          ].join(' ')}
+                        >
+                          <span className="truncate">{b.title}</span>
+                          <span className="text-white/40 ml-2 shrink-0">{b.bpm.toFixed(1)} BPM</span>
+                        </button>
+                      ))}
+                      {ytBeats.length > 5 && !showAll && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAll(true)}
+                          className="md:hidden w-full text-center text-xs text-white/40 hover:text-white/70 py-1"
+                        >Show all ({ytBeats.length}) →</button>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* ── RIGHT COLUMN: options + PLAY ── */}
@@ -343,28 +347,38 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
             />
 
             {/* PLAY — moved from below the container into the right column */}
-            <button
+            <motion.button
               type="button"
+              whileTap={canPlay ? { scale: 0.96 } : {}}
+              transition={{ duration: 0.1 }}
               onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
               disabled={!canPlay}
               className="rounded-2xl px-12 py-5 text-3xl font-extrabold text-[#060c14] disabled:opacity-40 block mx-auto md:mx-0 md:w-full md:mt-auto"
               style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', boxShadow: canPlay ? '0 0 32px rgba(94,200,255,0.45)' : 'none' }}
             >
               PLAY
-            </button>
+            </motion.button>
           </div>
 
         </div>
       </div>
 
-      {browseOpen && (
-        <BrowseBeats
-          beats={allBeats}
-          selectedId={beatId}
-          onChange={(id) => { chooseBeat(id); }}
-          onClose={() => { setBrowseOpen(false); browseButtonRef.current?.focus(); }}
-        />
-      )}
+      <AnimatePresence>
+        {browseOpen && (
+          <motion.div
+            key="browse"
+            className="fixed inset-0 z-50"
+            {...fadePanel}
+          >
+            <BrowseBeats
+              beats={allBeats}
+              selectedId={beatId}
+              onChange={(id) => { chooseBeat(id); }}
+              onClose={() => { setBrowseOpen(false); browseButtonRef.current?.focus(); }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

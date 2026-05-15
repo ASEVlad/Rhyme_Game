@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import type { Beat, BeatCategory } from '@/lib/beats';
 import { LANGUAGES, DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
@@ -230,14 +231,16 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
             <LanguagePicker languages={LANGUAGES} selectedId={languageId} onChange={chooseLanguage} />
             <DifficultyPicker difficulties={DIFFICULTIES} selectedId={difficultyId} onChange={setDifficultyId} />
             <RhymeSchemePicker schemes={RHYME_SCHEMES} selectedId={schemeId} onChange={setSchemeId} />
-            <button
+            <motion.button
               type="button"
+              whileTap={canPlay ? { scale: 0.96 } : {}}
+              transition={{ duration: 0.1 }}
               onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
               disabled={!canPlay}
               className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50 block mx-auto md:mx-0 md:w-full md:mt-auto"
             >
               PLAY
-            </button>
+            </motion.button>
           </div>
 
         </div>
