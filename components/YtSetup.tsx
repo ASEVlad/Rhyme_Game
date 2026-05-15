@@ -126,7 +126,6 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
 
   const canLoad = ytState.status !== 'loading' && isYouTubeUrl(ytUrl);
   const canPlay = activeBeat !== null;
-  const visibleBeats = showAll ? ytBeats : ytBeats.slice(0, 5);
 
   return (
     <main className="flex min-h-screen flex-col p-6">
@@ -143,96 +142,100 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
           </div>
         )}
 
-        {/* URL input / loading state / loaded chip */}
-        <div className="w-full max-w-sm space-y-1">
-          {ytState.status === 'loading' ? (
-            <YtLoadingState className="py-2" />
-          ) : ytState.status === 'loaded' ? (
-            <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-sm">
-              <span className="truncate">
-                {ytState.beat.title} · {ytState.beat.bpm.toFixed(1)} BPM
-                {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
-              </span>
-              <button
-                onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
-                className="ml-2 shrink-0 text-white/60 hover:text-white"
-                aria-label="Clear YouTube beat"
-              >✕</button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <input
-                type="url"
-                placeholder="YouTube URL"
-                value={ytUrl}
-                onChange={e => { setYtUrl(e.target.value); setYtState({ status: 'idle' }); }}
-                className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm placeholder:text-white/40 outline-none"
-              />
-              <button
-                onClick={loadYtBeat}
-                disabled={!canLoad}
-                aria-label="Load YouTube beat"
-                className="rounded-xl bg-white/20 px-3 py-2 text-sm disabled:opacity-40"
-              >Load</button>
-            </div>
-          )}
-          {ytState.status === 'error' && (
-            <p className="text-xs text-red-400">{ytState.message}</p>
-          )}
-        </div>
+        <div className="w-full max-w-sm md:max-w-3xl md:grid md:grid-cols-[1.2fr_1fr] md:gap-8">
 
-        {/* Catalog */}
-        <div className="w-full max-w-sm">
-          {ytBeats.length === 0 ? (
-            <p className="text-center text-sm text-white/40">
-              No beats yet — paste a URL above.
-            </p>
-          ) : (
-            <div className="space-y-1">
-              <p className="text-xs text-white/40 uppercase tracking-wide mb-2">
-                Or pick from catalog
-              </p>
-              {visibleBeats.map(b => (
+          {/* ── LEFT COLUMN: URL input + catalog ── */}
+          <div className="space-y-1">
+            {ytState.status === 'loading' ? (
+              <YtLoadingState className="py-2" />
+            ) : ytState.status === 'loaded' ? (
+              <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-sm">
+                <span className="truncate">
+                  {ytState.beat.title} · {ytState.beat.bpm.toFixed(1)} BPM
+                  {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
+                </span>
                 <button
-                  key={b.id}
-                  onClick={() => selectFromCatalog(b.id)}
-                  className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-left ${
-                    selectedCatalogId === b.id && ytState.status !== 'loaded'
-                      ? 'bg-white/20 text-white'
-                      : 'bg-white/[0.06] text-white/70 hover:bg-white/10'
-                  }`}
-                >
-                  <span className="truncate">{b.title}</span>
-                  <span className="text-white/40 ml-2 shrink-0">{b.bpm.toFixed(1)} BPM</span>
-                </button>
-              ))}
-              {ytBeats.length > 5 && !showAll && (
+                  onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
+                  className="ml-2 shrink-0 text-white/60 hover:text-white"
+                  aria-label="Clear YouTube beat"
+                >✕</button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder="YouTube URL"
+                  value={ytUrl}
+                  onChange={e => { setYtUrl(e.target.value); setYtState({ status: 'idle' }); }}
+                  className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm placeholder:text-white/40 outline-none"
+                />
                 <button
-                  onClick={() => setShowAll(true)}
-                  className="w-full text-center text-xs text-white/40 hover:text-white/70 py-1"
-                >
-                  Show all ({ytBeats.length}) →
-                </button>
+                  onClick={loadYtBeat}
+                  disabled={!canLoad}
+                  aria-label="Load YouTube beat"
+                  className="rounded-xl bg-white/20 px-3 py-2 text-sm disabled:opacity-40"
+                >Load</button>
+              </div>
+            )}
+            {ytState.status === 'error' && (
+              <p className="text-xs text-red-400">{ytState.message}</p>
+            )}
+
+            {/* Catalog — full-list render with CSS show/hide for mobile truncation */}
+            <div className="pt-2">
+              {ytBeats.length === 0 ? (
+                <p className="text-center text-sm text-white/40">
+                  No beats yet — paste a URL above.
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-xs text-white/40 uppercase tracking-wide mb-2">
+                    Or pick from catalog
+                  </p>
+                  {ytBeats.map((b, i) => (
+                    <button
+                      key={b.id}
+                      onClick={() => selectFromCatalog(b.id)}
+                      className={[
+                        'w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-left',
+                        selectedCatalogId === b.id && ytState.status !== 'loaded'
+                          ? 'bg-white/20 text-white'
+                          : 'bg-white/[0.06] text-white/70 hover:bg-white/10',
+                        !showAll && i >= 5 ? 'hidden md:flex' : 'flex',
+                      ].join(' ')}
+                    >
+                      <span className="truncate">{b.title}</span>
+                      <span className="text-white/40 ml-2 shrink-0">{b.bpm.toFixed(1)} BPM</span>
+                    </button>
+                  ))}
+                  {ytBeats.length > 5 && !showAll && (
+                    <button
+                      onClick={() => setShowAll(true)}
+                      className="md:hidden w-full text-center text-xs text-white/40 hover:text-white/70 py-1"
+                    >
+                      Show all ({ytBeats.length}) →
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Pickers */}
-        <div className="w-full max-w-sm space-y-3">
-          <LanguagePicker languages={LANGUAGES} selectedId={languageId} onChange={chooseLanguage} />
-          <DifficultyPicker difficulties={DIFFICULTIES} selectedId={difficultyId} onChange={setDifficultyId} />
-          <RhymeSchemePicker schemes={RHYME_SCHEMES} selectedId={schemeId} onChange={setSchemeId} />
-        </div>
+          {/* ── RIGHT COLUMN: pickers + PLAY ── */}
+          <div className="flex flex-col gap-3 mt-6 md:mt-0">
+            <LanguagePicker languages={LANGUAGES} selectedId={languageId} onChange={chooseLanguage} />
+            <DifficultyPicker difficulties={DIFFICULTIES} selectedId={difficultyId} onChange={setDifficultyId} />
+            <RhymeSchemePicker schemes={RHYME_SCHEMES} selectedId={schemeId} onChange={setSchemeId} />
+            <button
+              onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
+              disabled={!canPlay}
+              className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50 block mx-auto md:mx-0 md:w-full md:mt-auto"
+            >
+              PLAY
+            </button>
+          </div>
 
-        {/* PLAY */}
-        <button
-          onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
-          disabled={!canPlay}
-          className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50"
-        >
-          PLAY
-        </button>
+        </div>
       </div>
     </main>
   );
