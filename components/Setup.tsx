@@ -87,6 +87,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   }
 
   function chooseBeat(id: string | null) {
+    setBeatSource('local');
     setBeatId(id);
     setYtUrl('');
     setYtState({ status: 'idle' });
