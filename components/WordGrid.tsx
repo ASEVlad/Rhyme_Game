@@ -17,6 +17,13 @@ const COLOR_SHADOW: Record<RhymeColor, string> = {
   red:    '0 0 16px rgba(228,77,77,0.5)',
 };
 
+export function rowOpacity(index: number, activeRow: number, windowSize: number): number {
+  if (index === activeRow) return 1;
+  if (index === activeRow - 1) return 0.07;
+  if (index < activeRow - 1 || index > activeRow + windowSize) return 0;
+  return 0.28;
+}
+
 type Props = {
   bars: Bar[];
   /** index into bars[] currently being played */
@@ -30,8 +37,8 @@ type Props = {
 };
 
 export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2 }: Props) {
-  const start = activeRow - 1;
-  const end = activeRow + windowSize;
+  const start = activeRow - 2;
+  const end = activeRow + windowSize + 1;
   const visibleRows: Array<{ index: number; bar: Bar | null }> = [];
   for (let i = start; i <= end; i++) {
     visibleRows.push({ index: i, bar: bars[i] ?? null });
@@ -42,8 +49,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
     <div className="space-y-2 select-none">
       {visibleRows.map(({ index, bar }) => {
         const isActive = index === activeRow;
-        const isPast   = index < activeRow;
-        const opacity  = isActive ? 1 : isPast ? 0.07 : 0.28;
+        const opacity  = rowOpacity(index, activeRow, windowSize);
 
         const rowContent = (
           <div className="grid grid-cols-4 gap-2">
@@ -73,8 +79,8 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
                   className={[
                     'rounded-2xl py-5',
                     cellActive
-                      ? 'bg-white/20 border border-white/40'
-                      : 'bg-white/[0.06]',
+                      ? 'bg-[rgba(94,200,255,0.20)] border border-[rgba(94,200,255,0.40)]'
+                      : 'bg-[rgba(94,200,255,0.06)]',
                   ].join(' ')}
                 />
               );
@@ -86,14 +92,14 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
           return (
             <div
               key={index}
-              style={{ opacity, position: 'relative', transition: 'opacity 300ms ease' }}
+              style={{ opacity, position: 'relative', transition: 'opacity 600ms ease' }}
             >
               <div
                 style={{
                   position: 'absolute',
                   inset: '-8px -10px',
                   borderRadius: '18px',
-                  background: 'radial-gradient(ellipse at 50% 50%, rgba(255,200,50,0.12) 0%, transparent 70%)',
+                  background: 'radial-gradient(ellipse at 50% 50%, rgba(94,200,255,0.10) 0%, transparent 70%)',
                   pointerEvents: 'none',
                 }}
               />
@@ -105,7 +111,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
         return (
           <div
             key={index}
-            style={{ opacity, transition: 'opacity 300ms ease' }}
+            style={{ opacity, transition: 'opacity 600ms ease' }}
           >
             {rowContent}
           </div>
