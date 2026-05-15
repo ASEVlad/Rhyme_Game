@@ -39,10 +39,13 @@ export function YtGame() {
 
   // playing
   return (
-    <main className="relative min-h-screen p-4 flex flex-col">
+    <main
+      className="relative min-h-screen p-4 flex flex-col bg-[#060c14]"
+      style={{ backgroundImage: 'radial-gradient(ellipse 80% 30% at 50% -5%, rgba(94,200,255,0.13) 0%, transparent 100%)' }}
+    >
       <div
         className="absolute inset-0 pointer-events-none z-0"
-        style={{ backgroundColor: pulseColor, transition: 'background-color 400ms ease' }}
+        style={{ background: `radial-gradient(ellipse at 50% 35%, ${pulseColor} 0%, transparent 70%)`, transition: 'background 400ms ease' }}
       />
       <div className="relative z-10">
         <div className="flex justify-between mb-2" style={{ opacity: 0.18 }}>
