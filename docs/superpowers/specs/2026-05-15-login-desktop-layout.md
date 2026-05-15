@@ -35,9 +35,9 @@ md:grid-cols-2   h-full
 
 **Left column — branding:**
 - `FREESTYLE RAP TRAINER` — `text-xs uppercase tracking-widest text-[rgba(94,200,255,0.65)]`
-- `The Rhyme Game` — large gradient title, same gradient as rest of app (`linear-gradient(135deg,#5ec8ff,#2860e0)`)
-- Tagline: "Beat plays. Ball bounces. Your rhyme lands on time." — `text-white/50`
-- 5-row decorative game grid, 4 columns, full column width. Row opacities follow `WordGrid`'s `rowOpacity` pattern (active row = 1, rows above/below fade). Row 3 (active) gets a cyan glow ring. Col 4 of each row shows a color chip (yellow, blue, orange, red, red-faded). Col 3 of row 2 shows the orange bouncing ball dot.
+- `The Rhyme Game` — `text-4xl font-extrabold` gradient title (`linear-gradient(135deg,#5ec8ff,#2860e0)` via `WebkitBackgroundClip`)
+- Tagline: "Beat plays. Ball bounces. Your rhyme lands on time." — `text-sm text-white/50 leading-relaxed`
+- 5-row decorative game grid, 4 columns, full column width. Row opacities (top to bottom): `opacity-0`, `opacity-[0.07]`, `opacity-100` (active), `opacity-[0.28]`, `opacity-[0.07]`. Active row (row 3) gets `ring-2 ring-white/80` on each cell and a radial-gradient glow behind the row (same as `WordGrid`'s active row glow: `radial-gradient(ellipse at 50% 50%, rgba(94,200,255,0.10) 0%, transparent 70%)`). Col 4 of each row shows a color chip: `bg-rhyme-yellow`, `bg-rhyme-blue`, `bg-rhyme-orange`, `bg-rhyme-red`, `bg-rhyme-red opacity-40`. Col 3 of row 2 shows the orange bouncing ball dot (`w-3 h-3 rounded-full bg-[#ff9d2a]` with glow).
 - `Calm Bap · 88 BPM` caption — `text-xs text-white/25`
 - Right edge: `border-r border-[rgba(94,200,255,0.10)]`
 
