@@ -4,7 +4,7 @@
 
 **Goal:** Apply the Hybrid C visual reskin (navy bg, cyan chrome, rhyme colors intact), add ball bounce that lands on cell tops, slow down the prev-row fade, and fix the row-transition layout glitch via invisible buffer rows.
 
-**Architecture:** Four files touched, no new files. Pure functions are extracted from `BouncingBall.tsx` and `WordGrid.tsx` so the bounce formula and opacity logic can be unit-tested before updating the components. `Game.tsx` and `YtGame.tsx` get identical background changes.
+**Architecture:** Six files touched, two new test files. Pure functions are extracted from `BouncingBall.tsx` and `WordGrid.tsx` so the bounce formula and opacity logic can be unit-tested before updating the components. `Game.tsx` and `YtGame.tsx` get identical background changes.
 
 **Tech Stack:** Next.js 14, React 18, Tailwind CSS, Vitest
 

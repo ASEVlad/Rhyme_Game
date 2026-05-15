@@ -27,6 +27,13 @@ describe('rowOpacity', () => {
     expect(rowOpacity(11, 5, ws)).toBe(0);
   });
 
+  it('returns 0 for all non-active rows when windowSize = 0', () => {
+    expect(rowOpacity(5, 5, 0)).toBe(1);   // active
+    expect(rowOpacity(4, 5, 0)).toBe(0.07); // near past
+    expect(rowOpacity(6, 5, 0)).toBe(0);   // immediately below active = buffer
+    expect(rowOpacity(3, 5, 0)).toBe(0);   // buffer above
+  });
+
   it('works correctly at activeRow = 0 (start of game)', () => {
     expect(rowOpacity(0, 0, ws)).toBe(1);    // active
     expect(rowOpacity(-1, 0, ws)).toBe(0.07); // near past (will be null bar, just needs opacity)

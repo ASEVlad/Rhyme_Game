@@ -30,7 +30,7 @@ type Props = {
   activeRow: number;
   /** ballX 0..1 — used to highlight the active cell */
   ballX: number;
-  /** number of upcoming rows rendered below the active row (default 4) */
+  /** upcoming rows visible below the active row; two invisible buffer rows always render above and below (default 4) */
   windowSize?: number;
   /** hide rhyme words for the first N bars so the player can feel the beat first */
   introRows?: number;

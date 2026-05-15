@@ -9,9 +9,7 @@ Four targeted changes to the playing screen: (1) Hybrid C visual reskin — navy
 
 ## Scope
 
-Changes touch `BouncingBall.tsx`, `WordGrid.tsx`, and `Game.tsx` only. No hook changes, no logic changes, no new components.
-
-`YtGame.tsx` gets the same playing-phase changes as `Game.tsx` since its playing section is identical.
+Changes touch `BouncingBall.tsx`, `WordGrid.tsx`, `Game.tsx`, and `YtGame.tsx` only. No hook changes, no logic changes, no new components. `YtGame.tsx` is included because its playing phase is identical to `Game.tsx`.
 
 ## 1 — Hybrid C Reskin
 
@@ -28,7 +26,16 @@ Changes touch `BouncingBall.tsx`, `WordGrid.tsx`, and `Game.tsx` only. No hook c
 >
 ```
 
-The static cyan top glow is on `<main>` via inline `backgroundImage`. The existing dynamic pulse overlay div remains unchanged — it still uses `pulseColor` (driven by active rhyme group).
+The static cyan top glow is on `<main>` via inline `backgroundImage`. The dynamic pulse overlay div changes from a flat `backgroundColor` fill to a focused radial gradient so the pulse reads as a soft spotlight rather than a full-screen tint against the new navy background:
+
+```tsx
+<div
+  className="absolute inset-0 pointer-events-none z-0"
+  style={{ background: `radial-gradient(ellipse at 50% 35%, ${pulseColor} 0%, transparent 70%)`, transition: 'background 400ms ease' }}
+/>
+```
+
+The `pulseColor` value remains rhyme-group-driven and unchanged.
 
 ### Beat cells
 
