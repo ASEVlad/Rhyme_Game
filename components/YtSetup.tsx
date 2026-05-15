@@ -200,7 +200,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
                       key={b.id}
                       onClick={() => selectFromCatalog(b.id)}
                       className={[
-                        'w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-left',
+                        'w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-left',
                         selectedCatalogId === b.id && ytState.status !== 'loaded'
                           ? 'bg-white/20 text-white'
                           : 'bg-white/[0.06] text-white/70 hover:bg-white/10',

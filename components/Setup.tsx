@@ -245,6 +245,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                       {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
                     </span>
                     <button
+                      type="button"
                       onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
                       className="ml-2 shrink-0 text-white/60 hover:text-white"
                       aria-label="Clear YouTube beat"
@@ -260,6 +261,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                       className="flex-1 rounded-xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.30)] px-3 py-2 text-sm placeholder:text-white/40 outline-none disabled:opacity-40"
                     />
                     <button
+                      type="button"
                       onClick={loadYtBeat}
                       disabled={!canLoad}
                       aria-label="Load YouTube beat"
@@ -286,7 +288,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                           setYtState({ status: 'idle' });
                         }}
                         className={[
-                          'w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-left',
+                          'w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-left',
                           selectedCatalogId === b.id && ytState.status !== 'loaded'
                             ? 'bg-[rgba(94,200,255,0.12)] border border-[rgba(94,200,255,0.25)] text-white'
                             : 'bg-[rgba(94,200,255,0.04)] text-white/70 hover:bg-[rgba(94,200,255,0.08)]',
