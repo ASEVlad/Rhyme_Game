@@ -2,7 +2,6 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import { DifficultyPicker } from './DifficultyPicker';
 import type { DifficultyId } from '@/lib/difficulties';
 
