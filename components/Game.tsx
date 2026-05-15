@@ -1,23 +1,20 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useGamePhases } from '@/hooks/useGamePhases';
 import { Setup } from './Setup';
 import { WordGrid } from './WordGrid';
 import { BouncingBall } from './BouncingBall';
 import { EndScreen } from './EndScreen';
+import { signOut } from 'next-auth/react';
 
 export function Game() {
-  const router = useRouter();
   const {
     phase, activeBeat, languageId, bars, loadError, tick, pulseColor,
     handlePlay, quitToSetup, playAgain, goToSetup,
   } = useGamePhases();
 
   async function logout() {
-    await fetch('/api/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
+    await signOut({ callbackUrl: '/login' });
   }
 
   if (phase === 'setup') {
