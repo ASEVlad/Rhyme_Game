@@ -238,7 +238,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
               {/* Inline catalog */}
               {ytBeats.length > 0 && (
                 <div className="space-y-1 pt-1">
-                  <p className="text-[10px] text-[rgba(94,200,255,0.45)] uppercase tracking-wide">Recent</p>
+                  <p className="text-[10px] text-[rgba(94,200,255,0.45)] uppercase tracking-wider">Recent</p>
                   {(showAll ? ytBeats : ytBeats.slice(0, 5)).map(b => (
                     <button
                       key={b.id}
@@ -303,7 +303,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
         <button
           onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
           disabled={!canPlay}
-          className="rounded-2xl px-12 py-5 text-3xl font-extrabold text-[#060c14] disabled:opacity-50"
+          className="rounded-2xl px-12 py-5 text-3xl font-extrabold text-[#060c14] disabled:opacity-40"
           style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', boxShadow: canPlay ? '0 0 32px rgba(94,200,255,0.45)' : 'none' }}
         >
           PLAY
