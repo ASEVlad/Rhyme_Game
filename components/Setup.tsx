@@ -202,7 +202,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
               {ytState.status === 'loading' ? (
                 <YtLoadingState className="py-2" />
               ) : ytState.status === 'loaded' ? (
-                <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-sm">
+                <div className="flex items-center justify-between rounded-xl bg-[rgba(94,200,255,0.12)] border border-[rgba(94,200,255,0.25)] px-3 py-2 text-sm">
                   <span className="truncate">
                     {ytState.beat.title} · {ytState.beat.bpm.toFixed(1)} BPM
                     {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
