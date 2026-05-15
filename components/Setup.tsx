@@ -7,11 +7,11 @@ import { DIFFICULTIES, DEFAULT_DIFFICULTY, type DifficultyId } from '@/lib/diffi
 import { RHYME_SCHEMES, DEFAULT_SCHEME, type RhymeSchemeId } from '@/lib/rhyme-schemes';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
 import { isYouTubeUrl } from '@/lib/yt-beat';
-import Link from 'next/link';
 import { BrowseBeats } from './BrowseBeats';
 import { LanguagePicker } from './LanguagePicker';
 import { DifficultyPicker } from './DifficultyPicker';
 import { RhymeSchemePicker } from './RhymeSchemePicker';
+import { YtLoadingState } from './YtLoadingState';
 
 type YtState =
   | { status: 'idle' }
@@ -58,6 +58,11 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   const [ytBeats, setYtBeats] = useState<Beat[]>([]);
   const [browseOpen, setBrowseOpen] = useState(false);
   const browseButtonRef = useRef<HTMLButtonElement>(null);
+  const [beatSource, setBeatSource] = useState<BeatSource>(
+    initialYtBeat ? 'youtube' : 'local'
+  );
+  const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const fetchCatalog = useCallback(() => {
     fetch('/beats/yt-catalog.json')
@@ -127,8 +132,9 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   const selectedBundled: Beat | null =
     beatId ? (pickBeat(beatId) ?? allBeats.find(b => b.id === beatId) ?? null) : null;
 
-  const activeBeat: Beat | null =
-    ytState.status === 'loaded' ? ytState.beat : selectedBundled;
+  const activeBeat: Beat | null = computeActiveBeat(
+    beatSource, selectedBundled, ytState, selectedCatalogId, ytBeats,
+  );
 
   const canLoad = ytState.status !== 'loading' && isYouTubeUrl(ytUrl);
   const canPlay = activeBeat !== null;
@@ -136,10 +142,143 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   return (
     <main className="flex min-h-screen flex-col p-6">
       <div className="flex justify-end">
-        <button onClick={onLogout} className="text-white/60 hover:text-white">Log out</button>
+        <button onClick={onLogout} className="text-white/60 hover:text-white text-sm">Log out</button>
       </div>
+
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
         <h1 className="text-4xl font-extrabold">The Rhyme Game</h1>
+
+        <div className="w-full max-w-sm space-y-3">
+          {/* Beat source toggle */}
+          <div className="w-full rounded-xl bg-white/[0.06] p-1 flex gap-1">
+            <button
+              type="button"
+              onClick={() => setBeatSource('local')}
+              className={beatSource === 'local'
+                ? 'flex-1 rounded-lg bg-rhyme-yellow text-bg font-bold py-2 text-sm'
+                : 'flex-1 rounded-lg bg-transparent text-white/50 py-2 text-sm'}
+            >
+              Local beats
+            </button>
+            <button
+              type="button"
+              onClick={() => setBeatSource('youtube')}
+              className={beatSource === 'youtube'
+                ? 'flex-1 rounded-lg bg-rhyme-yellow text-bg font-bold py-2 text-sm'
+                : 'flex-1 rounded-lg bg-transparent text-white/50 py-2 text-sm'}
+            >
+              YouTube
+            </button>
+          </div>
+
+          {/* Beat area — switches based on beatSource */}
+          {beatSource === 'local' ? (
+            <button
+              ref={browseButtonRef}
+              type="button"
+              onClick={() => setBrowseOpen(true)}
+              className="w-full flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-left"
+            >
+              <span className="font-bold truncate">{selectedBundled?.title ?? 'Pick a beat'}</span>
+              <span className="flex items-center gap-2 text-white/60 text-sm">
+                {selectedBundled ? `${Number.isInteger(selectedBundled.bpm) ? selectedBundled.bpm : selectedBundled.bpm.toFixed(1)} BPM` : ''}
+                <span aria-hidden="true">›</span>
+              </span>
+            </button>
+          ) : (
+            <div className="space-y-2">
+              {/* URL input / loading / loaded chip */}
+              {ytState.status === 'loading' ? (
+                <YtLoadingState className="py-2" />
+              ) : ytState.status === 'loaded' ? (
+                <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-sm">
+                  <span className="truncate">
+                    {ytState.beat.title} · {ytState.beat.bpm.toFixed(1)} BPM
+                    {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
+                  </span>
+                  <button
+                    onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
+                    className="ml-2 shrink-0 text-white/60 hover:text-white"
+                    aria-label="Clear YouTube beat"
+                  >✕</button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="Paste YouTube URL…"
+                    value={ytUrl}
+                    onChange={e => { setYtUrl(e.target.value); setYtState({ status: 'idle' }); }}
+                    className="flex-1 rounded-xl bg-white/10 border border-white/20 px-3 py-2 text-sm placeholder:text-white/40 outline-none disabled:opacity-40"
+                  />
+                  <button
+                    onClick={loadYtBeat}
+                    disabled={!canLoad}
+                    aria-label="Load YouTube beat"
+                    className="rounded-xl bg-white/20 px-3 py-2 text-sm font-bold disabled:opacity-40"
+                  >Load</button>
+                </div>
+              )}
+              {ytState.status === 'error' && (
+                <p className="text-xs text-red-400">{ytState.message}</p>
+              )}
+
+              {/* Inline catalog */}
+              {ytBeats.length > 0 && (
+                <div className="space-y-1 pt-1">
+                  <p className="text-[10px] text-white/40 uppercase tracking-wide">Recent</p>
+                  {(showAll ? ytBeats : ytBeats.slice(0, 5)).map(b => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCatalogId(b.id);
+                        setYtUrl('');
+                        setYtState({ status: 'idle' });
+                      }}
+                      className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-left ${
+                        selectedCatalogId === b.id && ytState.status !== 'loaded'
+                          ? 'bg-white/20 text-white'
+                          : 'bg-white/[0.06] text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      <span className="truncate">{b.title}</span>
+                      <span className="text-white/40 ml-2 shrink-0">{b.bpm.toFixed(1)} BPM</span>
+                    </button>
+                  ))}
+                  {ytBeats.length > 5 && !showAll && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAll(true)}
+                      className="w-full text-center text-xs text-white/40 hover:text-white/70 py-1"
+                    >Show all ({ytBeats.length}) →</button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="border-t border-white/[0.08] my-1" />
+
+          <LanguagePicker
+            languages={LANGUAGES}
+            selectedId={languageId}
+            onChange={chooseLanguage}
+          />
+          <DifficultyPicker
+            difficulties={DIFFICULTIES}
+            selectedId={difficultyId}
+            onChange={setDifficultyId}
+          />
+          <RhymeSchemePicker
+            schemes={RHYME_SCHEMES}
+            selectedId={schemeId}
+            onChange={setSchemeId}
+          />
+        </div>
+
+        {/* PLAY — bottom */}
         <button
           onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
           disabled={!canPlay}
@@ -147,88 +286,8 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
         >
           PLAY
         </button>
-        <div className="w-full max-w-sm space-y-3">
-          <button
-            ref={browseButtonRef}
-            type="button"
-            onClick={() => setBrowseOpen(true)}
-            className="w-full flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-left"
-          >
-            <span className="font-bold truncate">{selectedBundled?.title ?? 'Pick a beat'}</span>
-            <span className="flex items-center gap-2 text-white/60 text-sm">
-              {selectedBundled ? `${Number.isInteger(selectedBundled.bpm) ? selectedBundled.bpm : selectedBundled.bpm.toFixed(1)} BPM` : ''}
-              <span aria-hidden="true">›</span>
-            </span>
-          </button>
-
-          <div className="space-y-1">
-            {ytState.status === 'loaded' ? (
-              <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2 text-sm">
-                <span className="truncate">
-                  {ytState.beat.title} · {ytState.beat.bpm} BPM
-                  {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
-                </span>
-                <button
-                  onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
-                  className="ml-2 shrink-0 text-white/60 hover:text-white"
-                  aria-label="Clear YouTube beat"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  placeholder="YouTube URL"
-                  value={ytUrl}
-                  disabled={ytState.status === 'loading'}
-                  onChange={e => {
-                    setYtUrl(e.target.value);
-                    setYtState({ status: 'idle' });
-                  }}
-                  className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm placeholder:text-white/40 outline-none disabled:opacity-40"
-                />
-                <button
-                  onClick={loadYtBeat}
-                  disabled={!canLoad}
-                  className="rounded-xl bg-white/20 px-3 py-2 text-sm disabled:opacity-40"
-                >
-                  {ytState.status === 'loading' ? '…' : 'Load'}
-                </button>
-              </div>
-            )}
-            {ytState.status === 'error' && (
-              <p className="text-xs text-red-400">{ytState.message}</p>
-            )}
-          </div>
-
-          <Link
-            href="/yt"
-            className="block text-center text-xs text-white/50 hover:text-white/80 underline"
-          >
-            Try YouTube mode →
-          </Link>
-
-          <LanguagePicker
-            languages={LANGUAGES}
-            selectedId={languageId}
-            onChange={chooseLanguage}
-          />
-
-          <DifficultyPicker
-            difficulties={DIFFICULTIES}
-            selectedId={difficultyId}
-            onChange={setDifficultyId}
-          />
-
-          <RhymeSchemePicker
-            schemes={RHYME_SCHEMES}
-            selectedId={schemeId}
-            onChange={setSchemeId}
-          />
-        </div>
       </div>
+
       {browseOpen && (
         <BrowseBeats
           beats={allBeats}
