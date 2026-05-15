@@ -131,7 +131,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
     <main className="flex min-h-screen flex-col p-6">
       <div className="flex justify-between">
         <Link href="/" className="text-white/60 hover:text-white text-sm">← Back</Link>
-        <button onClick={onLogout} className="text-white/60 hover:text-white text-sm">Log out</button>
+        <button type="button" onClick={onLogout} className="text-white/60 hover:text-white text-sm">Log out</button>
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-6 mt-6">
@@ -155,6 +155,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
                   {ytState.bpmFallback && ' (BPM ~90, auto-detect failed)'}
                 </span>
                 <button
+                  type="button"
                   onClick={() => { setYtUrl(''); setYtState({ status: 'idle' }); }}
                   className="ml-2 shrink-0 text-white/60 hover:text-white"
                   aria-label="Clear YouTube beat"
@@ -170,6 +171,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
                   className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm placeholder:text-white/40 outline-none"
                 />
                 <button
+                  type="button"
                   onClick={loadYtBeat}
                   disabled={!canLoad}
                   aria-label="Load YouTube beat"
@@ -194,6 +196,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
                   </p>
                   {ytBeats.map((b, i) => (
                     <button
+                      type="button"
                       key={b.id}
                       onClick={() => selectFromCatalog(b.id)}
                       className={[
@@ -210,6 +213,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
                   ))}
                   {ytBeats.length > 5 && !showAll && (
                     <button
+                      type="button"
                       onClick={() => setShowAll(true)}
                       className="md:hidden w-full text-center text-xs text-white/40 hover:text-white/70 py-1"
                     >
@@ -227,6 +231,7 @@ export function YtSetup({ onPlay, onLogout, errorMessage }: Props) {
             <DifficultyPicker difficulties={DIFFICULTIES} selectedId={difficultyId} onChange={setDifficultyId} />
             <RhymeSchemePicker schemes={RHYME_SCHEMES} selectedId={schemeId} onChange={setSchemeId} />
             <button
+              type="button"
               onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
               disabled={!canPlay}
               className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50 block mx-auto md:mx-0 md:w-full md:mt-auto"
