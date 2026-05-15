@@ -1,3 +1,6 @@
+export const INVITE_STATE_HEADER = 'x-rhyme-invite-state';
+export const INVITE_STATE_CLOSED_BETA = 'closed-beta';
+
 export type InviteDecision =
   | { kind: 'pass' }
   | { kind: 'set'; code: string }
