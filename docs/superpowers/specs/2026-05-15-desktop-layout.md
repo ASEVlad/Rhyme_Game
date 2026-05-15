@@ -82,9 +82,10 @@ The `browseButtonRef` moves to the "Browse all" button so focus returns to it co
 
 **YouTube tab on desktop:**
 
-No structural change to the URL input. For the catalog list, render all beats but use CSS to hide items beyond index 5 on mobile until "Show all" is tapped:
+No structural change to the URL input. For the catalog list, replace the current slice-based render (`ytBeats.slice(0, 5).map(…)`) with a full-list render where items beyond index 4 are CSS-hidden on mobile until "Show all" is tapped:
 
 ```tsx
+{/* Replace (showAll ? ytBeats : ytBeats.slice(0, 5)).map(…) with: */}
 {ytBeats.map((b, i) => (
   <button
     key={b.id}
@@ -134,15 +135,39 @@ Title stays centered. On desktop it spans above both columns naturally because i
 
 ## 2 — YtSetup.tsx Desktop Layout
 
-Same two-column pattern:
+`YtSetup.tsx` currently has several separate sibling `<div className="w-full max-w-sm …">` wrappers inside a `flex flex-col` container: one for the URL input, one for the catalog, one for the pickers. These must be **consolidated** before the two-column grid can be applied.
+
+### Consolidation step (prerequisite)
+
+Wrap the URL input div and the catalog div together into a single left-column div, and wrap the pickers + PLAY button together into a right-column div. Then place both inside the two-column grid wrapper:
 
 ```tsx
-<div className="w-full max-w-sm md:max-w-3xl space-y-3 md:space-y-0 md:grid md:grid-cols-[1.2fr_1fr] md:gap-8 md:items-start">
+{/* Remove the individual max-w-sm wrappers from URL input, catalog, pickers, and PLAY */}
+{/* Wrap as: */}
+<div className="w-full max-w-sm md:max-w-3xl md:grid md:grid-cols-[1.2fr_1fr] md:gap-8 md:items-start">
+  {/* Left column */}
+  <div className="space-y-2">
+    {/* URL input + Load button (currently a separate div) */}
+    {/* Catalog list (currently a separate div) */}
+  </div>
+
+  {/* Right column */}
+  <div className="flex flex-col gap-3">
+    {/* LanguagePicker, DifficultyPicker, RhymeSchemePicker */}
+    {/* PLAY button */}
+  </div>
+</div>
 ```
 
-**Left column:** URL input + load button + YouTube catalog list. On desktop, always show all catalog beats (no 5-item limit). Same CSS approach as `Setup.tsx`: items beyond index 4 get `hidden md:flex`, the "Show all" button gets `md:hidden`.
+Remove the `flex flex-1 flex-col items-center justify-center gap-6 mt-6` wrapper that currently centers everything vertically — on desktop the two-column layout is top-aligned.
 
-**Right column:** Language, Difficulty, RhymeScheme pickers + PLAY button (same `md:mt-auto md:w-full` treatment).
+### Catalog list on desktop
+
+Same CSS approach as `Setup.tsx` YouTube tab: replace the slice-based render with a full-list render. Items beyond index 4 get `hidden md:flex`; the "Show all" button gets `md:hidden`.
+
+### Right column
+
+Language, Difficulty, RhymeScheme pickers + PLAY button. Same `md:mt-auto md:w-full` treatment on PLAY.
 
 ---
 
