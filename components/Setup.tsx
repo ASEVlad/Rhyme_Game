@@ -141,23 +141,32 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   const canPlay = activeBeat !== null;
 
   return (
-    <main className="flex min-h-screen flex-col p-6">
+    <main
+      className="flex min-h-screen flex-col p-6 bg-[#060c14]"
+      style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -5%, rgba(94,200,255,0.22) 0%, transparent 100%)' }}
+    >
       <div className="flex justify-end">
         <button onClick={onLogout} className="text-white/60 hover:text-white text-sm">Log out</button>
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
-        <h1 className="text-4xl font-extrabold">The Rhyme Game</h1>
+        <h1
+          className="text-4xl font-extrabold tracking-tight"
+          style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+        >
+          The Rhyme Game
+        </h1>
 
         <div className="w-full max-w-sm space-y-3">
           {/* Beat source toggle */}
-          <div className="w-full rounded-xl bg-white/[0.06] p-1 flex gap-1">
+          <div className="w-full rounded-xl bg-[rgba(94,200,255,0.08)] border border-[rgba(94,200,255,0.18)] p-1 flex gap-1">
             <button
               type="button"
               onClick={() => setBeatSource('local')}
               className={beatSource === 'local'
-                ? 'flex-1 rounded-lg bg-rhyme-yellow text-bg font-bold py-2 text-sm'
+                ? 'flex-1 rounded-lg font-bold py-2 text-sm text-[#060c14]'
                 : 'flex-1 rounded-lg bg-transparent text-white/50 py-2 text-sm'}
+              style={beatSource === 'local' ? { background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', boxShadow: '0 0 12px rgba(94,200,255,0.35)' } : undefined}
             >
               Local beats
             </button>
@@ -165,8 +174,9 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
               type="button"
               onClick={() => setBeatSource('youtube')}
               className={beatSource === 'youtube'
-                ? 'flex-1 rounded-lg bg-rhyme-yellow text-bg font-bold py-2 text-sm'
+                ? 'flex-1 rounded-lg font-bold py-2 text-sm text-[#060c14]'
                 : 'flex-1 rounded-lg bg-transparent text-white/50 py-2 text-sm'}
+              style={beatSource === 'youtube' ? { background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', boxShadow: '0 0 12px rgba(94,200,255,0.35)' } : undefined}
             >
               YouTube
             </button>
@@ -178,10 +188,10 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
               ref={browseButtonRef}
               type="button"
               onClick={() => setBrowseOpen(true)}
-              className="w-full flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-left"
+              className="w-full flex items-center justify-between rounded-2xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.14)] px-4 py-3 text-left"
             >
               <span className="font-bold truncate">{selectedBundled?.title ?? 'Pick a beat'}</span>
-              <span className="flex items-center gap-2 text-white/60 text-sm">
+              <span className="flex items-center gap-2 text-[rgba(94,200,255,0.5)] text-sm">
                 {selectedBundled ? `${Number.isInteger(selectedBundled.bpm) ? selectedBundled.bpm : selectedBundled.bpm.toFixed(1)} BPM` : ''}
                 <span aria-hidden="true">›</span>
               </span>
@@ -210,13 +220,14 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                     placeholder="Paste YouTube URL…"
                     value={ytUrl}
                     onChange={e => { setYtUrl(e.target.value); setYtState({ status: 'idle' }); }}
-                    className="flex-1 rounded-xl bg-white/10 border border-white/20 px-3 py-2 text-sm placeholder:text-white/40 outline-none disabled:opacity-40"
+                    className="flex-1 rounded-xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.30)] px-3 py-2 text-sm placeholder:text-white/40 outline-none disabled:opacity-40"
                   />
                   <button
                     onClick={loadYtBeat}
                     disabled={!canLoad}
                     aria-label="Load YouTube beat"
-                    className="rounded-xl bg-white/20 px-3 py-2 text-sm font-bold disabled:opacity-40"
+                    className="rounded-xl px-3 py-2 text-sm font-bold text-[#060c14] disabled:opacity-40"
+                    style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
                   >Load</button>
                 </div>
               )}
@@ -227,7 +238,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
               {/* Inline catalog */}
               {ytBeats.length > 0 && (
                 <div className="space-y-1 pt-1">
-                  <p className="text-[10px] text-white/40 uppercase tracking-wide">Recent</p>
+                  <p className="text-[10px] text-[rgba(94,200,255,0.45)] uppercase tracking-wide">Recent</p>
                   {(showAll ? ytBeats : ytBeats.slice(0, 5)).map(b => (
                     <button
                       key={b.id}
@@ -239,8 +250,8 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                       }}
                       className={`w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-left ${
                         selectedCatalogId === b.id && ytState.status !== 'loaded'
-                          ? 'bg-white/20 text-white'
-                          : 'bg-white/[0.06] text-white/70 hover:bg-white/10'
+                          ? 'bg-[rgba(94,200,255,0.12)] border border-[rgba(94,200,255,0.25)] text-white'
+                          : 'bg-[rgba(94,200,255,0.04)] text-white/70 hover:bg-[rgba(94,200,255,0.08)]'
                       }`}
                     >
                       <span className="truncate">{b.title}</span>
@@ -260,22 +271,31 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
           )}
 
           {/* Divider */}
-          <div className="border-t border-white/[0.08] my-1" />
+          <div className="border-t border-[rgba(94,200,255,0.10)] my-1" />
 
           <LanguagePicker
             languages={LANGUAGES}
             selectedId={languageId}
             onChange={chooseLanguage}
+            className="flex flex-wrap justify-center gap-2 rounded-2xl bg-[rgba(94,200,255,0.04)] px-3 py-3"
+            activeClassName="rounded-full bg-[rgba(94,200,255,0.20)] px-4 py-2 text-sm font-semibold text-white"
+            inactiveClassName="rounded-full bg-transparent px-4 py-2 text-sm text-white/35 hover:text-white/60"
           />
           <DifficultyPicker
             difficulties={DIFFICULTIES}
             selectedId={difficultyId}
             onChange={setDifficultyId}
+            className="flex flex-wrap justify-center gap-2 rounded-2xl bg-[rgba(94,200,255,0.04)] px-3 py-3"
+            activeClassName="rounded-full bg-[rgba(94,200,255,0.20)] px-4 py-2 text-sm font-semibold text-white"
+            inactiveClassName="rounded-full bg-transparent px-4 py-2 text-sm text-white/35 hover:text-white/60"
           />
           <RhymeSchemePicker
             schemes={RHYME_SCHEMES}
             selectedId={schemeId}
             onChange={setSchemeId}
+            className="flex flex-wrap justify-center gap-2 rounded-2xl bg-[rgba(94,200,255,0.04)] px-3 py-3"
+            activeClassName="rounded-full bg-[rgba(94,200,255,0.20)] px-4 py-2 text-sm font-semibold text-white"
+            inactiveClassName="rounded-full bg-transparent px-4 py-2 text-sm text-white/35 hover:text-white/60"
           />
         </div>
 
@@ -283,7 +303,8 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
         <button
           onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
           disabled={!canPlay}
-          className="rounded-2xl bg-rhyme-yellow px-12 py-5 text-3xl font-extrabold text-bg disabled:opacity-50"
+          className="rounded-2xl px-12 py-5 text-3xl font-extrabold text-[#060c14] disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', boxShadow: canPlay ? '0 0 32px rgba(94,200,255,0.45)' : 'none' }}
         >
           PLAY
         </button>
