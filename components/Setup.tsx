@@ -158,7 +158,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
           The Rhyme Game
         </h1>
 
-        <div className="w-full max-w-sm md:max-w-3xl space-y-3 md:space-y-0 md:grid md:grid-cols-[1.2fr_1fr] md:gap-8 md:items-start">
+        <div className="w-full max-w-sm md:max-w-3xl space-y-3 md:space-y-0 md:grid md:grid-cols-[1.2fr_1fr] md:gap-8">
 
           {/* ── LEFT COLUMN: beat source + beat picker ── */}
           <div className="space-y-3">
