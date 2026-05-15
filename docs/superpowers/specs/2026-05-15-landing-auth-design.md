@@ -15,7 +15,7 @@ Add a public marketing landing page at `/` and redesign the auth page at `/login
 | `/play` | — (didn't exist) | Game (auth-gated, moved from `/`) |
 | `/login` | Password form | Google + magic link auth page |
 
-Middleware updated: unauthenticated requests to `/play` redirect to `/login`. The landing page `/` and auth page `/login` are always public.
+Middleware updated: unauthenticated requests to `/play`, `/yt`, and `/calibrate` redirect to `/login`. The landing page `/` and auth page `/login` (including the Auth.js `/api/auth/*` routes) are always public.
 
 ## Landing page (`/`)
 
@@ -151,7 +151,7 @@ To grant access: add email to `ALLOWED_EMAILS` in Vercel dashboard. To revoke: r
 | `app/page.tsx` | Becomes public landing page |
 | `app/login/page.tsx` | Redesigned auth page (Google + magic link) |
 | `middleware.ts` | Swap homegrown cookie check for Auth.js `auth()` |
-| `components/Game.tsx` | `onLogout` prop call replaced with `signOut()` from `next-auth/react` |
+| `app/play/page.tsx` | Passes `onLogout={() => signOut()}` to `<Game />` instead of the old `/api/logout` fetch |
 
 ### Files deleted
 
@@ -163,7 +163,7 @@ To grant access: add email to `ALLOWED_EMAILS` in Vercel dashboard. To revoke: r
 
 ## What does NOT change
 
-- `components/Game.tsx`, `components/Setup.tsx`, and all game components — untouched
+- `components/Game.tsx`, `components/Setup.tsx`, and all other game components — untouched
 - `app/globals.css` body background
 - `tailwind.config.ts` color tokens
 - All game API routes (`/api/rhymes`, `/api/yt-beat`, `/api/analyze-beat`)
