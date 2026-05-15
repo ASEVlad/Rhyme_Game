@@ -73,7 +73,7 @@ export function Game() {
             {activeBeat?.title} · {activeBeat?.bpm.toFixed(1)} BPM
           </div>
         </div>
-        <div className="mt-4 mx-auto w-full max-w-md">
+        <div className="mt-4 mx-auto w-full max-w-md lg:max-w-3xl">
           <BouncingBall x={tick.ballX} />
           <WordGrid bars={bars} activeRow={tick.currentBar} ballX={tick.ballX} />
         </div>

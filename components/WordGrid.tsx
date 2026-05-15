@@ -62,7 +62,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
                   <div
                     key={col}
                     className={[
-                      'rounded-2xl py-5 text-center text-xl font-black',
+                      'rounded-2xl py-5 lg:py-8 text-center text-xl lg:text-3xl font-black',
                       COLOR_BG[bar.color],
                       isActive ? 'ring-2 ring-white/80' : '',
                     ].join(' ')}
@@ -77,7 +77,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
                 <div
                   key={col}
                   className={[
-                    'rounded-2xl py-5',
+                    'rounded-2xl py-5 lg:py-8',
                     cellActive
                       ? 'bg-[rgba(94,200,255,0.20)] border border-[rgba(94,200,255,0.40)]'
                       : 'bg-[rgba(94,200,255,0.06)]',
