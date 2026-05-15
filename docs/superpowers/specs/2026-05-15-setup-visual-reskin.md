@@ -14,8 +14,6 @@ This spec covers the **Setup screen only** (`components/Setup.tsx` and `app/glob
 
 ## Color tokens
 
-Replace or extend `tailwind.config.ts`:
-
 Add two new tokens to `tailwind.config.ts` (existing tokens unchanged):
 
 | Token | Value |

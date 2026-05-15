@@ -57,7 +57,9 @@ When the user selects the YouTube tab, the beat picker button is replaced by:
    - List of catalog beats, same row style as current YtSetup catalog (title + BPM, selectable)
    - "Show all (N) →" if more than 5 entries
 
-The YouTube tab owns the same state machine as the current `Setup.tsx` YouTube section (`YtState`: idle / loading / loaded / error) plus `selectedCatalogId`.
+The YouTube tab owns the same state machine as the current `Setup.tsx` YouTube section (`YtState`: idle / loading / loaded / error) plus `selectedCatalogId` (new state — not currently in `Setup.tsx`; this mirrors the pattern in `YtSetup.tsx`).
+
+> **New behaviour:** The current `Setup.tsx` merges `ytBeats` into `allBeats` and shows them via the BrowseBeats modal — there is no inline catalog list. The YouTube tab introduces a new inline catalog list (title + BPM rows, selectable) that replaces this. YouTube beats will no longer appear inside BrowseBeats when the YouTube tab is active.
 
 ### PLAY button position
 
@@ -120,14 +122,7 @@ The `loadYtBeat` function, `fetchCatalog` call, and `ytBeats` state are already 
 
 ## Visual spec
 
-| Element | Class |
-|---|---|
-| Toggle container | `w-full rounded-xl bg-white/[0.06] p-1 flex gap-1` |
-| Active tab | `flex-1 rounded-lg bg-rhyme-yellow text-bg font-bold py-2 text-sm` |
-| Inactive tab | `flex-1 rounded-lg bg-transparent text-white/50 py-2 text-sm` |
-| YouTube URL input (YouTube tab active) | `flex-1 rounded-xl bg-white/10 border border-rhyme-yellow/30 px-3 py-2 text-sm placeholder:text-white/40 outline-none` |
-| Load button (YouTube tab) | `rounded-xl bg-rhyme-yellow text-bg font-bold px-3 py-2 text-sm disabled:opacity-40` |
-| Divider | `border-t border-white/[0.08] my-1` |
+All colors and gradients for this screen are defined in `2026-05-15-setup-visual-reskin.md`. Do not use `bg-rhyme-yellow` on any Setup element introduced by this spec.
 
 ## Out of scope
 
