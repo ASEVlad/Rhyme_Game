@@ -7,10 +7,12 @@ export default {
       colors: {
         bg: '#080808',
         rhyme: {
-          yellow: '#ffd447',
-          blue:   '#3aa3ff',
-          orange: '#ff8a3c',
-          red:    '#e44d4d',
+          yellow:     '#ffd447',
+          blue:       '#3aa3ff',
+          orange:     '#ff8a3c',
+          red:        '#e44d4d',
+          'cyan-from': '#5ec8ff',
+          'cyan-to':   '#2860e0',
         },
       },
       fontFamily: {
