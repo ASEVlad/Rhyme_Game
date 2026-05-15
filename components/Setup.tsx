@@ -19,6 +19,23 @@ type YtState =
   | { status: 'loaded'; beat: Beat; bpmFallback?: boolean }
   | { status: 'error'; message: string };
 
+export type BeatSource = 'local' | 'youtube';
+
+export function computeActiveBeat(
+  beatSource: BeatSource,
+  selectedBundled: Beat | null,
+  ytState: YtState,
+  selectedCatalogId: string | null,
+  ytBeats: Beat[],
+): Beat | null {
+  if (beatSource === 'local') return selectedBundled;
+  const urlBeat = ytState.status === 'loaded' ? ytState.beat : null;
+  const catalogBeat = selectedCatalogId
+    ? ytBeats.find(b => b.id === selectedCatalogId) ?? null
+    : null;
+  return urlBeat ?? catalogBeat;
+}
+
 type Props = {
   initialBeatId: string | null;
   initialYtBeat?: Beat;
