@@ -1,62 +1,48 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
-  const [password, setPassword] = useState('');
+  const [signingIn, setSigningIn] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
+  async function handleSignIn(provider: 'google' | 'resend') {
+    setSigningIn(provider);
     setError(null);
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      if (res.ok) {
-        router.push('/');
-        router.refresh();
-      } else {
-        setError('Wrong password');
-      }
+      await signIn(provider, { redirect: true, redirectTo: '/play' });
     } catch {
-      setError('Connection error');
-    } finally {
-      setSubmitting(false);
+      setError(`Failed to sign in with ${provider}`);
+      setSigningIn(null);
     }
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4">
+      <div className="w-full max-w-sm space-y-4">
         <h1 className="text-3xl font-extrabold text-center">The Rhyme Game</h1>
-        <p className="text-center text-white/60">Enter password</p>
-        <input
-          type="password"
-          aria-label="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          autoFocus
-          className="w-full rounded-xl bg-white/10 px-4 py-3 text-lg outline-none focus:bg-white/15"
-          placeholder="Enter password"
-        />
+        <p className="text-center text-white/60">Sign in to play</p>
+        <div className="space-y-3">
+          <button
+            onClick={() => handleSignIn('google')}
+            disabled={signingIn !== null}
+            className="w-full rounded-xl bg-white text-black font-bold py-3 text-lg disabled:opacity-50 hover:bg-gray-100"
+          >
+            {signingIn === 'google' ? 'Signing in…' : 'Sign in with Google'}
+          </button>
+          <button
+            onClick={() => handleSignIn('resend')}
+            disabled={signingIn !== null}
+            className="w-full rounded-xl bg-rhyme-yellow text-bg font-bold py-3 text-lg disabled:opacity-50 hover:bg-yellow-400"
+          >
+            {signingIn === 'resend' ? 'Signing in…' : 'Sign in with Email'}
+          </button>
+        </div>
         {error && (
           <p role="alert" className="text-rhyme-red text-center">{error}</p>
         )}
-        <button
-          type="submit"
-          disabled={submitting || !password}
-          className="w-full rounded-xl bg-rhyme-yellow text-bg font-bold py-3 text-lg disabled:opacity-50"
-        >
-          {submitting ? 'Checking…' : 'Log in'}
-        </button>
-      </form>
+      </div>
     </main>
   );
 }

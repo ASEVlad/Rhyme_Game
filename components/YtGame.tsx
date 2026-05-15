@@ -1,24 +1,21 @@
 // components/YtGame.tsx
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useGamePhases } from '@/hooks/useGamePhases';
+import { signOut } from 'next-auth/react';
 import { YtSetup } from './YtSetup';
 import { WordGrid } from './WordGrid';
 import { BouncingBall } from './BouncingBall';
 import { EndScreen } from './EndScreen';
 
 export function YtGame() {
-  const router = useRouter();
   const {
     phase, activeBeat, bars, tick, pulseColor, loadError,
     handlePlay, quitToSetup, playAgain, goToSetup,
   } = useGamePhases();
 
   async function logout() {
-    await fetch('/api/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
+    await signOut({ callbackUrl: '/login' });
   }
 
   if (phase === 'setup') {
