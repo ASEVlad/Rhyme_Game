@@ -21,6 +21,7 @@ We want to soft-launch The Rhyme Game to friends only. The existing email allowl
 - Rate-limiting / brute-force protection on the invite code. (The code is in a query string, and the email allowlist is the real wall.)
 - Replacing or weakening the existing email allowlist.
 - Gating routes other than `/login`. Auth-protected routes (`/play`, `/yt`, `/calibrate`) remain protected by the existing NextAuth `authorized` callback.
+- Gating `/api/auth/*` (NextAuth's OAuth callback, magic-link, and signout endpoints). These stay reachable; the email allowlist in the `signIn` callback prevents any non-friend email from completing a sign-in regardless of whether the form was reached through the invite gate.
 
 ## Two-Layer Model
 
@@ -61,24 +62,25 @@ Storing the code itself (rather than a boolean) means rotating `INVITE_CODE` inv
 
 ### Middleware flow
 
-The existing `middleware.ts` uses NextAuth's `auth()` wrapper. We extend it to perform the invite check for `/login` requests before NextAuth's authorization runs.
+The existing `middleware.ts` uses NextAuth's `auth()` wrapper. We rewrite it to use the callback form (`export default auth((req) => { ... })`) so we can run custom logic with `req.auth` available.
 
 For a request to `/login`:
 
-1. If `INVITE_CODE` is unset or empty string → pass through (invite layer disabled).
-2. If query param `?invite=<code>` is present:
+1. If `req.auth?.user` is truthy → user is already signed in. Redirect to `/play` (matching today's behavior). The invite check does not run.
+2. If `INVITE_CODE` is unset or empty string → pass through (invite layer disabled).
+3. If query param `?invite=<code>` is present:
    - If it matches `INVITE_CODE` → set the `rhyme-invite` cookie and `307` redirect to `/login` (clean URL).
-   - If it does not match → fall through to step 3 (treat as no invite).
-3. If the `rhyme-invite` cookie equals `INVITE_CODE` → pass through; the login form renders.
-4. Otherwise → rewrite (not redirect) to the closed-beta variant of `/login`. URL stays `/login`, no information leak.
+   - If it does not match → fall through to step 4 (treat as no invite).
+4. If the `rhyme-invite` cookie equals `INVITE_CODE` → pass through; the login form renders.
+5. Otherwise → rewrite to `/login` with a `x-rhyme-invite-state: closed-beta` request header. URL stays `/login`, no information leak.
 
-Already-authenticated users hitting `/login` continue to redirect to `/play` (existing `authorized` callback behavior). The invite check only fires for unauthenticated visitors.
+Auth check comes first so that an already-signed-in user whose invite cookie has expired still gets redirected to `/play` instead of seeing a closed-beta page.
 
-For all other routes, behavior is unchanged.
+For all routes other than `/login`, behavior matches today's `authorized` callback: `/play`, `/yt`, `/calibrate` require a signed-in user; everything else is public. The implementation may keep the callback in `auth.config.ts` or replicate the equivalent checks in the new middleware callback — design is silent on which.
 
 ### Login page branching
 
-`app/login/page.tsx` becomes a thin server component that reads a signal from middleware (via a request header or a cookie set in the rewrite step — implementation plan picks one) and renders one of two children:
+`app/login/page.tsx` becomes a thin server component that reads the `x-rhyme-invite-state` request header (via `headers()` from `next/headers`) and renders one of two children based on its value:
 
 - **Sign-in view** (existing): nav header, "Sign in" card, Google button, magic-link form, dev-only credentials form. Code in this branch is exactly what `LoginContent` renders today.
 - **Closed-beta view** (new): same nav header and visual shell, but the card contents are:
@@ -112,7 +114,7 @@ Closed-beta view uses the existing Ice & Chrome palette already established on t
 
 - Manual: with `INVITE_CODE` set, visiting `/login` shows closed-beta; visiting `/login?invite=<correct>` shows the form and sets the cookie; subsequent `/login` visits show the form; changing `INVITE_CODE` and reloading reverts to closed-beta.
 - Manual: with `INVITE_CODE` unset, `/login` always shows the form (matches current behavior).
-- Manual: an already-signed-in user hitting `/login` still gets redirected to `/play` regardless of invite state.
+- Manual: an already-signed-in user hitting `/login` still gets redirected to `/play` regardless of invite state — including the case where their invite cookie has expired or been cleared.
 - Unit test (optional, low value): a small test of the middleware decision function if it can be extracted from the Next.js request context. Not required for v1.
 
 ## Rollout
