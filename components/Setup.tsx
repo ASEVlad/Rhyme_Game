@@ -91,6 +91,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
     setBeatId(id);
     setYtUrl('');
     setYtState({ status: 'idle' });
+    setSelectedCatalogId(null);
   }
 
   async function loadYtBeat() {
@@ -301,6 +302,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
 
         {/* PLAY — bottom */}
         <button
+          type="button"
           onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
           disabled={!canPlay}
           className="rounded-2xl px-12 py-5 text-3xl font-extrabold text-[#060c14] disabled:opacity-40"
