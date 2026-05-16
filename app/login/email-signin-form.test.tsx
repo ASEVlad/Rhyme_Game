@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { signIn } from 'next-auth/react';
 import { EmailSignInForm } from './email-signin-form';
@@ -69,7 +69,9 @@ describe('EmailSignInForm', () => {
       expect(screen.getByRole('button', { name: /sending…/i })).toBeDisabled(),
     );
 
-    resolveCall({ error: null });
+    await act(async () => {
+      resolveCall({ error: null });
+    });
   });
 
   it('replaces the form with an inbox message on success', async () => {

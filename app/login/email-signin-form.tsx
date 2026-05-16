@@ -18,7 +18,7 @@ export function EmailSignInForm() {
         redirect: false,
         callbackUrl: '/play',
       });
-      if (result && 'error' in result && result.error) {
+      if (result?.error) {
         setStatus('error');
         return;
       }
@@ -30,7 +30,7 @@ export function EmailSignInForm() {
 
   if (status === 'sent') {
     return (
-      <p className="text-center text-sm text-white/70">
+      <p aria-live="polite" className="text-center text-sm text-white/70">
         Check your inbox — we sent a sign-in link to{' '}
         <span className="text-white">{email}</span>.
       </p>
@@ -43,7 +43,7 @@ export function EmailSignInForm() {
         Sign in with your email
       </p>
       {status === 'error' && (
-        <p className="text-xs text-red-400 text-center">
+        <p aria-live="polite" className="text-xs text-red-400 text-center">
           Something went wrong — try again.
         </p>
       )}
@@ -52,6 +52,8 @@ export function EmailSignInForm() {
         required
         maxLength={254}
         placeholder="your@email.com"
+        aria-label="Email address"
+        autoComplete="email"
         value={email}
         onChange={e => {
           setEmail(e.target.value);
