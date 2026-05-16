@@ -52,7 +52,7 @@ export function EmailSignInForm() {
         required
         maxLength={254}
         placeholder="your@email.com"
-        aria-label="Email address"
+        aria-label="Email for sign-in link"
         autoComplete="email"
         value={email}
         onChange={e => {
