@@ -49,7 +49,8 @@ describe('Setup — desktop inline beat list', () => {
         onLogout={() => {}}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /Beat Two/i }));
+    const list = screen.getByTestId('desktop-beat-list');
+    fireEvent.click(within(list).getByRole('button', { name: /Beat Two/i }));
     expect(startPreviewMock).toHaveBeenCalled();
     expect(startPreviewMock.mock.calls[0][0].id).toBe('b2');
   });
@@ -64,9 +65,10 @@ describe('Setup — desktop inline beat list', () => {
         onLogout={() => {}}
       />,
     );
-    const row = screen.getByRole('button', { name: /Beat One/i });
+    const list = screen.getByTestId('desktop-beat-list');
+    const row = within(list).getByRole('button', { name: /Beat One/i });
     expect(within(row).getByText('▮▮')).toBeInTheDocument();
-    const otherRow = screen.getByRole('button', { name: /Beat Two/i });
+    const otherRow = within(list).getByRole('button', { name: /Beat Two/i });
     expect(within(otherRow).queryByText('▮▮')).not.toBeInTheDocument();
   });
 });

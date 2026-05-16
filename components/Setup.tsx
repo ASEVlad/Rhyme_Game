@@ -198,7 +198,6 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                   <button
                     ref={browseButtonRef}
                     type="button"
-                    aria-label="Open beat picker"
                     onClick={() => setBrowseOpen(true)}
                     className="md:hidden w-full flex items-center justify-between rounded-2xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.14)] px-4 py-3 text-left"
                   >
@@ -210,7 +209,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                   </button>
 
                   {/* Desktop: inline scrollable list + Browse all button */}
-                  <div className="hidden md:block rounded-2xl bg-[rgba(94,200,255,0.04)] border border-[rgba(94,200,255,0.10)] overflow-hidden">
+                  <div data-testid="desktop-beat-list" className="hidden md:block rounded-2xl bg-[rgba(94,200,255,0.04)] border border-[rgba(94,200,255,0.10)] overflow-hidden">
                     <div className="max-h-72 overflow-y-auto">
                       {allBeats.map(b => (
                         <button
