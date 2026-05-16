@@ -8,6 +8,7 @@ import { DIFFICULTIES, DEFAULT_DIFFICULTY, type DifficultyId } from '@/lib/diffi
 import { RHYME_SCHEMES, DEFAULT_SCHEME, type RhymeSchemeId } from '@/lib/rhyme-schemes';
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
 import { isYouTubeUrl } from '@/lib/yt-beat';
+import { useBeatPreview } from '@/hooks/useBeatPreview';
 import { BrowseBeats } from './BrowseBeats';
 import { LanguagePicker } from './LanguagePicker';
 import { DifficultyPicker } from './DifficultyPicker';
@@ -65,6 +66,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   );
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const { previewingId, startPreview } = useBeatPreview();
 
   const fetchCatalog = useCallback(() => {
     fetch('/beats/yt-catalog.json')
@@ -196,6 +198,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                   <button
                     ref={browseButtonRef}
                     type="button"
+                    aria-label="Open beat picker"
                     onClick={() => setBrowseOpen(true)}
                     className="md:hidden w-full flex items-center justify-between rounded-2xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.14)] px-4 py-3 text-left"
                   >
@@ -213,7 +216,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                         <button
                           key={b.id}
                           type="button"
-                          onClick={() => chooseBeat(b.id)}
+                          onClick={() => { chooseBeat(b.id); startPreview(b); }}
                           className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left hover:bg-[rgba(94,200,255,0.06)] transition-colors ${
                             b.id === beatId && beatSource === 'local'
                               ? 'bg-[rgba(94,200,255,0.12)] text-white'
@@ -221,8 +224,13 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                           }`}
                         >
                           <span className="truncate">{b.title}</span>
-                          <span className="text-white/40 ml-2 shrink-0 text-xs">
-                            {Number.isInteger(b.bpm) ? b.bpm : b.bpm.toFixed(1)} BPM
+                          <span className="flex items-center gap-2 ml-2 shrink-0">
+                            {previewingId === b.id && (
+                              <span aria-hidden="true" className="text-[#5ec8ff] text-xs">▮▮</span>
+                            )}
+                            <span className="text-white/40 text-xs">
+                              {Number.isInteger(b.bpm) ? b.bpm : b.bpm.toFixed(1)} BPM
+                            </span>
                           </span>
                         </button>
                       ))}
