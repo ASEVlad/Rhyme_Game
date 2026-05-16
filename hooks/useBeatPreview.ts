@@ -18,6 +18,7 @@ export function useBeatPreview(): BeatPreviewHandle {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const metaListenerRef = useRef<(() => void) | null>(null);
+  const errorListenerRef = useRef<(() => void) | null>(null);
 
   const stopPreview = useCallback(() => {
     const audio = audioRef.current;
@@ -25,6 +26,10 @@ export function useBeatPreview(): BeatPreviewHandle {
       if (metaListenerRef.current) {
         audio.removeEventListener('loadedmetadata', metaListenerRef.current);
         metaListenerRef.current = null;
+      }
+      if (errorListenerRef.current) {
+        audio.removeEventListener('error', errorListenerRef.current);
+        errorListenerRef.current = null;
       }
       audio.pause();
     }
@@ -51,7 +56,9 @@ export function useBeatPreview(): BeatPreviewHandle {
     };
     audio.addEventListener('loadedmetadata', onMeta);
     metaListenerRef.current = onMeta;
-    audio.addEventListener('error', () => setPreviewingId(null), { once: true });
+    const onError = () => setPreviewingId(null);
+    audio.addEventListener('error', onError);
+    errorListenerRef.current = onError;
     setPreviewingId(beat.id);
   }, [stopPreview]);
 
@@ -67,6 +74,10 @@ export function useBeatPreview(): BeatPreviewHandle {
         if (metaListenerRef.current) {
           audio.removeEventListener('loadedmetadata', metaListenerRef.current);
           metaListenerRef.current = null;
+        }
+        if (errorListenerRef.current) {
+          audio.removeEventListener('error', errorListenerRef.current);
+          errorListenerRef.current = null;
         }
         audio.pause();
       }
