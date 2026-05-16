@@ -9,6 +9,7 @@ Two changes scoped to the beat-picking experience on the Setup screen:
 
 1. Restyle the `BrowseBeats` modal from the legacy yellow theme to the existing Ice & Chrome (cyan/navy) palette so it matches the rest of [Setup.tsx](../../../components/Setup.tsx).
 2. Change preview behavior: clicking a beat row anywhere (the modal AND the desktop inline list) selects the beat AND auto-starts a preview at the 15-second mark; the preview auto-stops 15 seconds later.
+3. Add a 🎲 random-pick button to the `BrowseBeats` modal header. It picks a uniformly random beat from the currently-filtered list, selects it, and auto-starts the 15s preview.
 
 Game playback (after PLAY) is **not** affected by the 15s rule — it still begins at the start of the song.
 
@@ -99,6 +100,16 @@ export function useBeatPreview(): BeatPreviewHandle { /* … */ }
 - The modal close handler (`handleClose`) still calls `stopPreview()`.
 - The `computePreviewStart` export and its test are deleted.
 
+### Random-pick button
+
+- Added to the modal header, between the "Browse beats" title and the ✕ close button: `<button aria-label="Pick a random beat">🎲</button>`. Same chip styling as the close button (`bg-[rgba(94,200,255,0.08)] border border-[rgba(94,200,255,0.18)]`, `h-11 w-11 rounded-full`).
+- On click:
+  1. Compute the visible pool: `[...recents, ...main]` (which `buildSectionLists` already filters by current BPM bucket, category, and search).
+  2. If the pool is empty, the button is `disabled` and has `opacity-40`. (Same condition as `emptyAfterFilter`.)
+  3. Otherwise pick `pool[Math.floor(Math.random() * pool.length)]`, call `onChange(beat.id)` and `startPreview(beat)`.
+- Pure function helper `pickRandom<T>(arr: T[]): T | null` lives next to the component (or inline) so it can be unit-tested with a stubbed `Math.random`.
+- Keyboard: button is in the natural tab order; the existing Tab focus-trap continues to work.
+
 ### Setup.tsx desktop inline list
 
 - Import `useBeatPreview` at the top of the component.
@@ -126,6 +137,7 @@ Unchanged. `hooks/useBeat.ts` still calls `a.currentTime = 0` in its `play()`. T
 - **CHANGED** `components/BrowseBeats.test.ts`:
   - Delete the `computePreviewStart` block.
   - Add: rendering rows, clicking a row fires `onChange` AND enters previewing state. Easiest path: mock `useBeatPreview` and assert `startPreview` is called with the right beat. Alternatively, assert on `aria-label`/class state of the ▶ button.
+  - Add: random-pick button — with `Math.random` stubbed, clicking it fires `onChange` with the expected beat from the filtered pool and calls `startPreview`. When the filtered pool is empty, the button is disabled.
   - Keep existing filter / focus-trap / empty-state coverage.
 
 - **NEW** `components/Setup.preview.test.tsx`:
