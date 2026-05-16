@@ -54,14 +54,16 @@ Run once. All as root via SSH.
    - `CREATE DATABASE rhyme_game OWNER rhyme_app;`
    - `GRANT ALL PRIVILEGES ON DATABASE rhyme_game TO rhyme_app;`
    The generated password is recorded once into the app's `.env` and nowhere else.
-5. **Adapter schema.** Run the SQL DDL from [`@auth/pg-adapter`'s README](https://authjs.dev/reference/adapter/pg) against `rhyme_game` (creates `users`, `accounts`, `sessions`, `verification_token`). Also create the `waitlist` table the existing `/api/waitlist` route expects (see "Schema" below).
+5. **Schema.** Apply `scripts/db-schema.sql` to `rhyme_game` as `rhyme_app`:
+   `psql "postgres://rhyme_app:<pwd>@localhost/rhyme_game" -f scripts/db-schema.sql`.
+   This creates all five tables (`users`, `accounts`, `sessions`, `verification_token`, `waitlist`) plus the `pgcrypto` extension. See "Schema" below for one pre-deploy fix.
 
 ### Schema
 
-Two schemas live in the same database:
+`scripts/db-schema.sql` already ships in the repo and contains every table the app needs. Two notes:
 
-- **NextAuth tables** (`users`, `accounts`, `sessions`, `verification_token`) — managed by `@auth/pg-adapter`. DDL copied verbatim from the adapter's docs.
-- **Waitlist table** — used by `app/api/waitlist/route.ts`. The exact column shape is read from the source file at provisioning time and translated into `CREATE TABLE` DDL. (No migration tooling exists in the repo; the table is created once by hand.)
+- **Bug fix required before applying:** the file currently creates `verification_tokens` (plural), but `@auth/pg-adapter` queries `verification_token` (singular) at [node_modules/@auth/pg-adapter/index.js:29](../../../node_modules/@auth/pg-adapter/index.js#L29). Magic-link sign-in would fail on the first attempt. The schema file must be renamed `verification_tokens` → `verification_token` and the fix committed before Phase 3.
+- **Waitlist table** is already defined in the same file with `(id, email UNIQUE, created_at)` — matches what `app/api/waitlist/route.ts` expects.
 
 ## External account setup (Phase 2, in parallel with Phase 1)
 
@@ -85,11 +87,21 @@ The operator does these by hand, following click-by-click checklists provided du
 
 DNS propagation is typically minutes for new records but can be longer. Caddy's first cert issuance and Resend's domain verification both poll DNS — they self-heal once propagation completes.
 
+## Pre-deploy code change (do this locally first)
+
+Fix the table-name mismatch in `scripts/db-schema.sql`:
+
+```
+verification_tokens → verification_token
+```
+
+Commit on `master` and push. This must land before Phase 3 step 1, so the server pulls a schema file that matches what `@auth/pg-adapter` actually queries.
+
 ## App deploy (Phase 3)
 
 As user `deploy`:
 
-1. `git clone https://github.com/ASEVlad/Rhyme_Game.git /home/deploy/rhyme-game` (public repo; HTTPS clone, no key setup needed). Checkout `master`.
+1. `git clone https://github.com/ASEVlad/Rhyme_Game.git /home/deploy/rhyme-game` (repo is public — confirmed via HTTP 200 on the GitHub URL — so HTTPS clone needs no key setup). Checkout `master`. Note: ~288 MB of beats are committed, so first clone takes 30s–1min depending on VPS bandwidth.
 2. `cd rhyme-game && npm ci`. Then `npm run build`.
 3. Build `.env` on the operator's laptop (combining values carried over from local `.env` with the new ones obtained in Phase 2), `scp` it to `/tmp/rhyme-game.env` on the server, then as `deploy` move it to `/home/deploy/rhyme-game/.env` and `chmod 600`.
 4. `npm test` to confirm vitest passes on the server.
@@ -168,7 +180,8 @@ The `sudo systemctl restart rhyme-game` requires a sudoers rule for the `deploy`
 |---|---|---|
 | `AUTH_SECRET` | Carried over from local `.env` | 64-char hex. |
 | `AUTH_URL` | New value: `https://rhymefor.fun` | NextAuth v5 production origin. |
-| `AUTH_TRUST_HOST` | New value: `true` | Required when behind a reverse proxy (Caddy). |
+| `AUTH_TRUST_HOST` | New value: `true` | Setting `AUTH_URL` already implies `trustHost: true` per `@auth/core` ([env.js:40-41](../../../node_modules/@auth/core/lib/utils/env.js#L40)). Setting this too is harmless belt-and-braces. |
+| `HOSTNAME` | New value: `127.0.0.1` | Binds the Next.js server to loopback so it's only reachable through Caddy. Defense-in-depth on top of UFW. |
 | `AUTH_GOOGLE_ID` | New, from Google Cloud Console | Obtained in Phase 2. |
 | `AUTH_GOOGLE_SECRET` | New, from Google Cloud Console | Obtained in Phase 2. |
 | `AUTH_RESEND_KEY` | New, from Resend dashboard | `re_...` |
