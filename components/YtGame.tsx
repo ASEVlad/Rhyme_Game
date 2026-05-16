@@ -6,8 +6,8 @@ import { useGamePhases } from '@/hooks/useGamePhases';
 import { signOut } from 'next-auth/react';
 import { YtSetup } from './YtSetup';
 import { WordGrid } from './WordGrid';
-import { BouncingBall } from './BouncingBall';
 import { EndScreen } from './EndScreen';
+import { LoadingScreen } from './LoadingScreen';
 import { fadePage } from '@/lib/motion-variants';
 
 export function YtGame() {
@@ -30,9 +30,7 @@ export function YtGame() {
 
       {phase === 'loading' && (
         <motion.div key="loading" {...fadePage}>
-          <div className="flex min-h-screen items-center justify-center text-xl">
-            Loading…
-          </div>
+          <LoadingScreen bpm={activeBeat?.bpm} />
         </motion.div>
       )}
 
@@ -64,7 +62,6 @@ export function YtGame() {
                 </div>
               </div>
               <div className="mt-4 mx-auto w-full max-w-md lg:max-w-3xl">
-                <BouncingBall x={tick.ballX} />
                 <WordGrid bars={bars} activeRow={tick.currentBar} ballX={tick.ballX} />
               </div>
             </div>

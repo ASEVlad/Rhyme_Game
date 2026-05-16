@@ -12,12 +12,11 @@ export type GameTick = {
 export function useGameLoop(args: {
   audio: HTMLAudioElement | null;
   bpm: number;
-  totalBars: number;
   active: boolean;
   onEnd: () => void;
   startOffset?: number;
 }): GameTick {
-  const { audio, bpm, totalBars, active, onEnd, startOffset = 0 } = args;
+  const { audio, bpm, active, onEnd, startOffset = 0 } = args;
   const [tick, setTick] = useState<GameTick>({ ballX: 0, currentBar: 0, beatInBar: 0 });
   const onEndRef = useRef(onEnd);
   onEndRef.current = onEnd;
@@ -29,6 +28,16 @@ export function useGameLoop(args: {
     let ended = false;
     const beatsPerSecond = bpm / 60;
 
+    const terminate = () => {
+      if (ended) return;
+      ended = true;
+      cancelAnimationFrame(raf);
+      onEndRef.current();
+    };
+
+    const onAudioEnded = () => terminate();
+    audio.addEventListener('ended', onAudioEnded);
+
     const frame = () => {
       const t = sessionTime();
       const currentBeat = t * beatsPerSecond;
@@ -36,16 +45,15 @@ export function useGameLoop(args: {
       const beatInBar = currentBeat % 4;
       const ballX = beatInBar / 4;
       setTick({ ballX, currentBar, beatInBar });
-      if (currentBar >= totalBars && !ended) {
-        ended = true;
-        onEndRef.current();
-        return;
-      }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
-  }, [active, audio, bpm, totalBars, startOffset]);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      audio.removeEventListener('ended', onAudioEnded);
+    };
+  }, [active, audio, bpm, startOffset]);
 
   return tick;
 }

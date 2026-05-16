@@ -2,6 +2,7 @@
 
 import type { Bar } from '@/lib/flatten-bars';
 import type { RhymeColor } from '@/lib/colors';
+import { BouncingBall } from './BouncingBall';
 
 const COLOR_BG: Record<RhymeColor, string> = {
   yellow: 'bg-rhyme-yellow text-bg',
@@ -104,6 +105,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
                 }}
               />
               {rowContent}
+              <BouncingBall x={ballX} />
             </div>
           );
         }

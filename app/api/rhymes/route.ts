@@ -14,6 +14,7 @@ export async function POST(request: Request) {
   let rawDifficultyId: string | null = null;
   let rawSchemeId: string | null = null;
   let exclude: RhymeExclusion = { words: [], endings: [] };
+  let count: number | undefined;
   try {
     const body = await request.json();
     if (body && typeof body.language === 'string') rawLanguage = body.language;
@@ -28,6 +29,9 @@ export async function POST(request: Request) {
       exclude.endings = body.exclude.endings
         .filter((e: unknown) => typeof e === 'string')
         .slice(0, 20);
+    }
+    if (typeof body?.count === 'number' && Number.isFinite(body.count)) {
+      count = Math.max(1, Math.min(40, Math.floor(body.count)));
     }
   } catch {
     // No body or malformed JSON — use defaults.
@@ -45,6 +49,7 @@ export async function POST(request: Request) {
     exclude,
     difficultyId: getDifficulty(rawDifficultyId).id,
     schemeId: getRhymeScheme(rawSchemeId).id,
+    count,
   });
   return NextResponse.json({ groups });
 }
