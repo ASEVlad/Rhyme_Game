@@ -166,7 +166,7 @@ describe('fetchRhymeGroups', () => {
     }));
     const client = { messages: { create } } as any;
     await fetchRhymeGroups({ client, language: 'uk', schemeId: 'free', count: 23 });
-    const promptArg = create.mock.calls[0][0].messages[0].content as string;
+    const promptArg = client.messages.create.mock.calls[0][0].messages[0].content as string;
     // The Ukrainian prompt template embeds the count number; assert it's our override.
     expect(promptArg).toMatch(/23/);
   });
@@ -180,7 +180,7 @@ describe('fetchRhymeGroups', () => {
     const client = { messages: { create } } as any;
     // 'free' scheme has groupCount: 10
     await fetchRhymeGroups({ client, language: 'uk', schemeId: 'free' });
-    const promptArg = create.mock.calls[0][0].messages[0].content as string;
+    const promptArg = client.messages.create.mock.calls[0][0].messages[0].content as string;
     expect(promptArg).toMatch(/(^|\s|\D)10(\s|\D|$)/);
   });
 });
