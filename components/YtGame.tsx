@@ -6,7 +6,6 @@ import { useGamePhases } from '@/hooks/useGamePhases';
 import { signOut } from 'next-auth/react';
 import { YtSetup } from './YtSetup';
 import { WordGrid } from './WordGrid';
-import { BouncingBall } from './BouncingBall';
 import { EndScreen } from './EndScreen';
 import { fadePage } from '@/lib/motion-variants';
 
@@ -64,7 +63,6 @@ export function YtGame() {
                 </div>
               </div>
               <div className="mt-4 mx-auto w-full max-w-md lg:max-w-3xl">
-                <BouncingBall x={tick.ballX} />
                 <WordGrid bars={bars} activeRow={tick.currentBar} ballX={tick.ballX} />
               </div>
             </div>

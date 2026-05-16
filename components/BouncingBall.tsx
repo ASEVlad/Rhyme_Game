@@ -16,8 +16,9 @@ type Props = {
 
 /**
  * Renders inside the active row container (which must be `position: relative`).
- * The ball is positioned so its lowest point coincides with the row's top edge
- * on each beat and arcs up to `APEX_PX` above between beats.
+ * The ball's center lands on the row's top edge on each beat (so its lower
+ * half visually presses into the tile for the impact feel), and arcs up to
+ * `APEX_PX` above the row between beats.
  */
 export function BouncingBall({ x }: Props) {
   const yBounce = computeBounceY(x);
