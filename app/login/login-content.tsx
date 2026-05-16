@@ -1,42 +1,23 @@
 'use client';
 
-import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { LoginNav } from './login-nav';
+import { WaitlistForm } from './waitlist-form';
 
 // useSearchParams() requires a Suspense boundary in Next.js 14 App Router.
 // The parent (page.tsx) wraps this in <Suspense>.
 export function LoginContent() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle');
   const searchParams = useSearchParams();
   const oauthError = searchParams.get('error');
-
-  async function handleMagicLink(e: React.FormEvent) {
-    e.preventDefault();
-    setStatus('loading');
-    const result = await signIn('resend', { email, redirect: false });
-    if (result?.error) {
-      setStatus('error');
-    } else {
-      setStatus('sent');
-    }
-  }
 
   return (
     <main
       className="flex min-h-screen flex-col bg-[#060c14]"
       style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -5%, rgba(94,200,255,0.22) 0%, transparent 100%)' }}
     >
-      <nav className="flex items-center px-6 py-4 border-b border-[rgba(94,200,255,0.12)]">
-        <span
-          className="font-extrabold text-sm tracking-wide"
-          style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-        >
-          THE RHYME GAME
-        </span>
-      </nav>
+      <LoginNav />
 
       <div className="flex-1 md:grid md:grid-cols-2">
 
@@ -57,14 +38,12 @@ export function LoginContent() {
 
           {/* Static decorative game grid — 5 rows, opacity mirrors WordGrid rowOpacity */}
           <div className="space-y-2" aria-hidden="true">
-            {/* Row 1 — invisible (two above active) */}
             <div className="grid grid-cols-4 gap-2 opacity-0">
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-rhyme-yellow" />
             </div>
-            {/* Row 2 — ghost (one above active) */}
             <div className="grid grid-cols-4 gap-2 opacity-[0.07]">
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
@@ -73,7 +52,6 @@ export function LoginContent() {
               </div>
               <div className="rounded-2xl py-5 bg-rhyme-blue" />
             </div>
-            {/* Row 3 — active row (ring + radial glow) */}
             <div className="relative grid grid-cols-4 gap-2">
               <div
                 style={{
@@ -89,14 +67,12 @@ export function LoginContent() {
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)] ring-2 ring-white/80" />
               <div className="rounded-2xl py-5 bg-rhyme-orange ring-2 ring-white/80" />
             </div>
-            {/* Row 4 — dim upcoming */}
             <div className="grid grid-cols-4 gap-2 opacity-[0.28]">
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-rhyme-red" />
             </div>
-            {/* Row 5 — ghost upcoming */}
             <div className="grid grid-cols-4 gap-2 opacity-[0.07]">
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
               <div className="rounded-2xl py-5 bg-[rgba(94,200,255,0.06)]" />
@@ -149,82 +125,7 @@ export function LoginContent() {
               <div className="flex-1 h-px bg-[rgba(94,200,255,0.12)]" />
             </div>
 
-            {process.env.NODE_ENV === 'development' && status !== 'sent' && (
-              <>
-                <form
-                  onSubmit={async e => {
-                    e.preventDefault();
-                    setStatus('loading');
-                    const result = await signIn('credentials', { email, redirect: false });
-                    if (result?.error) {
-                      setStatus('error');
-                    } else {
-                      window.location.href = '/play';
-                    }
-                  }}
-                  className="space-y-3"
-                >
-                  <p className="text-xs text-[rgba(94,200,255,0.6)] text-center">Dev login (no Google/Resend needed)</p>
-                  {status === 'error' && (
-                    <p className="text-xs text-red-400 text-center">
-                      Email not on access list
-                    </p>
-                  )}
-                  <input
-                    type="email"
-                    required
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={e => { setEmail(e.target.value); setStatus('idle'); }}
-                    className="w-full rounded-xl bg-[rgba(94,200,255,0.07)] border border-[rgba(94,200,255,0.25)] px-4 py-2.5 text-sm placeholder:text-white/30 outline-none focus:border-[rgba(94,200,255,0.5)]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={status === 'loading' || !email}
-                    className="w-full rounded-xl py-2.5 text-sm font-bold text-[#060c14] disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
-                  >
-                    {status === 'loading' ? 'Signing in…' : 'Sign in (dev)'}
-                  </button>
-                </form>
-                <div className="flex items-center gap-3 text-xs text-white/30">
-                  <div className="flex-1 h-px bg-[rgba(94,200,255,0.12)]" />
-                  or magic link
-                  <div className="flex-1 h-px bg-[rgba(94,200,255,0.12)]" />
-                </div>
-              </>
-            )}
-
-            {status === 'sent' ? (
-              <p className="text-center text-sm text-white/70">
-                Check your inbox — link sent to{' '}
-                <span className="text-white font-medium">{email}</span>
-              </p>
-            ) : (
-              <form onSubmit={handleMagicLink} className="space-y-3">
-                {status === 'error' && process.env.NODE_ENV !== 'development' && (
-                  <p className="text-xs text-red-400 text-center">
-                    This email isn&apos;t on the access list
-                  </p>
-                )}
-                <input
-                  type="email"
-                  required
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={e => { setEmail(e.target.value); setStatus('idle'); }}
-                  className="w-full rounded-xl bg-[rgba(94,200,255,0.07)] border border-[rgba(94,200,255,0.25)] px-4 py-2.5 text-sm placeholder:text-white/30 outline-none focus:border-[rgba(94,200,255,0.5)]"
-                />
-                <button
-                  type="submit"
-                  disabled={status === 'loading' || !email}
-                  className="w-full rounded-xl py-2.5 text-sm font-bold text-[#060c14] disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
-                >
-                  {status === 'loading' ? 'Sending…' : 'Send magic link'}
-                </button>
-              </form>
-            )}
+            <WaitlistForm label="Not invited yet? Join the waitlist." />
 
             <p className="text-center text-xs text-white/35">
               <Link href="/" className="hover:text-white/60 transition-colors">

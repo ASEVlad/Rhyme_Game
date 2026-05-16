@@ -40,3 +40,10 @@ CREATE TABLE verification_tokens (
   expires TIMESTAMPTZ NOT NULL,
   PRIMARY KEY (identifier, token)
 );
+
+CREATE TABLE waitlist (
+  id TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  email TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (id)
+);
