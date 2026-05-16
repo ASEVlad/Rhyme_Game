@@ -9,9 +9,16 @@ export default function LoginPage() {
   if (inviteState === INVITE_STATE_CLOSED_BETA) {
     return <ClosedBeta />;
   }
+
+  const emailEnabled = !!(
+    process.env.POSTGRES_URL &&
+    process.env.AUTH_RESEND_KEY &&
+    process.env.EMAIL_FROM
+  );
+
   return (
     <Suspense>
-      <LoginContent />
+      <LoginContent emailEnabled={emailEnabled} />
     </Suspense>
   );
 }

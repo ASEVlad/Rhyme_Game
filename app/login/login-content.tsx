@@ -5,10 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { LoginNav } from './login-nav';
 import { WaitlistForm } from './waitlist-form';
+import { EmailSignInForm } from './email-signin-form';
 
 // useSearchParams() requires a Suspense boundary in Next.js 14 App Router.
 // The parent (page.tsx) wraps this in <Suspense>.
-export function LoginContent() {
+export function LoginContent({ emailEnabled }: { emailEnabled: boolean }) {
   const searchParams = useSearchParams();
   const oauthError = searchParams.get('error');
 
@@ -104,6 +105,17 @@ export function LoginContent() {
                   ? "This account isn't on the access list"
                   : 'Sign-in failed — try again'}
               </p>
+            )}
+
+            {emailEnabled && (
+              <>
+                <EmailSignInForm />
+                <div className="flex items-center gap-3 text-xs text-white/30">
+                  <div className="flex-1 h-px bg-[rgba(94,200,255,0.12)]" />
+                  or
+                  <div className="flex-1 h-px bg-[rgba(94,200,255,0.12)]" />
+                </div>
+              </>
             )}
 
             <button
