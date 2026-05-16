@@ -18,9 +18,10 @@ Game playback (after PLAY) is **not** affected by the 15s rule — it still begi
 | File | Status | Purpose |
 |---|---|---|
 | [hooks/useBeatPreview.ts](../../../hooks/useBeatPreview.ts) | NEW | Shared preview-audio state/logic |
-| [hooks/useBeatPreview.test.ts](../../../hooks/useBeatPreview.test.ts) | NEW | Unit tests for the hook |
+| [hooks/useBeatPreview.test.tsx](../../../hooks/useBeatPreview.test.tsx) | NEW | jsdom unit tests for the hook |
 | [components/BrowseBeats.tsx](../../../components/BrowseBeats.tsx) | CHANGED | Re-skin + use shared hook + click-row-to-preview |
-| [components/BrowseBeats.test.ts](../../../components/BrowseBeats.test.ts) | CHANGED | Drop dead test, add row-click test |
+| [components/BrowseBeats.test.ts](../../../components/BrowseBeats.test.ts) | DELETED | Only tested `computePreviewStart`, which is being removed |
+| [components/BrowseBeats.test.tsx](../../../components/BrowseBeats.test.tsx) | NEW | jsdom tests for row click → preview, random-pick button, and `pickRandom` |
 | [components/Setup.tsx](../../../components/Setup.tsx) | CHANGED | Desktop inline list uses the hook; "now-playing" indicator on previewing row |
 | [components/Setup.preview.test.tsx](../../../components/Setup.preview.test.tsx) | NEW | jsdom render test for click-to-preview on the desktop list |
 
@@ -75,22 +76,24 @@ export type BeatPreviewHandle = {
 export function useBeatPreview(): BeatPreviewHandle { /* … */ }
 ```
 
-**Internal state:**
-- One reused `HTMLAudioElement` held in a ref.
-- One `setTimeout` handle (auto-stop timer) held in a ref.
-- React state for `previewingId`.
+**Internal state (all `useRef`):**
+- `audioRef: HTMLAudioElement | null` — reused across previews; lazy-constructed on first call.
+- `stopTimerRef: ReturnType<typeof setTimeout> | null` — auto-stop timer handle.
+- `metaListenerRef: (() => void) | null` — last attached `loadedmetadata` handler, so we can `removeEventListener` it before attaching a new one.
+
+Plus React state: `previewingId: string | null`.
 
 **Behavior:**
-- `startPreview(beat)`: stops any current preview, swaps `audio.src` to the beat, waits for `loadedmetadata`, then sets `audio.currentTime = clamp(15, 0, duration - 1)` and calls `audio.play()`. Schedules a 15-second `setTimeout` that calls `stopPreview`.
+- `startPreview(beat)`: calls `stopPreview()` first (which also removes any pending `loadedmetadata` listener via `metaListenerRef`); sets `audio.loop = false`; sets `audio.src = beat.src`; attaches a fresh `loadedmetadata` listener that does `audio.currentTime = Math.min(15, Math.max(0, (audio.duration || 0) - 1))` then `audio.play().catch(...)`; schedules `setTimeout(stopPreview, 15000)`; sets `previewingId = beat.id`.
 - `togglePreview(beat)`: if `previewingId === beat.id`, calls `stopPreview`; otherwise `startPreview(beat)`.
-- `stopPreview()`: pauses audio, clears timer, sets `previewingId = null`.
-- Errors on the audio element or a failed `play()` reset `previewingId` to null (no UI toast — same silent fail the current code uses).
-- Effect cleanup on unmount: pause audio + clear timer.
+- `stopPreview()`: pauses audio if present; removes `metaListenerRef` if non-null and clears the ref; clears `stopTimerRef` and nulls it; sets `previewingId = null`.
+- Failed `play()` or audio `error` event → reset `previewingId` to null (no UI toast — matches current silent-fail behavior).
+- Effect cleanup on unmount: same as `stopPreview` plus null `audioRef`.
 
 **Edge cases:**
-- Beat duration unknown at construction time → we wait for `loadedmetadata`. Until then the audio doesn't play.
-- Duration < 16s → start is clamped to `max(0, duration - 1)`. Auto-stop timer still fires at 15s, but the audio will hit the end naturally first.
-- Rapid clicks across different beats → `startPreview` calls `stopPreview` first, then sets new src. The previous `loadedmetadata` listener used `{ once: true }`, so a stale listener for the old src will fire at most once and may set `currentTime` on the new src. Mitigation: in `startPreview`, capture the target beat id in closure and abort the play if `audioRef.current` has been swapped, OR remove the prior listener explicitly. **Decision: remove the previous `loadedmetadata` listener before adding a new one** (track it in a ref).
+- Beat duration unknown at construction time → wait for `loadedmetadata`. Until then, audio doesn't play.
+- Duration < 16s → start clamps to `max(0, duration - 1)`. Auto-stop timer fires at 15s but the audio naturally ends sooner (`loop=false`).
+- Rapid clicks across different beats → `stopPreview` removes the previous `loadedmetadata` listener via `metaListenerRef`, so a stale handler can't mutate the new src's `currentTime`.
 
 ### BrowseBeats integration
 
@@ -102,13 +105,15 @@ export function useBeatPreview(): BeatPreviewHandle { /* … */ }
 
 ### Random-pick button
 
-- Added to the modal header, between the "Browse beats" title and the ✕ close button: `<button aria-label="Pick a random beat">🎲</button>`. Same chip styling as the close button (`bg-[rgba(94,200,255,0.08)] border border-[rgba(94,200,255,0.18)]`, `h-11 w-11 rounded-full`).
+- **Header layout change:** wrap the existing close button and the new 🎲 button in a right-side flex container so they group together. The current `<strong>Browse beats</strong>` stays as the leftmost child; the wrapper gets `ml-auto flex items-center gap-2`. The close button loses its own `ml-auto` (moves to the wrapper).
+- Button markup: `<button type="button" aria-label="Pick a random beat" disabled={pool.length === 0} className="h-11 w-11 rounded-full bg-[rgba(94,200,255,0.08)] border border-[rgba(94,200,255,0.18)] flex items-center justify-center text-base disabled:opacity-40">🎲</button>`.
+- **Disabled condition:** `pool.length === 0` (computed as `[...recents, ...main]`). Distinct from `emptyAfterFilter` — the random pool can be empty when no filters are applied (catalog edge case).
 - On click:
-  1. Compute the visible pool: `[...recents, ...main]` (which `buildSectionLists` already filters by current BPM bucket, category, and search).
-  2. If the pool is empty, the button is `disabled` and has `opacity-40`. (Same condition as `emptyAfterFilter`.)
-  3. Otherwise pick `pool[Math.floor(Math.random() * pool.length)]`, call `onChange(beat.id)` and `startPreview(beat)`.
-- Pure function helper `pickRandom<T>(arr: T[]): T | null` lives next to the component (or inline) so it can be unit-tested with a stubbed `Math.random`.
-- Keyboard: button is in the natural tab order; the existing Tab focus-trap continues to work.
+  1. `const pool = [...recents, ...main];`
+  2. Call `const beat = pickRandom(pool)`; if `null`, no-op (defensive — disabled state should prevent this).
+  3. Call `onChange(beat.id)` and `startPreview(beat)`.
+- **Helper:** `export function pickRandom<T>(arr: T[]): T | null` is added to and exported from `components/BrowseBeats.tsx`. Pure function, returns `null` for empty arrays, uses `Math.floor(Math.random() * arr.length)` otherwise. Unit-tested in `BrowseBeats.test.tsx` with `vi.spyOn(Math, 'random')`.
+- Keyboard: button is in the natural tab order; the existing Tab focus-trap continues to work (the trap query already includes `button`).
 
 ### Setup.tsx desktop inline list
 
@@ -124,21 +129,22 @@ Unchanged. `hooks/useBeat.ts` still calls `a.currentTime = 0` in its `play()`. T
 
 ## Testing plan
 
-- **NEW** `hooks/useBeatPreview.test.ts`:
-  - Stub `window.HTMLMediaElement.prototype.play` to resolve (jsdom doesn't implement it).
-  - Construct hook via `renderHook`. Verify:
-    - `startPreview(beat1)` sets `previewingId === beat1.id`.
-    - After dispatching `loadedmetadata` on the underlying audio (with `duration = 60`), `audio.currentTime === 15`.
-    - With `duration = 8`, `audio.currentTime === 7`.
-    - After 15s of fake time (`vi.useFakeTimers`), `previewingId === null`.
-    - `startPreview(beat2)` while beat1 is previewing stops beat1 and updates `previewingId`.
-    - `togglePreview(beat1)` on currently-previewing beat stops it.
+- **NEW** `hooks/useBeatPreview.test.tsx` (jsdom env — uses DOM Audio + React renderHook):
+  - Stub `window.HTMLMediaElement.prototype.play` to a `vi.fn()` returning `Promise.resolve()` (jsdom doesn't implement playback).
+  - Construct hook via `renderHook` from `@testing-library/react`. Verify:
+    - `startPreview(beat1)` sets `previewingId === beat1.id` synchronously, before metadata fires.
+    - After manually dispatching a `loadedmetadata` event on the audio element with `duration = 60`: `audio.currentTime === 15` and `play` was called.
+    - Same flow with `duration = 8`: `audio.currentTime === 7`.
+    - With `vi.useFakeTimers()`: dispatch `loadedmetadata` first (timer is scheduled inside the listener), then advance 15s — `previewingId === null` and `pause` was called.
+    - `startPreview(beat2)` while beat1 is previewing: prior `loadedmetadata` listener is removed (no `currentTime` mutation if beat1's metadata fires post-swap), `previewingId === beat2.id`.
+    - `togglePreview(beat1)` on currently-previewing beat: `previewingId === null`, `pause` called.
 
-- **CHANGED** `components/BrowseBeats.test.ts`:
-  - Delete the `computePreviewStart` block.
-  - Add: rendering rows, clicking a row fires `onChange` AND enters previewing state. Easiest path: mock `useBeatPreview` and assert `startPreview` is called with the right beat. Alternatively, assert on `aria-label`/class state of the ▶ button.
-  - Add: random-pick button — with `Math.random` stubbed, clicking it fires `onChange` with the expected beat from the filtered pool and calls `startPreview`. When the filtered pool is empty, the button is disabled.
-  - Keep existing filter / focus-trap / empty-state coverage.
+- **NEW** `components/BrowseBeats.test.tsx` (jsdom env, replaces the deleted `.ts`):
+  - `pickRandom`: empty array → `null`; with `Math.random` stubbed to `0` returns first element; stubbed to `0.999...` returns last.
+  - Click row → `onChange(beat.id)` called AND `startPreview(beat)` called (mock `useBeatPreview`).
+  - Click random-pick 🎲 → `onChange` fires with the beat at the index `pickRandom` would return given the stubbed `Math.random`; `startPreview` fires with the same beat.
+  - Random-pick button is `disabled` when `[...recents, ...main]` is empty (use filters that exclude all beats).
+  - Keep coverage equivalent to deleted file: filter behavior, focus-trap on Tab/Shift-Tab, Esc closes, empty-state message.
 
 - **NEW** `components/Setup.preview.test.tsx`:
   - jsdom env (matches the `*.test.tsx` glob in `vitest.config.ts`). Render `<Setup>`, click a beat row in the desktop inline list, assert the row gains the "now-playing" indicator. Mock `useBeatPreview` if direct asserting on the audio side-effect is fragile.
