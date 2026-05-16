@@ -1,13 +1,14 @@
 // components/BrowseBeats.tsx
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Beat } from '@/lib/beats';
 import {
   buildSectionLists, availableCategories,
   type BpmBucket, type CategoryChip,
 } from '@/lib/beat-filters';
 import { loadRecentBeats } from '@/lib/recent-beats';
+import { useBeatPreview } from '@/hooks/useBeatPreview';
 
 type Props = {
   beats: Beat[];                       // typically allBeats = [...BEATS, ...ytCatalog]
@@ -16,34 +17,21 @@ type Props = {
   onClose: () => void;
 };
 
-const AUTO_STOP_MS = 8000;
-
-export function computePreviewStart(beat: Beat, duration: number): number {
-  const desired = beat.previewOffset ?? ((beat.startOffset ?? 0) + 8);
-  return Math.min(desired, Math.max(0, duration - 1));
-}
-
 export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
   const [query, setQuery] = useState('');
   const [bucket, setBucket] = useState<BpmBucket>('all');
   const [category, setCategory] = useState<CategoryChip | 'all'>('all');
   const [recentIds, setRecentIds] = useState<string[]>([]);
-  const [previewingId, setPreviewingId] = useState<string | null>(null);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const { previewingId, startPreview, togglePreview, stopPreview } = useBeatPreview();
 
   // Read recents after mount (avoid SSR/hydration mismatch).
   useEffect(() => { setRecentIds(loadRecentBeats()); }, []);
 
-  // Focus the close button on mount; cleanup pauses preview + clears timer on unmount.
   useEffect(() => {
     closeBtnRef.current?.focus();
-    return () => {
-      if (audioRef.current) audioRef.current.pause();
-      if (stopTimerRef.current) clearTimeout(stopTimerRef.current);
-    };
   }, []);
 
   // Esc closes the modal; Tab is trapped inside.
@@ -77,38 +65,6 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
   );
   const cats = useMemo(() => availableCategories(beats), [beats]);
 
-  const stopPreview = useCallback(() => {
-    if (audioRef.current) { audioRef.current.pause(); }
-    if (stopTimerRef.current) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
-    setPreviewingId(null);
-  }, []);
-
-  function startPreview(beat: Beat) {
-    stopPreview();
-    if (!audioRef.current) audioRef.current = new Audio();
-    const audio = audioRef.current;
-    audio.src = beat.src;
-    const onMeta = () => {
-      audio.currentTime = computePreviewStart(beat, audio.duration || 0);
-      audio.play().catch(() => {
-        console.warn('[BrowseBeats] preview play failed');
-        setPreviewingId(null);
-      });
-      stopTimerRef.current = setTimeout(stopPreview, AUTO_STOP_MS);
-    };
-    audio.addEventListener('loadedmetadata', onMeta, { once: true });
-    audio.addEventListener('error', () => {
-      console.warn('[BrowseBeats] preview audio error');
-      setPreviewingId(null);
-    }, { once: true });
-    setPreviewingId(beat.id);
-  }
-
-  function togglePreview(beat: Beat) {
-    if (previewingId === beat.id) stopPreview();
-    else startPreview(beat);
-  }
-
   function clearFilters() {
     setQuery('');
     setBucket('all');
@@ -128,8 +84,14 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
         key={beat.id}
         role="button"
         tabIndex={0}
-        onClick={() => onChange(beat.id)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onChange(beat.id); } }}
+        onClick={() => { onChange(beat.id); startPreview(beat); }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onChange(beat.id);
+            startPreview(beat);
+          }
+        }}
         aria-label={`${beat.title}, ${beat.bpm} BPM, ${beat.source === 'youtube' ? 'youtube' : beat.category}`}
         aria-current={isSelected ? 'true' : undefined}
         className={[
