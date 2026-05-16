@@ -157,6 +157,32 @@ describe('fetchRhymeGroups', () => {
     const msg: string = call.messages[0].content;
     expect(msg).toContain('8 groups');
   });
+
+  it('uses explicit count over scheme.groupCount when provided', async () => {
+    const create = vi.fn(async () => ({
+      content: [
+        { type: 'tool_use', name: 'rhyme_groups', input: { groups: [] } },
+      ],
+    }));
+    const client = { messages: { create } } as any;
+    await fetchRhymeGroups({ client, language: 'uk', schemeId: 'free', count: 23 });
+    const promptArg = create.mock.calls[0][0].messages[0].content as string;
+    // The Ukrainian prompt template embeds the count number; assert it's our override.
+    expect(promptArg).toMatch(/23/);
+  });
+
+  it('falls back to scheme.groupCount when count is omitted', async () => {
+    const create = vi.fn(async () => ({
+      content: [
+        { type: 'tool_use', name: 'rhyme_groups', input: { groups: [] } },
+      ],
+    }));
+    const client = { messages: { create } } as any;
+    // 'free' scheme has groupCount: 10
+    await fetchRhymeGroups({ client, language: 'uk', schemeId: 'free' });
+    const promptArg = create.mock.calls[0][0].messages[0].content as string;
+    expect(promptArg).toMatch(/(^|\s|\D)10(\s|\D|$)/);
+  });
 });
 
 describe('sampleGroups', () => {

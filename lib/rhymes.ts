@@ -39,6 +39,8 @@ export type FetchOpts = {
   exclude?: RhymeExclusion;
   difficultyId?: DifficultyId;
   schemeId?: RhymeSchemeId;
+  /** Override scheme.groupCount when set — used to size rhymes to song duration. */
+  count?: number;
 };
 
 function parseGroups(content: unknown): RhymeGroup[] | null {
@@ -83,7 +85,7 @@ export function sampleGroups(groups: RhymeGroup[], n: number): RhymeGroup[] {
 export async function fetchRhymeGroups(opts: FetchOpts = {}): Promise<RhymeGroup[]> {
   const difficulty = getDifficulty(opts.difficultyId);
   const scheme = getRhymeScheme(opts.schemeId);
-  const count = scheme.groupCount;
+  const count = opts.count ?? scheme.groupCount;
   const lang = getLanguage(opts.language);
   const fallback = FALLBACK_GROUPS_BY_LANGUAGE[lang.id];
   const client = opts.client;
