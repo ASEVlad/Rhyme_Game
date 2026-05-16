@@ -23,7 +23,7 @@ vi.mock('@/lib/recent-beats', () => ({
   loadRecentBeats: () => [],
 }));
 
-import { BrowseBeats } from './BrowseBeats';
+import { BrowseBeats, pickRandom } from './BrowseBeats';
 
 const beats: Beat[] = [
   { id: 'b1', src: '/b1.mp3', title: 'Beat One', bpm: 80, barsPerLoop: 8, category: 'boom-bap' },
@@ -106,5 +106,47 @@ describe('BrowseBeats — keyboard', () => {
     render(<BrowseBeats beats={beats} selectedId={null} onChange={noop} onClose={onClose} />);
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe('pickRandom', () => {
+  it('returns null for an empty array', () => {
+    expect(pickRandom([])).toBeNull();
+  });
+
+  it('returns the first element when Math.random returns 0', () => {
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    expect(pickRandom(['a', 'b', 'c'])).toBe('a');
+    spy.mockRestore();
+  });
+
+  it('returns the last element when Math.random returns just below 1', () => {
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.9999);
+    expect(pickRandom(['a', 'b', 'c'])).toBe('c');
+    spy.mockRestore();
+  });
+});
+
+describe('BrowseBeats — random-pick button', () => {
+  it('renders the random-pick button', () => {
+    render(<BrowseBeats beats={beats} selectedId={null} onChange={noop} onClose={noop} />);
+    expect(screen.getByRole('button', { name: /Pick a random beat/i })).toBeInTheDocument();
+  });
+
+  it('clicking calls onChange and startPreview for the picked beat', () => {
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const onChange = vi.fn();
+    render(<BrowseBeats beats={beats} selectedId={null} onChange={onChange} onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /Pick a random beat/i }));
+    // Pool ordering after buildSectionLists sorts by BPM ascending: b1 (80), b2 (92), b3 (105).
+    expect(onChange).toHaveBeenCalledWith('b1');
+    expect(startPreviewMock).toHaveBeenCalledWith(beats[0]);
+    spy.mockRestore();
+  });
+
+  it('is disabled when filters produce an empty pool', () => {
+    render(<BrowseBeats beats={beats} selectedId={null} onChange={noop} onClose={noop} />);
+    fireEvent.change(screen.getByPlaceholderText(/Search by title/i), { target: { value: 'zzz' } });
+    expect(screen.getByRole('button', { name: /Pick a random beat/i })).toBeDisabled();
   });
 });

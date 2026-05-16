@@ -10,6 +10,11 @@ import {
 import { loadRecentBeats } from '@/lib/recent-beats';
 import { useBeatPreview } from '@/hooks/useBeatPreview';
 
+export function pickRandom<T>(arr: T[]): T | null {
+  if (arr.length === 0) return null;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 type Props = {
   beats: Beat[];                       // typically allBeats = [...BEATS, ...ytCatalog]
   selectedId: string | null;
@@ -63,7 +68,15 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
     () => buildSectionLists(beats, recentIds, { bucket, category, query }),
     [beats, recentIds, bucket, category, query],
   );
+  const randomPool = useMemo(() => [...recents, ...main], [recents, main]);
   const cats = useMemo(() => availableCategories(beats), [beats]);
+
+  function handleRandomPick() {
+    const beat = pickRandom(randomPool);
+    if (!beat) return;
+    onChange(beat.id);
+    startPreview(beat);
+  }
 
   function clearFilters() {
     setQuery('');
@@ -137,15 +150,26 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
     >
       <div className="flex items-center px-4 pt-4">
         <strong className="text-lg">Browse beats</strong>
-        <button
-          ref={closeBtnRef}
-          type="button"
-          onClick={handleClose}
-          aria-label="Close"
-          className="ml-auto h-11 w-11 rounded-full bg-[rgba(94,200,255,0.08)] border border-[rgba(94,200,255,0.18)] text-base flex items-center justify-center"
-        >
-          ✕
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleRandomPick}
+            aria-label="Pick a random beat"
+            disabled={randomPool.length === 0}
+            className="h-11 w-11 rounded-full bg-[rgba(94,200,255,0.08)] border border-[rgba(94,200,255,0.18)] text-base flex items-center justify-center disabled:opacity-40"
+          >
+            🎲
+          </button>
+          <button
+            ref={closeBtnRef}
+            type="button"
+            onClick={handleClose}
+            aria-label="Close"
+            className="h-11 w-11 rounded-full bg-[rgba(94,200,255,0.08)] border border-[rgba(94,200,255,0.18)] text-base flex items-center justify-center"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div className="px-4 pt-3">
