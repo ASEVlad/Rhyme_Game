@@ -29,6 +29,16 @@ export function useGameLoop(args: {
     let ended = false;
     const beatsPerSecond = bpm / 60;
 
+    const terminate = () => {
+      if (ended) return;
+      ended = true;
+      cancelAnimationFrame(raf);
+      onEndRef.current();
+    };
+
+    const onAudioEnded = () => terminate();
+    audio.addEventListener('ended', onAudioEnded);
+
     const frame = () => {
       const t = sessionTime();
       const currentBeat = t * beatsPerSecond;
@@ -36,15 +46,18 @@ export function useGameLoop(args: {
       const beatInBar = currentBeat % 4;
       const ballX = beatInBar / 4;
       setTick({ ballX, currentBar, beatInBar });
-      if (currentBar >= totalBars && !ended) {
-        ended = true;
-        onEndRef.current();
+      if (currentBar >= totalBars) {
+        terminate();
         return;
       }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      audio.removeEventListener('ended', onAudioEnded);
+    };
   }, [active, audio, bpm, totalBars, startOffset]);
 
   return tick;
