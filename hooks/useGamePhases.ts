@@ -7,6 +7,7 @@ import { flattenBars } from '@/lib/flatten-bars';
 import { DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
 import { DEFAULT_DIFFICULTY, type DifficultyId } from '@/lib/difficulties';
 import { DEFAULT_SCHEME, getRhymeScheme, type RhymeSchemeId } from '@/lib/rhyme-schemes';
+import { computeRhymeFillPlan } from '@/lib/rhyme-fill';
 import { sampleGroups } from '@/lib/rhymes';
 import type { RhymeGroup } from '@/lib/fallback-groups';
 import { useBeat } from '@/hooks/useBeat';
@@ -69,7 +70,16 @@ export function useGamePhases(): GamePhasesReturn {
 
   useEffect(() => {
     if (phase !== 'loading' || !activeBeat) return;
+    if (beatHandle.duration == null) return; // wait for loadedmetadata
     let cancelled = false;
+    const scheme = getRhymeScheme(schemeId);
+    const plan = computeRhymeFillPlan({
+      duration: beatHandle.duration,
+      bpm: activeBeat.bpm,
+      startOffset: activeBeat.startOffset ?? 0,
+      wordsPerGroup: scheme.wordsPerGroup,
+    });
+
     (async () => {
       try {
         const res = await fetch('/api/rhymes', {
@@ -79,6 +89,7 @@ export function useGamePhases(): GamePhasesReturn {
             language: languageId,
             difficultyId,
             schemeId,
+            count: plan.count,
             exclude: {
               words: usedWordsRef.current,
               endings: usedEndingsRef.current,
@@ -89,10 +100,10 @@ export function useGamePhases(): GamePhasesReturn {
         const json = await res.json();
         if (cancelled) return;
 
-        const scheme = getRhymeScheme(schemeId);
         const allGroups: RhymeGroup[] = json.groups ?? [];
-        const picked = sampleGroups(allGroups, scheme.groupCount);
-        const newBars = flattenBars(picked, scheme);
+        const picked = sampleGroups(allGroups, allGroups.length); // shuffle, keep all
+        const flat = flattenBars(picked, scheme);
+        const newBars = flat.slice(0, Math.max(0, plan.targetBars));
 
         const roundWords = picked.flatMap(g => g.words);
         const roundEndings = picked.map(g => g.ending);
@@ -129,8 +140,10 @@ export function useGamePhases(): GamePhasesReturn {
     // Intentional: effect reads languageId/difficultyId/schemeId/beatHandle as
     // stable snapshots from the render that set phase='loading'. playAgain()
     // deliberately re-uses the last settings by only setting phase, not re-setting
-    // the other state. Do not add them as deps without re-auditing playAgain.
-  }, [phase]);
+    // the other state. Effect re-fires once per (phase, duration) tuple — duration
+    // is stable across replays of the same beat, so playAgain triggers exactly one
+    // rhyme refetch. Do not add other deps without re-auditing playAgain.
+  }, [phase, beatHandle.duration]);
 
   function handlePlay(beat: Beat, lang: LanguageId, difficulty: DifficultyId, scheme: RhymeSchemeId) {
     addRecentBeat(beat.id);
