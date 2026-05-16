@@ -59,7 +59,6 @@ export function useGamePhases(): GamePhasesReturn {
   const tick = useGameLoop({
     audio: phase === 'playing' ? beatHandle.audio : null,
     bpm: activeBeat?.bpm ?? 90,
-    totalBars: bars.length,
     active: phase === 'playing',
     startOffset: activeBeat?.startOffset ?? 0,
     onEnd: () => {

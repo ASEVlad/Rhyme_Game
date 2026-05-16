@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { WordGrid } from './WordGrid';
 
 type Props = {
@@ -10,14 +10,14 @@ type Props = {
 
 export function LoadingScreen({ bpm = 90 }: Props) {
   const [ballX, setBallX] = useState(0);
-  const startRef = useRef<number | null>(null);
 
   useEffect(() => {
     let raf = 0;
+    let start: number | null = null;
     const beatsPerSecond = bpm / 60;
     const frame = (now: number) => {
-      if (startRef.current == null) startRef.current = now;
-      const elapsed = (now - startRef.current) / 1000;
+      if (start == null) start = now;
+      const elapsed = (now - start) / 1000;
       const beats = elapsed * beatsPerSecond;
       const x = (beats % 4) / 4;
       setBallX(x);

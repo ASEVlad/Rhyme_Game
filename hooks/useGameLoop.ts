@@ -12,12 +12,11 @@ export type GameTick = {
 export function useGameLoop(args: {
   audio: HTMLAudioElement | null;
   bpm: number;
-  totalBars: number;
   active: boolean;
   onEnd: () => void;
   startOffset?: number;
 }): GameTick {
-  const { audio, bpm, totalBars, active, onEnd, startOffset = 0 } = args;
+  const { audio, bpm, active, onEnd, startOffset = 0 } = args;
   const [tick, setTick] = useState<GameTick>({ ballX: 0, currentBar: 0, beatInBar: 0 });
   const onEndRef = useRef(onEnd);
   onEndRef.current = onEnd;
@@ -46,10 +45,6 @@ export function useGameLoop(args: {
       const beatInBar = currentBeat % 4;
       const ballX = beatInBar / 4;
       setTick({ ballX, currentBar, beatInBar });
-      if (currentBar >= totalBars) {
-        terminate();
-        return;
-      }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -58,7 +53,7 @@ export function useGameLoop(args: {
       cancelAnimationFrame(raf);
       audio.removeEventListener('ended', onAudioEnded);
     };
-  }, [active, audio, bpm, totalBars, startOffset]);
+  }, [active, audio, bpm, startOffset]);
 
   return tick;
 }
