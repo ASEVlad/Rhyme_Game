@@ -5,6 +5,7 @@ import { useGamePhases } from '@/hooks/useGamePhases';
 import { Setup } from './Setup';
 import { WordGrid } from './WordGrid';
 import { EndScreen } from './EndScreen';
+import { LoadingScreen } from './LoadingScreen';
 import { signOut } from 'next-auth/react';
 import { fadePage } from '@/lib/motion-variants';
 
@@ -37,9 +38,7 @@ export function Game() {
 
       {phase === 'loading' && (
         <motion.div key="loading" {...fadePage}>
-          <div className="flex min-h-screen items-center justify-center text-xl">
-            Loading…
-          </div>
+          <LoadingScreen bpm={activeBeat?.bpm} />
         </motion.div>
       )}
 

@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react';
 import { YtSetup } from './YtSetup';
 import { WordGrid } from './WordGrid';
 import { EndScreen } from './EndScreen';
+import { LoadingScreen } from './LoadingScreen';
 import { fadePage } from '@/lib/motion-variants';
 
 export function YtGame() {
@@ -29,9 +30,7 @@ export function YtGame() {
 
       {phase === 'loading' && (
         <motion.div key="loading" {...fadePage}>
-          <div className="flex min-h-screen items-center justify-center text-xl">
-            Loading…
-          </div>
+          <LoadingScreen bpm={activeBeat?.bpm} />
         </motion.div>
       )}
 
