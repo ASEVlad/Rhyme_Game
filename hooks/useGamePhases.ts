@@ -105,8 +105,10 @@ export function useGamePhases(): GamePhasesReturn {
         const flat = flattenBars(picked, scheme);
         const newBars = flat.slice(0, Math.max(0, plan.targetBars));
 
-        const roundWords = picked.flatMap(g => g.words);
-        const roundEndings = picked.map(g => g.ending);
+        const renderedGroupIndices = new Set(newBars.map(b => b.groupIndex));
+        const renderedGroups = picked.filter((_, i) => renderedGroupIndices.has(i));
+        const roundWords = renderedGroups.flatMap(g => g.words);
+        const roundEndings = renderedGroups.map(g => g.ending);
         usedWordsRef.current = [
           ...usedWordsRef.current,
           ...roundWords,
