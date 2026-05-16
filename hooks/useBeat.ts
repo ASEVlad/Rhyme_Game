@@ -34,7 +34,7 @@ export function useBeat(beat: Beat | undefined): BeatHandle {
     a.loop = false;
     a.preload = 'auto';
     const onCanPlay = () => setReady(true);
-    const onError = () => setError('Failed to load beat');
+    const onError = () => setError('Не вдалося завантажити біт');
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     const onMeta = () => {
