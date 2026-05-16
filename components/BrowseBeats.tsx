@@ -134,10 +134,12 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
         aria-current={isSelected ? 'true' : undefined}
         className={[
           'flex items-center gap-3 rounded-xl p-2 mb-1',
-          isSelected ? 'bg-rhyme-yellow/16 outline outline-1 outline-rhyme-yellow' : 'bg-white/[0.03] hover:bg-white/[0.08]',
+          isSelected
+            ? 'bg-[rgba(94,200,255,0.12)] border border-[rgba(94,200,255,0.25)]'
+            : 'bg-[rgba(94,200,255,0.04)] hover:bg-[rgba(94,200,255,0.08)]',
         ].join(' ')}
       >
-        <div className="text-rhyme-yellow font-extrabold text-xl w-12 text-center leading-none">
+        <div className="text-[#5ec8ff] font-extrabold text-xl w-12 text-center leading-none">
           {Number.isInteger(beat.bpm) ? beat.bpm : beat.bpm.toFixed(1)}
           <small className="block text-[9px] text-white/40 mt-0.5">BPM</small>
         </div>
@@ -153,8 +155,9 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
           aria-label={isPreviewing ? 'Stop preview' : 'Preview beat'}
           className={[
             'h-8 w-8 rounded-full text-xs flex items-center justify-center shrink-0',
-            isPreviewing ? 'bg-rhyme-yellow text-bg' : 'bg-white/15 hover:bg-white/25',
+            isPreviewing ? 'text-[#060c14]' : 'bg-[rgba(94,200,255,0.10)] hover:bg-[rgba(94,200,255,0.18)]',
           ].join(' ')}
+          style={isPreviewing ? { background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' } : undefined}
         >
           {isPreviewing ? '▮▮' : '▶'}
         </button>
@@ -167,7 +170,8 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Browse beats"
-      className="bg-bg text-white flex flex-col h-full"
+      className="bg-[#060c14] text-white flex flex-col h-full"
+      style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -5%, rgba(94,200,255,0.22) 0%, transparent 100%)' }}
     >
       <div className="flex items-center px-4 pt-4">
         <strong className="text-lg">Browse beats</strong>
@@ -176,7 +180,7 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
           type="button"
           onClick={handleClose}
           aria-label="Close"
-          className="ml-auto h-11 w-11 rounded-full bg-white/10 text-base flex items-center justify-center"
+          className="ml-auto h-11 w-11 rounded-full bg-[rgba(94,200,255,0.08)] border border-[rgba(94,200,255,0.18)] text-base flex items-center justify-center"
         >
           ✕
         </button>
@@ -188,7 +192,7 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
           placeholder="Search by title…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-xl bg-white/[0.06] px-3 py-2 text-sm placeholder:text-white/40 outline-none"
+          className="w-full rounded-xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.30)] px-3 py-2 text-sm placeholder:text-white/40 outline-none"
         />
       </div>
 
@@ -206,8 +210,9 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
             aria-pressed={bucket === key}
             className={[
               'rounded-full px-3 py-1 text-xs font-bold',
-              bucket === key ? 'bg-rhyme-yellow text-bg' : 'bg-white/[0.08] text-white',
+              bucket === key ? 'text-[#060c14]' : 'bg-[rgba(94,200,255,0.06)] text-white/70',
             ].join(' ')}
+            style={bucket === key ? { background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' } : undefined}
           >
             {label}
           </button>
@@ -221,7 +226,7 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
           aria-pressed={category === 'all'}
           className={[
             'rounded-full px-3 py-1 text-[11px] font-semibold',
-            category === 'all' ? 'bg-white/20 text-white' : 'bg-white/[0.04] text-white/50',
+            category === 'all' ? 'bg-[rgba(94,200,255,0.18)] text-white' : 'bg-[rgba(94,200,255,0.04)] text-white/50',
           ].join(' ')}
         >
           all categories
@@ -234,7 +239,7 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
             aria-pressed={category === cat}
             className={[
               'rounded-full px-3 py-1 text-[11px] font-semibold',
-              category === cat ? 'bg-white/20 text-white' : 'bg-white/[0.04] text-white/50',
+              category === cat ? 'bg-[rgba(94,200,255,0.18)] text-white' : 'bg-[rgba(94,200,255,0.04)] text-white/50',
             ].join(' ')}
           >
             {cat === 'youtube' ? 'YouTube' : cat}
@@ -251,7 +256,7 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-3 text-rhyme-yellow underline text-sm"
+              className="mt-3 text-[#5ec8ff] underline text-sm"
             >
               Clear filters
             </button>
@@ -274,11 +279,12 @@ export function BrowseBeats({ beats, selectedId, onChange, onClose }: Props) {
         )}
       </div>
 
-      <div className="sticky bottom-0 left-0 right-0 p-4 bg-bg/80 backdrop-blur-sm">
+      <div className="sticky bottom-0 left-0 right-0 p-4 bg-[#060c14]/80 backdrop-blur-sm">
         <button
           type="button"
           onClick={handleClose}
-          className="w-full rounded-2xl bg-rhyme-yellow text-bg font-extrabold py-3 text-base"
+          className="w-full rounded-2xl text-[#060c14] font-extrabold py-3 text-base"
+          style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', boxShadow: '0 0 24px rgba(94,200,255,0.45)' }}
         >
           Done
         </button>
