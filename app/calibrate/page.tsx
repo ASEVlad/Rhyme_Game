@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import type { BeatCategory } from '@/lib/beats';
 
 const CATEGORIES: BeatCategory[] = ['boom-bap', 'trap', 'jazz', 'lo-fi', 'drill', 'other'];
@@ -112,8 +113,22 @@ export default function CalibratePage() {
     : null;
 
   return (
-    <main className="min-h-screen p-6 max-w-lg mx-auto space-y-8">
-      <h1 className="text-2xl font-extrabold">Beat Calibration</h1>
+    <main
+      className="flex min-h-screen flex-col bg-[#060c14]"
+      style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -5%, rgba(94,200,255,0.22) 0%, transparent 100%)' }}
+    >
+      <nav className="flex items-center h-16 px-6 md:px-12 shrink-0">
+        <Link
+          href="/"
+          className="font-extrabold text-sm tracking-wide hover:opacity-80 transition-opacity"
+          style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+        >
+          THE RHYME GAME
+        </Link>
+      </nav>
+
+      <div className="px-6 md:px-12 pt-4 md:pt-8 pb-8 max-w-lg w-full mx-auto space-y-8">
+        <h1 className="text-2xl font-extrabold">Beat Calibration</h1>
 
       {/* Step 1 — Load */}
       <section className="space-y-2">
@@ -124,12 +139,13 @@ export default function CalibratePage() {
             onChange={e => setPath(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleLoad()}
             placeholder="beats/my-beat.mp3"
-            className="flex-1 rounded-xl bg-white/10 px-4 py-2 text-sm outline-none focus:bg-white/15"
+            className="flex-1 rounded-xl bg-[rgba(94,200,255,0.06)] border border-[rgba(94,200,255,0.25)] px-4 py-2 text-sm outline-none focus:border-[rgba(94,200,255,0.5)]"
           />
           <button
             onClick={handleLoad}
             disabled={!path || loading}
-            className="rounded-xl bg-rhyme-yellow text-bg px-4 py-2 font-bold text-sm disabled:opacity-50"
+            className="rounded-xl px-4 py-2 font-bold text-sm text-[#060c14] disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
           >
             {loading ? '...' : 'Load'}
           </button>
@@ -220,6 +236,7 @@ export default function CalibratePage() {
           )}
         </>
       )}
+      </div>
     </main>
   );
 }
