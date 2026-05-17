@@ -122,6 +122,11 @@ describe('layout metadata', () => {
     const matches = src.match(/\/brand\/favicon-192\.png/g) ?? [];
     expect(matches.length).toBeGreaterThanOrEqual(2);
   });
+
+  it('sets metadataBase to the rhymefor.fun origin', () => {
+    const src = layout();
+    expect(src).toMatch(/metadataBase:\s*new URL\(['"]https:\/\/rhymefor\.fun['"]\)/);
+  });
 });
 
 // PNG IHDR chunk starts at byte offset 16. Width is bytes 16-19, height is 20-23.
