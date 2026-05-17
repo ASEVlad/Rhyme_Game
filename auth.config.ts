@@ -1,6 +1,5 @@
 import type { NextAuthConfig } from 'next-auth';
 import Google from 'next-auth/providers/google';
-import Resend from 'next-auth/providers/resend';
 
 export function isEmailAllowed(email: string | null | undefined): boolean {
   const list = (process.env.ALLOWED_EMAILS ?? '')
@@ -29,8 +28,5 @@ export const authConfig = {
       return isEmailAllowed(user.email);
     },
   },
-  providers: [
-    Google,
-    Resend({ from: process.env.EMAIL_FROM ?? '' }),
-  ],
+  providers: [Google],
 } satisfies NextAuthConfig;
