@@ -30,9 +30,10 @@ Two small UX fixes for the `playing` flow:
 
 ### Wire-up
 
-`components/YtGame.tsx`
+`LoadingScreen` is rendered by both top-level game containers. Both must pass `quitToSetup` as `onCancel`:
 
-- Pass `quitToSetup` from `useGamePhases` as `onCancel` to `<LoadingScreen … />`.
+- `components/Game.tsx` (the main app at `/`) — pass `quitToSetup` from `useGamePhases` to `<LoadingScreen … />`.
+- `components/YtGame.tsx` (the `/yt` flow) — same.
 
 `hooks/useGamePhases.ts` — no changes. `quitToSetup` already:
 
@@ -86,6 +87,7 @@ Properties:
 ## Files touched
 
 - `components/LoadingScreen.tsx` — add `onCancel` prop, render `Cancel` button.
+- `components/Game.tsx` — pass `quitToSetup` to `LoadingScreen`.
 - `components/YtGame.tsx` — pass `quitToSetup` to `LoadingScreen`.
 - `components/BouncingBall.tsx` — replace `computeBounceY` body.
 - `components/BouncingBall.test.ts` — update quarter-phase assertion.
