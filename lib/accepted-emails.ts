@@ -16,3 +16,20 @@ export async function isEmailAccepted(
     return false;
   }
 }
+
+export async function upsertWaitlist(
+  email: string | null | undefined,
+  accepted: boolean,
+): Promise<void> {
+  if (!email) return;
+  if (!pool) return;
+  try {
+    await pool.query(
+      `INSERT INTO waitlist (email, accepted) VALUES ($1, $2)
+       ON CONFLICT (email) DO UPDATE SET accepted = EXCLUDED.accepted`,
+      [email, accepted],
+    );
+  } catch (err) {
+    console.warn('[accepted-emails] upsert failed:', err);
+  }
+}

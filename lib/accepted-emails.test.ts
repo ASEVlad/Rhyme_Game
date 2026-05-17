@@ -6,7 +6,7 @@ vi.mock('@/lib/db', () => ({
 
 // Imported after the mock so it picks up the stubbed pool.
 import { pool } from '@/lib/db';
-import { isEmailAccepted } from './accepted-emails';
+import { isEmailAccepted, upsertWaitlist } from './accepted-emails';
 
 const mockQuery = (pool as unknown as { query: ReturnType<typeof vi.fn> }).query;
 
@@ -41,5 +41,43 @@ describe('isEmailAccepted', () => {
     await expect(isEmailAccepted(null)).resolves.toBe(false);
     await expect(isEmailAccepted(undefined)).resolves.toBe(false);
     expect(mockQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe('upsertWaitlist', () => {
+  beforeEach(() => {
+    mockQuery.mockReset();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  it('upserts an accepted=true row', async () => {
+    mockQuery.mockResolvedValue({ rowCount: 1, rows: [] });
+    await upsertWaitlist('alice@example.com', true);
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining('ON CONFLICT (email) DO UPDATE SET accepted = EXCLUDED.accepted'),
+      ['alice@example.com', true],
+    );
+  });
+
+  it('upserts an accepted=false row', async () => {
+    mockQuery.mockResolvedValue({ rowCount: 1, rows: [] });
+    await upsertWaitlist('pending@example.com', false);
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.any(String),
+      ['pending@example.com', false],
+    );
+  });
+
+  it('no-ops for null / undefined / empty input without querying', async () => {
+    await upsertWaitlist('', true);
+    await upsertWaitlist(null, true);
+    await upsertWaitlist(undefined, false);
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('swallows errors and logs via console.warn', async () => {
+    mockQuery.mockRejectedValue(new Error('db down'));
+    await expect(upsertWaitlist('alice@example.com', true)).resolves.toBeUndefined();
+    expect(console.warn).toHaveBeenCalledTimes(1);
   });
 });

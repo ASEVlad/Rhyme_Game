@@ -4,10 +4,23 @@ import Resend from 'next-auth/providers/resend';
 import PostgresAdapter from '@auth/pg-adapter';
 import { authConfig } from './auth.config';
 import { pool } from './lib/db';
-import { isEmailAccepted } from './lib/accepted-emails';
+import { isEmailAccepted, upsertWaitlist } from './lib/accepted-emails';
+import { isInviteCookieValid } from './lib/invite';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;
+
+async function decideSignIn(email: string): Promise<boolean> {
+  if (isInviteCookieValid()) {
+    await upsertWaitlist(email, true);
+    return true;
+  }
+  if (await isEmailAccepted(email)) {
+    return true;
+  }
+  await upsertWaitlist(email, false);
+  return false;
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -20,7 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials?.email;
         if (typeof email !== 'string') return null;
         if (email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) return null;
-        if (!(await isEmailAccepted(email))) return null;
+        if (!(await decideSignIn(email))) return null;
         return { id: email, email, name: null };
       },
     }),
@@ -30,7 +43,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === 'credentials') return true;
-      if (account?.provider === 'google') return isEmailAccepted(user.email);
+      if (account?.provider === 'google') {
+        const email = user.email;
+        if (!email || email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) return false;
+        return decideSignIn(email);
+      }
       // Any other provider (including the registered-but-unused 'resend') is denied.
       return false;
     },

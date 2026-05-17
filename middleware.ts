@@ -1,11 +1,7 @@
 import NextAuth from 'next-auth';
 import { NextResponse } from 'next/server';
 import { authConfig } from './auth.config';
-import {
-  decideInvite,
-  INVITE_STATE_HEADER,
-  INVITE_STATE_CLOSED_BETA,
-} from './lib/invite';
+import { decideInvite } from './lib/invite';
 
 const { auth } = NextAuth(authConfig);
 
@@ -30,10 +26,7 @@ export default auth(req => {
     const decision = decideInvite({
       envCode: process.env.INVITE_CODE,
       queryCode: nextUrl.searchParams.get('invite') ?? undefined,
-      cookieCode: req.cookies.get('rhyme-invite')?.value,
     });
-
-    if (decision.kind === 'pass') return;
 
     if (decision.kind === 'set') {
       const cleanUrl = new URL('/login', nextUrl);
@@ -48,10 +41,7 @@ export default auth(req => {
       return res;
     }
 
-    // decision.kind === 'closed'
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set(INVITE_STATE_HEADER, INVITE_STATE_CLOSED_BETA);
-    return NextResponse.rewrite(nextUrl, { request: { headers: requestHeaders } });
+    // decision.kind === 'pass': fall through, render the login form normally.
   }
 
   // All other routes: pass through
