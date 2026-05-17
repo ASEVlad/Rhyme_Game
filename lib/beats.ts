@@ -20,24 +20,6 @@ export type Beat = {
 
 export const BEATS: Beat[] = [
   {
-    id: 'medicate',
-    src: '/beats/(FREE) 90s Old School Chill Freestyle Boom Bap Type Beat [2023] - Medicate.mp3?v=2',
-    title: 'Medicate',
-    bpm: 90.1,
-    barsPerLoop: 64,
-    startOffset: 0,
-    category: 'boom-bap',
-  },
-  {
-    id: 'unchanged',
-    src: '/beats/(FREE) Boom Bap Freestyle Joey Bada$$ x 90s Type Beat [2024] - Unchanged.mp3?v=2',
-    title: 'Unchanged',
-    bpm: 94,
-    barsPerLoop: 64,
-    startOffset: 0,
-    category: 'boom-bap',
-  },
-  {
     id: 'criminal',
     src: '/beats/(FREE) Freestyle Boom Bap Beat ｜ ＂Criminal＂ ｜ Old School Hip Hop Beat ｜ Rap Instrumental.mp3',
     title: 'Criminal',
