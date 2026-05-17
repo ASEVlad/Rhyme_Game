@@ -42,9 +42,18 @@ describe('logo.svg', () => {
     expect(svg).toMatch(/viewBox\s*=\s*"0 0 800 256"/);
   });
 
-  it('contains the wordmark text', () => {
+  it('contains the wordmark inside a <text> element', () => {
     const svg = readFileSync(brand('logo.svg'), 'utf8');
-    expect(svg).toContain('rhymefor.fun');
+    expect(svg).toMatch(/<text[^>]*>rhymefor\.fun<\/text>/);
+  });
+
+  it('embeds the icon mark geometry (both rings)', () => {
+    const svg = readFileSync(brand('logo.svg'), 'utf8');
+    // The mark's two ring centers, copied verbatim into the lockup.
+    expect(svg).toMatch(/cx\s*=\s*"89"/);
+    expect(svg).toMatch(/cx\s*=\s*"167"/);
+    // The interlock arc, copied from mark.svg.
+    expect(svg).toContain('M 142.46 178.31 A 56 56 0 0 0 117.55 154.30');
   });
 
   it('uses Manrope semibold for the wordmark', () => {
