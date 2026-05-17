@@ -2,7 +2,7 @@
 
 import type { Bar } from '@/lib/flatten-bars';
 import type { RhymeColor } from '@/lib/colors';
-import { BouncingBall } from './BouncingBall';
+import { BouncingBall, computeBounceY } from './BouncingBall';
 
 const COLOR_BG: Record<RhymeColor, string> = {
   yellow: 'bg-rhyme-yellow text-bg',
@@ -45,6 +45,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
     visibleRows.push({ index: i, bar: bars[i] ?? null });
   }
   const activeCol = Math.min(3, Math.floor(ballX * 4));
+  const yBounce = computeBounceY(ballX);
 
   return (
     <div className="space-y-2 select-none">
@@ -77,12 +78,15 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
               return (
                 <div
                   key={col}
-                  className={[
-                    'rounded-2xl py-5 lg:py-8',
+                  className="rounded-2xl py-5 lg:py-8"
+                  style={
                     cellActive
-                      ? 'bg-[rgba(94,200,255,0.20)] border border-[rgba(94,200,255,0.40)]'
-                      : 'bg-[rgba(94,200,255,0.06)]',
-                  ].join(' ')}
+                      ? {
+                          backgroundColor: `rgba(94,200,255,${0.06 + 0.34 * yBounce})`,
+                          boxShadow: `inset 0 0 0 1px rgba(94,200,255,${0.4 * yBounce})`,
+                        }
+                      : { backgroundColor: 'rgba(94,200,255,0.06)' }
+                  }
                 />
               );
             })}
