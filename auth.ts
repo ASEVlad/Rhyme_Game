@@ -6,19 +6,22 @@ import { authConfig } from './auth.config';
 import { pool } from './lib/db';
 import { isEmailAccepted, upsertWaitlist } from './lib/accepted-emails';
 import { isInviteCookieValid } from './lib/invite';
+import { notifyWaitlistJoin } from './lib/waitlist-notify';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;
 
 async function decideSignIn(email: string): Promise<boolean> {
   if (isInviteCookieValid()) {
-    await upsertWaitlist(email, true);
+    const inserted = await upsertWaitlist(email, true);
+    if (inserted) await notifyWaitlistJoin(email);
     return true;
   }
   if (await isEmailAccepted(email)) {
     return true;
   }
-  await upsertWaitlist(email, false);
+  const inserted = await upsertWaitlist(email, false);
+  if (inserted) await notifyWaitlistJoin(email);
   return false;
 }
 

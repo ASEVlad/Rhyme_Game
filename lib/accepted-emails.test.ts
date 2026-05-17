@@ -50,34 +50,34 @@ describe('upsertWaitlist', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
-  it('upserts an accepted=true row', async () => {
-    mockQuery.mockResolvedValue({ rowCount: 1, rows: [] });
-    await upsertWaitlist('alice@example.com', true);
+  it('returns true and emits the upsert SQL when a fresh row is inserted', async () => {
+    mockQuery.mockResolvedValue({ rowCount: 1, rows: [{ inserted: true }] });
+    await expect(upsertWaitlist('alice@example.com', true)).resolves.toBe(true);
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('ON CONFLICT (email) DO UPDATE SET accepted = EXCLUDED.accepted'),
       ['alice@example.com', true],
     );
   });
 
-  it('upserts an accepted=false row', async () => {
-    mockQuery.mockResolvedValue({ rowCount: 1, rows: [] });
-    await upsertWaitlist('pending@example.com', false);
+  it('returns false when the row already existed and was updated', async () => {
+    mockQuery.mockResolvedValue({ rowCount: 1, rows: [{ inserted: false }] });
+    await expect(upsertWaitlist('pending@example.com', false)).resolves.toBe(false);
     expect(mockQuery).toHaveBeenCalledWith(
       expect.any(String),
       ['pending@example.com', false],
     );
   });
 
-  it('no-ops for null / undefined / empty input without querying', async () => {
-    await upsertWaitlist('', true);
-    await upsertWaitlist(null, true);
-    await upsertWaitlist(undefined, false);
+  it('returns false for null / undefined / empty input without querying', async () => {
+    await expect(upsertWaitlist('', true)).resolves.toBe(false);
+    await expect(upsertWaitlist(null, true)).resolves.toBe(false);
+    await expect(upsertWaitlist(undefined, false)).resolves.toBe(false);
     expect(mockQuery).not.toHaveBeenCalled();
   });
 
-  it('swallows errors and logs via console.warn', async () => {
+  it('returns false and logs via console.warn on error', async () => {
     mockQuery.mockRejectedValue(new Error('db down'));
-    await expect(upsertWaitlist('alice@example.com', true)).resolves.toBeUndefined();
+    await expect(upsertWaitlist('alice@example.com', true)).resolves.toBe(false);
     expect(console.warn).toHaveBeenCalledTimes(1);
   });
 });
