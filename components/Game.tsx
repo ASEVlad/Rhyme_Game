@@ -38,7 +38,7 @@ export function Game() {
 
       {phase === 'loading' && (
         <motion.div key="loading" {...fadePage}>
-          <LoadingScreen bpm={activeBeat?.bpm} />
+          <LoadingScreen bpm={activeBeat?.bpm} onCancel={quitToSetup} />
         </motion.div>
       )}
 
