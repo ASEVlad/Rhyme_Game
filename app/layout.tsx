@@ -10,7 +10,9 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://rhymefor.fun'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rhymefor.fun',
+  ),
   title: 'The Rhyme Game',
   description: 'A web game for freestyle rap practice',
   icons: {

@@ -123,9 +123,10 @@ describe('layout metadata', () => {
     expect(matches.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('sets metadataBase to the rhymefor.fun origin', () => {
+  it('sets metadataBase with the rhymefor.fun fallback', () => {
     const src = layout();
-    expect(src).toMatch(/metadataBase:\s*new URL\(['"]https:\/\/rhymefor\.fun['"]\)/);
+    expect(src).toMatch(/metadataBase:\s*new URL\(/);
+    expect(src).toContain('rhymefor.fun');
   });
 });
 
