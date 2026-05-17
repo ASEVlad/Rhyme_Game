@@ -102,6 +102,10 @@ function pngSize(path: string): { width: number; height: number } {
   if (buf.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') {
     throw new Error(`not a PNG: ${path}`);
   }
+  const chunkType = buf.toString('ascii', 12, 16);
+  if (chunkType !== 'IHDR') {
+    throw new Error(`expected IHDR chunk, got ${chunkType}: ${path}`);
+  }
   const width = buf.readUInt32BE(16);
   const height = buf.readUInt32BE(20);
   return { width, height };

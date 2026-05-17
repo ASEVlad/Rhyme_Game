@@ -27,9 +27,14 @@ async function prepareFont() {
   const woff2 = readFileSync(woff2Path);
   const ttf = await wawoff.decompress(woff2);
   const tmpDir = mkdtempSync(join(tmpdir(), 'rhymefor-brand-'));
-  const ttfPath = join(tmpDir, 'manrope-600.ttf');
-  writeFileSync(ttfPath, Buffer.from(ttf));
-  return { ttfPath, tmpDir };
+  try {
+    const ttfPath = join(tmpDir, 'manrope-600.ttf');
+    writeFileSync(ttfPath, Buffer.from(ttf));
+    return { ttfPath, tmpDir };
+  } catch (e) {
+    rmSync(tmpDir, { recursive: true, force: true });
+    throw e;
+  }
 }
 
 function rasterize(svgPath, width, fontFile) {
@@ -50,6 +55,11 @@ function rasterizeWithBackground(svgPath, width, height, bg, fontFile) {
   // Strip outer <svg ...></svg> and re-embed children inside a transformed
   // group on a 1200x630 canvas. Keeps the renderer's job simple — no nested
   // <svg> elements.
+  // NOTE: This regex-strip approach assumes logo.svg has exactly one outer
+  // <svg> element with no nested <svg> children. The trailing `</svg>\s*$`
+  // match would strip the wrong tag if a nested SVG were ever added. If
+  // logo.svg gains nested SVG content in the future, replace this with a
+  // real XML parser (e.g. @xmldom/xmldom) and walk the tree.
   const inner = readFileSync(svgPath, 'utf8')
     .replace(/^[\s\S]*?<svg[^>]*>/, '')
     .replace(/<\/svg>\s*$/, '');
