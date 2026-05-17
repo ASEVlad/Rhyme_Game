@@ -31,3 +31,31 @@ describe('mark.svg', () => {
     expect(svg.toLowerCase()).toContain('#2860e0');
   });
 });
+
+describe('logo.svg', () => {
+  it('exists', () => {
+    expect(existsSync(brand('logo.svg'))).toBe(true);
+  });
+
+  it('has the lockup viewBox 0 0 800 256', () => {
+    const svg = readFileSync(brand('logo.svg'), 'utf8');
+    expect(svg).toMatch(/viewBox\s*=\s*"0 0 800 256"/);
+  });
+
+  it('contains the wordmark text', () => {
+    const svg = readFileSync(brand('logo.svg'), 'utf8');
+    expect(svg).toContain('rhymefor.fun');
+  });
+
+  it('uses Manrope semibold for the wordmark', () => {
+    const svg = readFileSync(brand('logo.svg'), 'utf8');
+    expect(svg).toMatch(/font-family\s*=\s*"[^"]*Manrope/);
+    expect(svg).toMatch(/font-weight\s*=\s*"600"/);
+  });
+
+  it('uses white for the wordmark fill', () => {
+    const svg = readFileSync(brand('logo.svg'), 'utf8');
+    // Look for fill="#ffffff" or fill="white" on the text element
+    expect(svg).toMatch(/<text[^>]*fill\s*=\s*"(#ffffff|#FFFFFF|white)"/);
+  });
+});
