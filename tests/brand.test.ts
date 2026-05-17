@@ -96,6 +96,34 @@ describe('logo-mono.svg', () => {
   });
 });
 
+describe('layout metadata', () => {
+  const layoutPath = resolve(root, 'app', 'layout.tsx');
+  const layout = () => readFileSync(layoutPath, 'utf8');
+
+  it('declares all four favicon PNG paths', () => {
+    const src = layout();
+    expect(src).toContain("/brand/favicon-32.png");
+    expect(src).toContain("/brand/favicon-64.png");
+    expect(src).toContain("/brand/favicon-192.png");
+    expect(src).toContain("/brand/favicon-512.png");
+  });
+
+  it('declares the OG image with 1200x630', () => {
+    const src = layout();
+    expect(src).toContain("/brand/og.png");
+    expect(src).toMatch(/width:\s*1200/);
+    expect(src).toMatch(/height:\s*630/);
+  });
+
+  it('declares apple-touch icon pointing at the 192px favicon', () => {
+    const src = layout();
+    // The 192px file should appear both under `icon:` and under `apple:`.
+    // A simple proxy: it appears at least twice in the file.
+    const matches = src.match(/\/brand\/favicon-192\.png/g) ?? [];
+    expect(matches.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 // PNG IHDR chunk starts at byte offset 16. Width is bytes 16-19, height is 20-23.
 function pngSize(path: string): { width: number; height: number } {
   const buf = readFileSync(path);
