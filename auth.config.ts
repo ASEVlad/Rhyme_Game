@@ -2,7 +2,7 @@ import type { NextAuthConfig } from 'next-auth';
 import Google from 'next-auth/providers/google';
 
 export const authConfig = {
-  pages: { signIn: '/login' },
+  pages: { signIn: '/login', error: '/login' },
   session: { strategy: 'jwt' },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
