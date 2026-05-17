@@ -47,7 +47,7 @@ export function LoadingScreen({ bpm = 90, onCancel }: Props) {
             <button
               type="button"
               onClick={onCancel}
-              className="text-sm text-white/60 hover:text-white transition-colors"
+              className="rounded-sm text-sm text-white/60 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(94,200,255,0.7)]"
             >
               Cancel
             </button>
