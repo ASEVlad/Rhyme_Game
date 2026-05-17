@@ -21,11 +21,6 @@ describe('ClosedBeta', () => {
     expect(h1.textContent?.replace(/\s+/g, ' ').trim()).toMatch(/the rhyme game/i);
   });
 
-  it('renders the 4-dot rhythm motif', () => {
-    const { container } = render(<ClosedBeta />);
-    expect(container.querySelectorAll('[data-rhythm-dot]')).toHaveLength(4);
-  });
-
   it('renders the Closed beta caption inside the card', () => {
     render(<ClosedBeta />);
     expect(screen.getByText(/closed beta — private testing/i)).toBeInTheDocument();

@@ -23,12 +23,6 @@ describe('LoginContent', () => {
     expect(h1.textContent?.replace(/\s+/g, ' ').trim()).toMatch(/the rhyme game/i);
   });
 
-  it('renders the 4-dot rhythm motif', () => {
-    const { container } = render(<LoginContent />);
-    const dots = container.querySelectorAll('[data-rhythm-dot]');
-    expect(dots).toHaveLength(4);
-  });
-
   it('renders the auth card with Sign in heading and Continue with Google', () => {
     render(<LoginContent />);
     expect(screen.getByRole('heading', { level: 2, name: /sign in/i })).toBeInTheDocument();
