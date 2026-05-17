@@ -18,7 +18,7 @@ describe('computeBounceY', () => {
   });
 
   it('returns 0.25 at quarter phase (squared-triangle, ball still near apex)', () => {
-    // x=0.0625 → cellPhase=0.25 → t = 1 - |0.5 - 1| = 0.5 → y = 0.25.
+    // x=0.0625 → cellPhase=0.25 → 2·cellPhase−1 = −0.5 → t = 1 − |−0.5| = 0.5 → y = 0.25.
     // This value (vs. 0.5 for a linear triangle or 0.125 for cubed) locks in
     // the squared-triangle shape — i.e. ball spends most of the cell near the
     // apex and only snaps to the tile near the beat center.
