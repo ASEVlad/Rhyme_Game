@@ -51,19 +51,21 @@ export function YtGame() {
               style={{ background: `radial-gradient(ellipse at 50% 35%, ${pulseColor} 0%, transparent 70%)`, transition: 'background 400ms ease' }}
             />
             <div className="relative z-10">
-              <div className="flex justify-between mb-2" style={{ opacity: 0.18 }}>
-                <button
-                  onClick={() => { if (confirm('End session?')) quitToSetup(); }}
-                  aria-label="Quit"
-                  className="text-white/70 text-xl"
-                >←</button>
-                <div className="text-white/60 text-sm">
-                  {activeBeat?.title} · {activeBeat?.bpm.toFixed(1)} BPM
-                </div>
+              <div className="text-center text-white/60 text-sm mb-2" style={{ opacity: 0.18 }}>
+                {activeBeat?.title} · {activeBeat?.bpm.toFixed(1)} BPM
               </div>
               <div className="mt-4 mx-auto w-full max-w-md lg:max-w-3xl">
                 <WordGrid bars={bars} activeRow={tick.currentBar} ballX={tick.ballX} />
               </div>
+            </div>
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20">
+              <button
+                type="button"
+                onClick={quitToSetup}
+                className="rounded-sm text-sm text-white/60 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(94,200,255,0.7)]"
+              >
+                Cancel
+              </button>
             </div>
           </main>
         </motion.div>
