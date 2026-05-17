@@ -156,4 +156,52 @@ describe('EmailSignInForm', () => {
     });
     expect(screen.queryByText(/account isn't accepted yet/i)).not.toBeInTheDocument();
   });
+
+  describe('variant="inline"', () => {
+    it('renders the input and submit button (no visible "Sign in with your email" label)', () => {
+      render(<EmailSignInForm variant="inline" />);
+      expect(screen.queryByText(/sign in with your email/i)).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument();
+      // Button accessible name is "Sign in" via aria-label (desktop) or visible text (mobile)
+      expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
+    });
+
+    it('keeps the input required in inline mode', () => {
+      render(<EmailSignInForm variant="inline" />);
+      expect(screen.getByPlaceholderText('your@email.com')).toBeRequired();
+    });
+
+    it('submits with the same signIn("credentials", …) payload in inline mode', async () => {
+      (signIn as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: true,
+        error: undefined,
+        url: '/play',
+      });
+      render(<EmailSignInForm variant="inline" />);
+      fireEvent.change(screen.getByPlaceholderText('your@email.com'), {
+        target: { value: 'me@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+      await waitFor(() => expect(signIn).toHaveBeenCalledTimes(1));
+      expect(signIn).toHaveBeenCalledWith('credentials', {
+        email: 'me@example.com',
+        redirect: false,
+        callbackUrl: '/play',
+      });
+    });
+
+    it('navigates to the returned url on success in inline mode', async () => {
+      (signIn as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: true,
+        error: undefined,
+        url: '/play',
+      });
+      render(<EmailSignInForm variant="inline" />);
+      fireEvent.change(screen.getByPlaceholderText('your@email.com'), {
+        target: { value: 'me@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+      await waitFor(() => expect(assignMock).toHaveBeenCalledWith('/play'));
+    });
+  });
 });

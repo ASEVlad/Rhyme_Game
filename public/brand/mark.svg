@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="rhymefor.fun mark">
+  <defs>
+    <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5ec8ff"/>
+      <stop offset="1" stop-color="#2860e0"/>
+    </linearGradient>
+    <radialGradient id="spec" cx="0.3" cy="0.25" r="0.45">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Ring B (right), back -->
+  <circle cx="167" cy="128" r="56" fill="none" stroke="url(#chrome)" stroke-width="14"/>
+  <circle cx="167" cy="128" r="56" fill="none" stroke="url(#spec)" stroke-width="14"/>
+
+  <!-- Ring A (left), front at both crossings -->
+  <circle cx="89" cy="128" r="56" fill="none" stroke="url(#chrome)" stroke-width="14"/>
+  <circle cx="89" cy="128" r="56" fill="none" stroke="url(#spec)" stroke-width="14"/>
+
+  <!-- Interlock: arc of Ring B drawn on top of A at the bottom crossing
+       so B passes over A there, completing the chain-link effect.
+       Drawn twice — chrome then spec — to match the rings' double-layer treatment. -->
+  <path d="M 142.46 178.31 A 56 56 0 0 0 117.55 154.30"
+        fill="none" stroke="url(#chrome)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 142.46 178.31 A 56 56 0 0 0 117.55 154.30"
+        fill="none" stroke="url(#spec)" stroke-width="14" stroke-linecap="round"/>
+</svg>

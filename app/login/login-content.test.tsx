@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { LoginContent } from './login-content';
 
@@ -10,39 +10,52 @@ vi.mock('next/link', () => ({
 }));
 
 describe('LoginContent', () => {
-  it('renders branding column elements', () => {
-    render(<LoginContent />);
-    expect(screen.getByText('Freestyle rap trainer')).toBeInTheDocument();
-    expect(screen.getByText('Calm Bap · 88 BPM')).toBeInTheDocument();
-  });
-
-  it('renders the auth card with Google sign-in', () => {
-    render(<LoginContent />);
-    // The "Sign in" heading is an h1; disambiguate from the form button.
-    expect(screen.getByRole('heading', { name: /^sign in$/i })).toBeInTheDocument();
-    expect(screen.getByText('Continue with Google')).toBeInTheDocument();
-  });
-
-  it('renders the wordmark as a link to /', () => {
+  it('renders the small brand wordmark at the top as a link to /', () => {
     render(<LoginContent />);
     const wordmark = screen.getByText('THE RHYME GAME');
     expect(wordmark.tagName).toBe('A');
     expect(wordmark).toHaveAttribute('href', '/');
   });
 
-  it('renders the email sign-in form (always)', () => {
+  it('renders the oversized brand title (h1) in the middle zone', () => {
     render(<LoginContent />);
-    expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1.textContent?.replace(/\s+/g, ' ').trim()).toMatch(/the rhyme game/i);
   });
 
-  it('renders the waitlist form', () => {
+  it('renders the auth card with Sign in heading and Continue with Google', () => {
     render(<LoginContent />);
-    expect(screen.getByRole('button', { name: /join waitlist/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
   });
 
-  it('does not render the dev-login form', () => {
+  it('always renders the inline email form with its caption', () => {
     render(<LoginContent />);
-    expect(screen.queryByText(/dev login/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /sign in \(dev\)/i })).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument();
+    expect(screen.getByText(/or use email/i)).toBeInTheDocument();
+  });
+
+  it('shows the waitlist as a collapsed text link by default', () => {
+    render(<LoginContent />);
+    expect(screen.getByRole('button', { name: /not invited\? join the waitlist/i })).toBeInTheDocument();
+    // The actual waitlist form (with its own Join waitlist submit button) is not yet mounted
+    expect(screen.queryByRole('button', { name: /^join waitlist$/i })).not.toBeInTheDocument();
+  });
+
+  it('expands the waitlist form when the text link is clicked', () => {
+    render(<LoginContent />);
+    fireEvent.click(screen.getByRole('button', { name: /not invited\? join the waitlist/i }));
+    expect(screen.getByRole('button', { name: /^join waitlist$/i })).toBeInTheDocument();
+  });
+
+  it('renders the back-to-home link', () => {
+    render(<LoginContent />);
+    const back = screen.getByText(/back to home/i);
+    expect(back.closest('a')).toHaveAttribute('href', '/');
+  });
+
+  it('does not show an OAuth error message by default', () => {
+    render(<LoginContent />);
+    expect(screen.queryByText(/sign-in failed/i)).not.toBeInTheDocument();
   });
 });

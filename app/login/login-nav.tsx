@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export function LoginNav() {
   return (
-    <nav className="flex items-center px-6 py-4 border-b border-[rgba(94,200,255,0.12)]">
+    <nav className="flex items-center h-16 px-6 md:px-12 shrink-0">
       <Link
         href="/"
         className="font-extrabold text-sm tracking-wide hover:opacity-80 transition-opacity"

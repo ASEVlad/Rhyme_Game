@@ -41,8 +41,12 @@ export function useGameLoop(args: {
     const frame = () => {
       const t = sessionTime();
       const currentBeat = t * beatsPerSecond;
-      const currentBar = Math.floor(currentBeat / 4);
-      const beatInBar = currentBeat % 4;
+      // The ball's bounce peaks in the middle of each cell. Shifting the
+      // audio-time anchor by half a beat puts an integer-beat kick at the
+      // moment of the peak — so each landing aligns with the kick.
+      const shiftedBeat = currentBeat + 0.5;
+      const currentBar = Math.floor(shiftedBeat / 4);
+      const beatInBar = shiftedBeat % 4;
       const ballX = beatInBar / 4;
       setTick({ ballX, currentBar, beatInBar });
       raf = requestAnimationFrame(frame);
