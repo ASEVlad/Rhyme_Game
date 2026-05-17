@@ -40,7 +40,7 @@ export default function LandingPage() {
           className="text-5xl md:text-7xl font-extrabold leading-tight"
           style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
         >
-          The Rhyme<br />Game.
+          The Rhyme <br />Game.
         </h1>
         <p className="text-base text-white/55 leading-relaxed max-w-sm">
           Beat plays. Ball bounces. Your rhyme lands on time.
