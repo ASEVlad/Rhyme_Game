@@ -20,16 +20,8 @@ export type Beat = {
 
 export const BEATS: Beat[] = [
   {
-    id: 'click-90',
-    src: '/beats/click-90.wav',
-    title: 'Click 90',
-    bpm: 90,
-    barsPerLoop: 8,
-    category: 'other',
-  },
-  {
     id: 'medicate',
-    src: '/beats/(FREE) 90s Old School Chill Freestyle Boom Bap Type Beat [2023] - Medicate.mp3',
+    src: '/beats/(FREE) 90s Old School Chill Freestyle Boom Bap Type Beat [2023] - Medicate.mp3?v=2',
     title: 'Medicate',
     bpm: 90.1,
     barsPerLoop: 64,
@@ -38,7 +30,7 @@ export const BEATS: Beat[] = [
   },
   {
     id: 'unchanged',
-    src: '/beats/(FREE) Boom Bap Freestyle Joey Bada$$ x 90s Type Beat [2024] - Unchanged.mp3',
+    src: '/beats/(FREE) Boom Bap Freestyle Joey Bada$$ x 90s Type Beat [2024] - Unchanged.mp3?v=2',
     title: 'Unchanged',
     bpm: 94,
     barsPerLoop: 64,
@@ -218,7 +210,7 @@ export const BEATS: Beat[] = [
   },
   {
     id: 'this-aint-luck',
-    src: "/beats/J COLE TYPE BEAT - ＂THIS AIN'T LUCK＂ (FREESTYLE).mp3",
+    src: "/beats/J COLE TYPE BEAT - ＂THIS AIN’T LUCK＂ (FREESTYLE).mp3",
     title: "This Ain't Luck",
     bpm: 80,
     barsPerLoop: 64,
@@ -326,7 +318,7 @@ export const BEATS: Beat[] = [
   },
   {
     id: 'no-joke',
-    src: '/beats/[FREE] Kendrick Lamar x Cordae x Dreamville Type Beat ｜ "No Joke".mp3',
+    src: '/beats/[FREE] Kendrick Lamar x Cordae x Dreamville Type Beat ｜ “No Joke“.mp3',
     title: 'No Joke',
     bpm: 104.7,
     barsPerLoop: 64,
@@ -344,7 +336,7 @@ export const BEATS: Beat[] = [
   },
   {
     id: 'bounce',
-    src: '/beats/[FREE] Short Rap Freestyle Type Beat - "BOUNCE" ｜ Free Beat ｜ Rap Trap Beats Freestyle Instrumental.mp3',
+    src: '/beats/[FREE] Short Rap Freestyle Type Beat - “BOUNCE” ｜ Free Beat ｜ Rap Trap Beats Freestyle Instrumental.mp3',
     title: 'Bounce',
     bpm: 74,
     barsPerLoop: 16,
