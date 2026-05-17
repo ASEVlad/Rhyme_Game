@@ -17,8 +17,11 @@ describe('computeBounceY', () => {
     expect(computeBounceY(0.875)).toBeCloseTo(1); // beat 3 center
   });
 
-  it('returns ~0.707 at quarter phase within a cell', () => {
-    // x=0.0625 → cellPhase=0.25 → sin(π/4) ≈ 0.707
-    expect(computeBounceY(0.0625)).toBeCloseTo(0.707, 2);
+  it('returns 0.25 at quarter phase (squared-triangle, ball still near apex)', () => {
+    // x=0.0625 → cellPhase=0.25 → t = 1 - |0.5 - 1| = 0.5 → y = 0.25.
+    // This value (vs. 0.5 for a linear triangle or 0.125 for cubed) locks in
+    // the squared-triangle shape — i.e. ball spends most of the cell near the
+    // apex and only snaps to the tile near the beat center.
+    expect(computeBounceY(0.0625)).toBeCloseTo(0.25);
   });
 });

@@ -2,7 +2,8 @@
 
 export function computeBounceY(x: number): number {
   const cellPhase = (x * 4) % 1;
-  return Math.sin(cellPhase * Math.PI);
+  const t = 1 - Math.abs(2 * cellPhase - 1); // triangle wave: 0 → 1 → 0
+  return t * t;                              // squared: slow at apex, fast at impact
 }
 
 const BALL_SIZE_PX = 14;       // matches w-3.5 h-3.5
@@ -18,7 +19,8 @@ type Props = {
  * Renders inside the active row container (which must be `position: relative`).
  * The ball's center lands on the row's top edge on each beat (so its lower
  * half visually presses into the tile for the impact feel), and arcs up to
- * `APEX_PX` above the row between beats.
+ * `APEX_PX` above the row between beats. The arc is gravity-shaped: the ball
+ * lingers near the apex and snaps down onto each tile.
  */
 export function BouncingBall({ x }: Props) {
   const yBounce = computeBounceY(x);
