@@ -6,9 +6,11 @@ import { WordGrid } from './WordGrid';
 type Props = {
   /** BPM for the preview animation. Defaults to 90 when undefined. */
   bpm?: number;
+  /** When provided, a "Cancel" button appears under the status text. */
+  onCancel?: () => void;
 };
 
-export function LoadingScreen({ bpm = 90 }: Props) {
+export function LoadingScreen({ bpm = 90, onCancel }: Props) {
   const [ballX, setBallX] = useState(0);
 
   useEffect(() => {
@@ -40,6 +42,17 @@ export function LoadingScreen({ bpm = 90 }: Props) {
         <div className="mt-8 text-center text-sm text-[rgba(94,200,255,0.7)]">
           Loading rhymes…
         </div>
+        {onCancel && (
+          <div className="mt-3 text-center">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="text-sm text-white/60 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </main>
   );
