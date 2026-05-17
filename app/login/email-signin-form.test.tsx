@@ -138,4 +138,46 @@ describe('EmailSignInForm', () => {
     });
     expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
+
+  describe('variant="inline"', () => {
+    it('renders the input and submit button (no visible "Sign in with your email" label)', () => {
+      render(<EmailSignInForm variant="inline" />);
+      expect(screen.queryByText(/sign in with your email/i)).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument();
+      // Button has aria-label "Send sign-in link" even though visible text differs by viewport
+      expect(screen.getByRole('button', { name: /send sign-in link/i })).toBeInTheDocument();
+    });
+
+    it('keeps the input required in inline mode', () => {
+      render(<EmailSignInForm variant="inline" />);
+      expect(screen.getByPlaceholderText('your@email.com')).toBeRequired();
+    });
+
+    it('submits with the same signIn payload in inline mode', async () => {
+      (signIn as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
+      render(<EmailSignInForm variant="inline" />);
+      fireEvent.change(screen.getByPlaceholderText('your@email.com'), {
+        target: { value: 'me@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /send sign-in link/i }));
+      await waitFor(() => expect(signIn).toHaveBeenCalledTimes(1));
+      expect(signIn).toHaveBeenCalledWith('resend', {
+        email: 'me@example.com',
+        redirect: false,
+        callbackUrl: '/play',
+      });
+    });
+
+    it('shows the inbox-success message on success in inline mode', async () => {
+      (signIn as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
+      render(<EmailSignInForm variant="inline" />);
+      fireEvent.change(screen.getByPlaceholderText('your@email.com'), {
+        target: { value: 'me@example.com' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /send sign-in link/i }));
+      await waitFor(() =>
+        expect(screen.getByText(/check your inbox/i)).toBeInTheDocument(),
+      );
+    });
+  });
 });
