@@ -64,14 +64,20 @@ describe('useBeatPreview', () => {
     expect(pauseMock).toHaveBeenCalled();
   });
 
-  it('swap startPreview removes the stale loadedmetadata listener', () => {
+  it('swap startPreview discards the old audio and listens on a fresh one', () => {
     const { result } = renderHook(() => useBeatPreview());
     act(() => { result.current.startPreview(beat1); });
     const firstAudio = audioInstance;
+    const firstPlayMock = playMock;
     act(() => { result.current.startPreview(beat2); });
-    expect(audioInstance).toBe(firstAudio);
+    // Each preview gets its own Audio instance — old element is detached.
+    expect(audioInstance).not.toBe(firstAudio);
+    // Stale loadedmetadata on the discarded element does nothing.
     act(() => { firstAudio.dispatchEvent(new Event('loadedmetadata')); });
-    expect(playMock).toHaveBeenCalledTimes(1);
+    expect(firstPlayMock).not.toHaveBeenCalled();
+    // The new element's loadedmetadata triggers play once.
+    act(() => { audioInstance.dispatchEvent(new Event('loadedmetadata')); });
+    expect(playMock).toHaveBeenCalledOnce();
     expect(result.current.previewingId).toBe('b2');
   });
 

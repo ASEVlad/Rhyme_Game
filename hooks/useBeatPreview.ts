@@ -32,6 +32,10 @@ export function useBeatPreview(): BeatPreviewHandle {
         errorListenerRef.current = null;
       }
       audio.pause();
+      // Discard the element so the next preview starts with a fresh one.
+      // Reusing an element across previews lets a transient decode/network
+      // error on one beat stick to subsequent previews of other beats.
+      audioRef.current = null;
     }
     if (stopTimerRef.current) {
       clearTimeout(stopTimerRef.current);
@@ -42,7 +46,7 @@ export function useBeatPreview(): BeatPreviewHandle {
 
   const startPreview = useCallback((beat: Beat) => {
     stopPreview();
-    if (!audioRef.current) audioRef.current = new Audio();
+    audioRef.current = new Audio();
     const audio = audioRef.current;
     audio.loop = false;
     audio.src = beat.src;
