@@ -19,7 +19,10 @@
   <circle cx="89" cy="128" r="56" fill="none" stroke="url(#spec)" stroke-width="14"/>
 
   <!-- Interlock: arc of Ring B drawn on top of A at the bottom crossing
-       so B passes over A there, completing the chain-link effect. -->
+       so B passes over A there, completing the chain-link effect.
+       Drawn twice — chrome then spec — to match the rings' double-layer treatment. -->
   <path d="M 142.46 178.31 A 56 56 0 0 0 117.55 154.30"
         fill="none" stroke="url(#chrome)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 142.46 178.31 A 56 56 0 0 0 117.55 154.30"
+        fill="none" stroke="url(#spec)" stroke-width="14" stroke-linecap="round"/>
 </svg>

@@ -18,6 +18,8 @@
     <circle cx="89" cy="128" r="56" fill="none" stroke="url(#spec)" stroke-width="14"/>
     <path d="M 142.46 178.31 A 56 56 0 0 0 117.55 154.30"
           fill="none" stroke="url(#chrome)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M 142.46 178.31 A 56 56 0 0 0 117.55 154.30"
+          fill="none" stroke="url(#spec)" stroke-width="14" stroke-linecap="round"/>
   </g>
 
   <!-- Wordmark -->

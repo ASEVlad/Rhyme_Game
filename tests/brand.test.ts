@@ -30,6 +30,13 @@ describe('mark.svg', () => {
     expect(svg.toLowerCase()).toContain('#5ec8ff');
     expect(svg.toLowerCase()).toContain('#2860e0');
   });
+
+  it('applies the specular gradient as a stroke on each ring', () => {
+    const svg = readFileSync(brand('mark.svg'), 'utf8');
+    // Both ring circles + the interlock arc carry url(#spec), so we expect ≥3 references.
+    const matches = svg.match(/stroke\s*=\s*"url\(#spec\)"/g) ?? [];
+    expect(matches.length).toBeGreaterThanOrEqual(3);
+  });
 });
 
 describe('logo.svg', () => {
@@ -93,6 +100,11 @@ describe('logo-mono.svg', () => {
     expect(svg.toLowerCase()).not.toContain('#2860e0');
     // White appears
     expect(svg.toLowerCase()).toContain('#ffffff');
+  });
+
+  it('contains the wordmark inside a <text> element', () => {
+    const svg = readFileSync(brand('logo-mono.svg'), 'utf8');
+    expect(svg).toMatch(/<text[^>]*>rhymefor\.fun<\/text>/);
   });
 });
 
