@@ -9,6 +9,7 @@ import { RHYME_SCHEMES, DEFAULT_SCHEME, type RhymeSchemeId } from '@/lib/rhyme-s
 import { loadLanguage, saveLanguage } from '@/lib/language-storage';
 import { isYouTubeUrl } from '@/lib/yt-beat';
 import { useBeatPreview } from '@/hooks/useBeatPreview';
+import Link from 'next/link';
 import { BrowseBeats } from './BrowseBeats';
 import { LanguagePicker } from './LanguagePicker';
 import { DifficultyPicker } from './DifficultyPicker';
@@ -147,21 +148,29 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
 
   return (
     <main
-      className="flex min-h-screen flex-col p-6 bg-[#060c14]"
+      className="flex min-h-screen flex-col bg-[#060c14]"
       style={{ backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% -5%, rgba(94,200,255,0.22) 0%, transparent 100%)' }}
     >
-      <div className="flex justify-end">
-        <button onClick={onLogout} className="text-white/60 hover:text-white text-sm">Log out</button>
-      </div>
-
-      <div className="flex flex-1 flex-col items-center justify-center gap-6">
-        <h1
-          className="text-4xl font-extrabold tracking-tight"
+      {/* TOP — brand bar (matches landing + login) */}
+      <nav className="flex items-center justify-between h-16 px-6 md:px-12 shrink-0">
+        <Link
+          href="/"
+          className="font-extrabold text-sm tracking-wide hover:opacity-80 transition-opacity"
           style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
         >
-          The Rhyme Game
-        </h1>
+          THE RHYME GAME
+        </Link>
+        <button
+          type="button"
+          onClick={onLogout}
+          className="text-xs text-white/55 hover:text-white/80 transition-colors"
+        >
+          Log out →
+        </button>
+      </nav>
 
+      {/* CONTENT — anchored near the top, no centered title */}
+      <div className="flex flex-1 flex-col items-center justify-start px-6 md:px-12 pt-4 md:pt-8 pb-8">
         <div className="w-full max-w-sm md:max-w-3xl space-y-3 md:space-y-0 md:grid md:grid-cols-[1.2fr_1fr] md:gap-8">
 
           {/* ── LEFT COLUMN: beat source + beat picker ── */}
