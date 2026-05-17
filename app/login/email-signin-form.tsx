@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 
-type Status = 'idle' | 'loading' | 'sent' | 'error';
+type Status = 'idle' | 'loading' | 'error';
 
 export function EmailSignInForm() {
   const [email, setEmail] = useState('');
@@ -13,28 +13,19 @@ export function EmailSignInForm() {
     e.preventDefault();
     setStatus('loading');
     try {
-      const result = await signIn('resend', {
+      const result = await signIn('credentials', {
         email,
         redirect: false,
         callbackUrl: '/play',
       });
-      if (result?.error) {
-        setStatus('error');
+      if (result?.ok && !result.error) {
+        window.location.assign(result.url ?? '/play');
         return;
       }
-      setStatus('sent');
+      setStatus('error');
     } catch {
       setStatus('error');
     }
-  }
-
-  if (status === 'sent') {
-    return (
-      <p aria-live="polite" className="text-center text-sm text-white/70">
-        Check your inbox — we sent a sign-in link to{' '}
-        <span className="text-white">{email}</span>.
-      </p>
-    );
   }
 
   return (
@@ -44,7 +35,7 @@ export function EmailSignInForm() {
       </p>
       {status === 'error' && (
         <p aria-live="polite" className="text-xs text-red-400 text-center">
-          Something went wrong — try again.
+          Your account isn&apos;t accepted yet.
         </p>
       )}
       <input
@@ -52,7 +43,7 @@ export function EmailSignInForm() {
         required
         maxLength={254}
         placeholder="your@email.com"
-        aria-label="Email for sign-in link"
+        aria-label="Email"
         autoComplete="email"
         value={email}
         onChange={e => {
@@ -67,7 +58,7 @@ export function EmailSignInForm() {
         className="w-full rounded-xl py-2.5 text-sm font-bold text-[#060c14] disabled:opacity-50"
         style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
       >
-        {status === 'loading' ? 'Sending…' : 'Send sign-in link'}
+        {status === 'loading' ? 'Signing in…' : 'Sign in'}
       </button>
     </form>
   );
