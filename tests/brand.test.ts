@@ -95,3 +95,30 @@ describe('logo-mono.svg', () => {
     expect(svg.toLowerCase()).toContain('#ffffff');
   });
 });
+
+// PNG IHDR chunk starts at byte offset 16. Width is bytes 16-19, height is 20-23.
+function pngSize(path: string): { width: number; height: number } {
+  const buf = readFileSync(path);
+  if (buf.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') {
+    throw new Error(`not a PNG: ${path}`);
+  }
+  const width = buf.readUInt32BE(16);
+  const height = buf.readUInt32BE(20);
+  return { width, height };
+}
+
+describe('PNG exports', () => {
+  it.each([
+    ['favicon-32.png', 32, 32],
+    ['favicon-64.png', 64, 64],
+    ['favicon-192.png', 192, 192],
+    ['favicon-512.png', 512, 512],
+    ['og.png', 1200, 630],
+  ])('%s is %d×%d', (name, w, h) => {
+    const path = brand(name);
+    expect(existsSync(path)).toBe(true);
+    const size = pngSize(path);
+    expect(size.width).toBe(w);
+    expect(size.height).toBe(h);
+  });
+});
