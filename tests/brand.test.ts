@@ -68,3 +68,30 @@ describe('logo.svg', () => {
     expect(svg).toMatch(/<text[^>]*fill\s*=\s*"(#ffffff|#FFFFFF|white)"/);
   });
 });
+
+describe('logo-mono.svg', () => {
+  it('exists', () => {
+    expect(existsSync(brand('logo-mono.svg'))).toBe(true);
+  });
+
+  it('has the lockup viewBox 0 0 800 256', () => {
+    const svg = readFileSync(brand('logo-mono.svg'), 'utf8');
+    expect(svg).toMatch(/viewBox\s*=\s*"0 0 800 256"/);
+  });
+
+  it('contains no gradient fills or strokes', () => {
+    const svg = readFileSync(brand('logo-mono.svg'), 'utf8');
+    expect(svg).not.toMatch(/url\(#/);
+    expect(svg).not.toMatch(/<linearGradient/);
+    expect(svg).not.toMatch(/<radialGradient/);
+  });
+
+  it('uses only white as a visible color', () => {
+    const svg = readFileSync(brand('logo-mono.svg'), 'utf8');
+    // No cyan tokens
+    expect(svg.toLowerCase()).not.toContain('#5ec8ff');
+    expect(svg.toLowerCase()).not.toContain('#2860e0');
+    // White appears
+    expect(svg.toLowerCase()).toContain('#ffffff');
+  });
+});
