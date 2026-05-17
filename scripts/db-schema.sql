@@ -34,7 +34,7 @@ CREATE TABLE sessions (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE verification_tokens (
+CREATE TABLE verification_token (
   identifier TEXT NOT NULL,
   token TEXT NOT NULL,
   expires TIMESTAMPTZ NOT NULL,
