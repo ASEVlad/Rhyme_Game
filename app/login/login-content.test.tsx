@@ -11,48 +11,37 @@ vi.mock('next/link', () => ({
 
 describe('LoginContent', () => {
   it('renders branding column elements', () => {
-    render(<LoginContent emailEnabled={false} />);
+    render(<LoginContent />);
     expect(screen.getByText('Freestyle rap trainer')).toBeInTheDocument();
     expect(screen.getByText('Calm Bap · 88 BPM')).toBeInTheDocument();
   });
 
   it('renders the auth card with Google sign-in', () => {
-    render(<LoginContent emailEnabled={false} />);
-    expect(screen.getByText('Sign in')).toBeInTheDocument();
+    render(<LoginContent />);
+    // The "Sign in" heading is an h1; disambiguate from the form button.
+    expect(screen.getByRole('heading', { name: /^sign in$/i })).toBeInTheDocument();
     expect(screen.getByText('Continue with Google')).toBeInTheDocument();
   });
 
   it('renders the wordmark as a link to /', () => {
-    render(<LoginContent emailEnabled={false} />);
+    render(<LoginContent />);
     const wordmark = screen.getByText('THE RHYME GAME');
     expect(wordmark.tagName).toBe('A');
     expect(wordmark).toHaveAttribute('href', '/');
   });
 
-  it('renders the waitlist form regardless of emailEnabled', () => {
-    render(<LoginContent emailEnabled={false} />);
-    expect(screen.getByRole('button', { name: /join waitlist/i })).toBeInTheDocument();
+  it('renders the email sign-in form (always)', () => {
+    render(<LoginContent />);
+    expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
   });
 
-  it('hides the email sign-in form when emailEnabled is false', () => {
-    render(<LoginContent emailEnabled={false} />);
-    expect(
-      screen.queryByRole('button', { name: /send sign-in link/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('shows the email sign-in form when emailEnabled is true', () => {
-    render(<LoginContent emailEnabled={true} />);
-    expect(
-      screen.getByRole('button', { name: /send sign-in link/i }),
-    ).toBeInTheDocument();
-    // Both forms coexist
+  it('renders the waitlist form', () => {
+    render(<LoginContent />);
     expect(screen.getByRole('button', { name: /join waitlist/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
   });
 
   it('does not render the dev-login form', () => {
-    render(<LoginContent emailEnabled={false} />);
+    render(<LoginContent />);
     expect(screen.queryByText(/dev login/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /sign in \(dev\)/i })).not.toBeInTheDocument();
   });
