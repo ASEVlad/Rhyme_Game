@@ -30,11 +30,13 @@ export function useBeat(beat: Beat | undefined): BeatHandle {
       audioRef.current = null;
       return;
     }
-    const a = new Audio(beat.src);
+    // encodeURI percent-encodes brackets and other reserved chars that the
+    // browser would otherwise leave literal, which Caddy rejects with 404.
+    const a = new Audio(encodeURI(beat.src));
     a.loop = false;
     a.preload = 'auto';
     const onCanPlay = () => setReady(true);
-    const onError = () => setError('Не вдалося завантажити біт');
+    const onError = () => setError('Failed to load beat');
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     const onMeta = () => {

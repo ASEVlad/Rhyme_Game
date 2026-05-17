@@ -49,7 +49,9 @@ export function useBeatPreview(): BeatPreviewHandle {
     audioRef.current = new Audio();
     const audio = audioRef.current;
     audio.loop = false;
-    audio.src = beat.src;
+    // encodeURI percent-encodes brackets and other reserved chars that the
+    // browser would otherwise leave literal, which Caddy rejects with 404.
+    audio.src = encodeURI(beat.src);
     const onMeta = () => {
       audio.currentTime = Math.min(
         PREVIEW_START_SEC,
