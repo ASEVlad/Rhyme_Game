@@ -31,6 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === 'credentials') return true;
       if (account?.provider === 'google') return isEmailAccepted(user.email);
+      // Any other provider (including the registered-but-unused 'resend') is denied.
       return false;
     },
   },
