@@ -22,7 +22,7 @@ describe('mark.svg', () => {
     // Ring B (right) center
     expect(svg).toMatch(/cx\s*=\s*"167"/);
     // Same vertical center
-    expect(svg.match(/cy\s*=\s*"128"/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+    expect(svg.match(/cy\s*=\s*"128"/g)?.length ?? 0).toBeGreaterThanOrEqual(4);
   });
 
   it('uses the chrome gradient with the Tailwind cyan tokens', () => {

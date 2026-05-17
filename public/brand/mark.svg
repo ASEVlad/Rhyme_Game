@@ -4,11 +4,7 @@
       <stop offset="0" stop-color="#5ec8ff"/>
       <stop offset="1" stop-color="#2860e0"/>
     </linearGradient>
-    <radialGradient id="spec-a" cx="0.3" cy="0.25" r="0.45">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="spec-b" cx="0.3" cy="0.25" r="0.45">
+    <radialGradient id="spec" cx="0.3" cy="0.25" r="0.45">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
@@ -16,11 +12,11 @@
 
   <!-- Ring B (right), back -->
   <circle cx="167" cy="128" r="56" fill="none" stroke="url(#chrome)" stroke-width="14"/>
-  <circle cx="167" cy="128" r="56" fill="none" stroke="url(#spec-b)" stroke-width="14"/>
+  <circle cx="167" cy="128" r="56" fill="none" stroke="url(#spec)" stroke-width="14"/>
 
   <!-- Ring A (left), front at both crossings -->
   <circle cx="89" cy="128" r="56" fill="none" stroke="url(#chrome)" stroke-width="14"/>
-  <circle cx="89" cy="128" r="56" fill="none" stroke="url(#spec-a)" stroke-width="14"/>
+  <circle cx="89" cy="128" r="56" fill="none" stroke="url(#spec)" stroke-width="14"/>
 
   <!-- Interlock: arc of Ring B drawn on top of A at the bottom crossing
        so B passes over A there, completing the chain-link effect. -->
