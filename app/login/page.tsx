@@ -10,15 +10,9 @@ export default function LoginPage() {
     return <ClosedBeta />;
   }
 
-  const emailEnabled = !!(
-    process.env.POSTGRES_URL &&
-    process.env.AUTH_RESEND_KEY &&
-    process.env.EMAIL_FROM
-  );
-
   return (
     <Suspense>
-      <LoginContent emailEnabled={emailEnabled} />
+      <LoginContent />
     </Suspense>
   );
 }

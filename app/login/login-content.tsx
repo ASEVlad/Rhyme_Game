@@ -10,7 +10,9 @@ import { EmailSignInForm } from './email-signin-form';
 
 const DOT_COLORS = ['#5ec8ff', '#5ec8ff', '#2860e0', '#2860e0'];
 
-export function LoginContent({ emailEnabled }: { emailEnabled: boolean }) {
+// useSearchParams() requires a Suspense boundary in Next.js 14 App Router.
+// The parent (page.tsx) wraps this in <Suspense>.
+export function LoginContent() {
   const searchParams = useSearchParams();
   const oauthError = searchParams.get('error');
   const [showWaitlist, setShowWaitlist] = useState(false);
@@ -80,14 +82,12 @@ export function LoginContent({ emailEnabled }: { emailEnabled: boolean }) {
             Continue with Google
           </button>
 
-          {emailEnabled && (
-            <div className="space-y-2">
-              <p className="text-xs tracking-widest text-white/40 uppercase text-center">
-                or use email
-              </p>
-              <EmailSignInForm variant="inline" />
-            </div>
-          )}
+          <div className="space-y-2">
+            <p className="text-xs tracking-widest text-white/40 uppercase text-center">
+              or use email
+            </p>
+            <EmailSignInForm variant="inline" />
+          </div>
 
           {showWaitlist ? (
             <div className="pt-2 border-t border-[rgba(94,200,255,0.10)]">

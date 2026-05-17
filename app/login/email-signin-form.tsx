@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 
-type Status = 'idle' | 'loading' | 'sent' | 'error';
+type Status = 'idle' | 'loading' | 'error';
 type Variant = 'stacked' | 'inline';
 
 type Props = {
@@ -18,28 +18,19 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
     e.preventDefault();
     setStatus('loading');
     try {
-      const result = await signIn('resend', {
+      const result = await signIn('credentials', {
         email,
         redirect: false,
         callbackUrl: '/play',
       });
-      if (result?.error) {
-        setStatus('error');
+      if (result?.ok && !result.error) {
+        window.location.assign(result.url ?? '/play');
         return;
       }
-      setStatus('sent');
+      setStatus('error');
     } catch {
       setStatus('error');
     }
-  }
-
-  if (status === 'sent') {
-    return (
-      <p aria-live="polite" className="text-center text-sm text-white/70">
-        Check your inbox — we sent a sign-in link to{' '}
-        <span className="text-white">{email}</span>.
-      </p>
-    );
   }
 
   const sharedInputClass =
@@ -50,7 +41,7 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
       <form onSubmit={handleSubmit} className="space-y-2">
         {status === 'error' && (
           <p aria-live="polite" className="text-xs text-red-400 text-center">
-            Something went wrong — try again.
+            Your account isn&apos;t accepted yet.
           </p>
         )}
         <div className="flex flex-col md:flex-row gap-2">
@@ -59,7 +50,7 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
             required
             maxLength={254}
             placeholder="your@email.com"
-            aria-label="Email for sign-in link"
+            aria-label="Email"
             autoComplete="email"
             value={email}
             onChange={e => {
@@ -71,12 +62,12 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
           <button
             type="submit"
             disabled={status === 'loading' || !email}
-            aria-label="Send sign-in link"
+            aria-label="Sign in"
             className="rounded-xl py-2.5 md:px-4 text-sm font-bold text-[#060c14] disabled:opacity-50 md:shrink-0"
             style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
           >
             <span className="md:hidden">
-              {status === 'loading' ? 'Sending…' : 'Send link →'}
+              {status === 'loading' ? 'Signing in…' : 'Sign in →'}
             </span>
             <span className="hidden md:inline">
               {status === 'loading' ? '…' : '→'}
@@ -87,7 +78,7 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
     );
   }
 
-  // stacked (default — unchanged behavior)
+  // stacked (default — master's credentials-flow behavior)
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <p className="text-xs text-[rgba(94,200,255,0.6)] text-center">
@@ -95,7 +86,7 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
       </p>
       {status === 'error' && (
         <p aria-live="polite" className="text-xs text-red-400 text-center">
-          Something went wrong — try again.
+          Your account isn&apos;t accepted yet.
         </p>
       )}
       <input
@@ -103,7 +94,7 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
         required
         maxLength={254}
         placeholder="your@email.com"
-        aria-label="Email for sign-in link"
+        aria-label="Email"
         autoComplete="email"
         value={email}
         onChange={e => {
@@ -118,7 +109,7 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
         className="w-full rounded-xl py-2.5 text-sm font-bold text-[#060c14] disabled:opacity-50"
         style={{ background: 'linear-gradient(135deg,#5ec8ff,#2860e0)' }}
       >
-        {status === 'loading' ? 'Sending…' : 'Send sign-in link'}
+        {status === 'loading' ? 'Signing in…' : 'Sign in'}
       </button>
     </form>
   );

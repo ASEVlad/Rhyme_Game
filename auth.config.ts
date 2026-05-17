@@ -1,14 +1,6 @@
 import type { NextAuthConfig } from 'next-auth';
 import Google from 'next-auth/providers/google';
 
-export function isEmailAllowed(email: string | null | undefined): boolean {
-  const list = (process.env.ALLOWED_EMAILS ?? '')
-    .split(',')
-    .map(e => e.trim())
-    .filter(Boolean);
-  return list.includes(email ?? '');
-}
-
 export const authConfig = {
   pages: { signIn: '/login' },
   session: { strategy: 'jwt' },
@@ -23,9 +15,6 @@ export const authConfig = {
         return Response.redirect(new URL('/play', nextUrl));
       }
       return true;
-    },
-    signIn({ user }) {
-      return isEmailAllowed(user.email);
     },
   },
   providers: [Google],

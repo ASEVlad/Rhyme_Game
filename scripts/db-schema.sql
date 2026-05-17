@@ -44,6 +44,7 @@ CREATE TABLE verification_token (
 CREATE TABLE waitlist (
   id TEXT NOT NULL DEFAULT gen_random_uuid()::text,
   email TEXT NOT NULL UNIQUE,
+  accepted BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (id)
 );
