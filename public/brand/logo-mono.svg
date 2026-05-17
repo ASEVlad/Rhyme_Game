@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 256" width="800" height="256" role="img" aria-label="rhymefor.fun">
+  <g transform="translate(24 32) scale(0.75)">
+    <circle cx="167" cy="128" r="56" fill="none" stroke="#ffffff" stroke-width="14"/>
+    <circle cx="89" cy="128" r="56" fill="none" stroke="#ffffff" stroke-width="14"/>
+    <path d="M 142.46 178.31 A 56 56 0 0 0 117.55 154.30"
+          fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+  </g>
+
+  <text x="244" y="152"
+        font-family="Manrope, system-ui, sans-serif"
+        font-weight="600"
+        font-size="92"
+        letter-spacing="-2"
+        fill="#ffffff"
+        dominant-baseline="alphabetic">rhymefor.fun</text>
+</svg>
