@@ -95,7 +95,7 @@ export async function fetchRhymeGroups(opts: FetchOpts = {}): Promise<RhymeGroup
     const tool = buildTool(lang, scheme.wordsPerGroup);
     const prompt = buildPrompt(lang, count, theme, difficulty.promptHint, scheme.wordsPerGroup, opts.exclude);
     const response: any = await client.messages.create({
-      model: 'claude-opus-4-7',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       temperature: 1,
       tools: [tool],
