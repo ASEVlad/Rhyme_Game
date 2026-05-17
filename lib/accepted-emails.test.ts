@@ -8,7 +8,7 @@ vi.mock('@/lib/db', () => ({
 import { pool } from '@/lib/db';
 import { isEmailAccepted } from './accepted-emails';
 
-const mockQuery = (pool as { query: ReturnType<typeof vi.fn> }).query;
+const mockQuery = (pool as unknown as { query: ReturnType<typeof vi.fn> }).query;
 
 describe('isEmailAccepted', () => {
   beforeEach(() => {
