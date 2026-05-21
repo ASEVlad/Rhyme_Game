@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { fetchRhymeGroups } from '@/lib/rhymes';
+import { fetchRhymeBlocks } from '@/lib/rhymes';
 import { getLanguage } from '@/lib/languages';
 import type { RhymeExclusion } from '@/lib/languages';
 import { getDifficulty } from '@/lib/difficulties';
@@ -25,13 +25,8 @@ export async function POST(request: Request) {
         .filter((w: unknown) => typeof w === 'string')
         .slice(0, 60);
     }
-    if (Array.isArray(body?.exclude?.endings)) {
-      exclude.endings = body.exclude.endings
-        .filter((e: unknown) => typeof e === 'string')
-        .slice(0, 20);
-    }
     if (typeof body?.count === 'number' && Number.isFinite(body.count)) {
-      count = Math.max(1, Math.min(40, Math.floor(body.count)));
+      count = Math.max(1, Math.min(25, Math.floor(body.count)));
     }
   } catch {
     // No body or malformed JSON — use defaults.
@@ -40,10 +35,10 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.warn('[rhymes] ANTHROPIC_API_KEY not set — using fallback groups');
+    console.warn('[rhymes] ANTHROPIC_API_KEY not set — using fallback blocks');
   }
   const client = apiKey ? new Anthropic({ apiKey }) : undefined;
-  const groups = await fetchRhymeGroups({
+  const blocks = await fetchRhymeBlocks({
     client,
     language: lang.id,
     exclude,
@@ -51,5 +46,5 @@ export async function POST(request: Request) {
     schemeId: getRhymeScheme(rawSchemeId).id,
     count,
   });
-  return NextResponse.json({ groups });
+  return NextResponse.json({ blocks });
 }

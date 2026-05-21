@@ -8,15 +8,14 @@ import { DEFAULT_LANGUAGE, type LanguageId } from '@/lib/languages';
 import { DEFAULT_DIFFICULTY, type DifficultyId } from '@/lib/difficulties';
 import { DEFAULT_SCHEME, getRhymeScheme, type RhymeSchemeId } from '@/lib/rhyme-schemes';
 import { computeRhymeFillPlan } from '@/lib/rhyme-fill';
-import { sampleGroups } from '@/lib/rhymes';
-import type { RhymeGroup } from '@/lib/fallback-groups';
+import { sampleBlocks } from '@/lib/rhymes';
+import type { RhymeBlock } from '@/lib/fallback-groups';
 import { useBeat } from '@/hooks/useBeat';
 import { useGameLoop, type GameTick } from '@/hooks/useGameLoop';
 import { addRecentBeat } from '@/lib/recent-beats';
 import type { RhymeColor } from '@/lib/colors';
 
 const MAX_EXCLUDED_WORDS = 60;
-const MAX_EXCLUDED_ENDINGS = 20;
 
 const PULSE_COLOR: Record<RhymeColor, string> = {
   yellow: 'rgba(255,212,71,0.10)',
@@ -52,7 +51,6 @@ export function useGamePhases(): GamePhasesReturn {
   const [bars, setBars] = useState<Bar[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const usedWordsRef = useRef<string[]>([]);
-  const usedEndingsRef = useRef<string[]>([]);
 
   const beatHandle = useBeat(activeBeat ?? undefined);
 
@@ -76,7 +74,6 @@ export function useGamePhases(): GamePhasesReturn {
       duration: beatHandle.duration,
       bpm: activeBeat.bpm,
       startOffset: activeBeat.startOffset ?? 0,
-      wordsPerGroup: scheme.wordsPerGroup,
     });
 
     (async () => {
@@ -91,7 +88,7 @@ export function useGamePhases(): GamePhasesReturn {
             count: plan.count,
             exclude: {
               words: usedWordsRef.current,
-              endings: usedEndingsRef.current,
+              endings: [],
             },
           }),
         });
@@ -99,23 +96,18 @@ export function useGamePhases(): GamePhasesReturn {
         const json = await res.json();
         if (cancelled) return;
 
-        const allGroups: RhymeGroup[] = json.groups ?? [];
-        const picked = sampleGroups(allGroups, allGroups.length); // shuffle, keep all
+        const allBlocks: RhymeBlock[] = json.blocks ?? [];
+        const picked = sampleBlocks(allBlocks, allBlocks.length); // shuffle, keep all
         const flat = flattenBars(picked, scheme);
         const newBars = flat.slice(0, Math.max(0, plan.targetBars));
 
-        const renderedGroupIndices = new Set(newBars.map(b => b.groupIndex));
-        const renderedGroups = picked.filter((_, i) => renderedGroupIndices.has(i));
-        const roundWords = renderedGroups.flatMap(g => g.words);
-        const roundEndings = renderedGroups.map(g => g.ending);
+        const renderedBlockIndices = new Set(newBars.map(b => b.blockIndex));
+        const renderedBlocks = picked.filter((_, i) => renderedBlockIndices.has(i));
+        const roundWords = renderedBlocks.flatMap(b => b.words).filter(w => w.length > 0);
         usedWordsRef.current = [
           ...usedWordsRef.current,
           ...roundWords,
         ].slice(-MAX_EXCLUDED_WORDS);
-        usedEndingsRef.current = [
-          ...usedEndingsRef.current,
-          ...roundEndings,
-        ].slice(-MAX_EXCLUDED_ENDINGS);
 
         setBars(newBars);
         try {

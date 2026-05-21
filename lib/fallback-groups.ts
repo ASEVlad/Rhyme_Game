@@ -1,6 +1,11 @@
 import type { LanguageId } from './languages';
+import type { RhymeScheme } from './rhyme-schemes';
 
+/** Internal fallback data shape — each entry is a pool of words that rhyme. */
 export type RhymeGroup = { ending: string; words: string[] };
+
+/** A 4-bar block. `words[i]` is '' for an X slot in the scheme pattern. */
+export type RhymeBlock = { words: string[] };
 
 export const FALLBACK_GROUPS_BY_LANGUAGE: Record<LanguageId, RhymeGroup[]> = {
   uk: [
@@ -66,3 +71,37 @@ export const FALLBACK_GROUPS_BY_LANGUAGE: Record<LanguageId, RhymeGroup[]> = {
     { ending: '-ucha',  words: ['mucha', 'ucha', 'ducha', 'słucha'] },
   ],
 };
+
+/**
+ * Build fallback 4-bar blocks for a given language and scheme.
+ * Uses the FALLBACK_GROUPS rhyme pools to fill A/B slots; X slots become ''.
+ */
+export function buildFallbackBlocks(
+  language: LanguageId,
+  scheme: RhymeScheme,
+  count: number,
+): RhymeBlock[] {
+  const groups = FALLBACK_GROUPS_BY_LANGUAGE[language];
+  const pattern = scheme.pattern;
+  const blocks: RhymeBlock[] = [];
+  for (let i = 0; i < count; i++) {
+    const aPool = groups[(i * 2) % groups.length].words;
+    const bPool = groups[(i * 2 + 1) % groups.length].words;
+    let aIdx = 0;
+    let bIdx = 0;
+    const words: string[] = [];
+    for (const ch of pattern) {
+      if (ch === 'A') {
+        words.push(aPool[aIdx % aPool.length]);
+        aIdx++;
+      } else if (ch === 'B') {
+        words.push(bPool[bIdx % bPool.length]);
+        bIdx++;
+      } else {
+        words.push('');
+      }
+    }
+    blocks.push({ words });
+  }
+  return blocks;
+}

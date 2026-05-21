@@ -59,7 +59,7 @@ export function WordGrid({ bars, activeRow, ballX, windowSize = 4, introRows = 2
               const isWordCell  = col === 3;
               const cellActive  = isActive && col === activeCol;
 
-              if (isWordCell && bar && index >= introRows) {
+              if (isWordCell && bar && bar.word && index >= introRows) {
                 return (
                   <div
                     key={col}

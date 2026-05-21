@@ -1,41 +1,33 @@
-import type { RhymeGroup } from './fallback-groups';
+import type { RhymeBlock } from './fallback-groups';
 import { RHYME_COLORS, type RhymeColor } from './colors';
 import type { RhymeScheme } from './rhyme-schemes';
 
 export type Bar = {
+  /** Empty string for X / silent slots. */
   word: string;
   color: RhymeColor;
-  groupIndex: number;
+  blockIndex: number;
 };
 
-export function flattenBars(groups: RhymeGroup[], scheme?: RhymeScheme): Bar[] {
-  if (!scheme?.interleave) {
-    const bars: Bar[] = [];
-    groups.forEach((g, i) => {
-      const color = RHYME_COLORS[i % RHYME_COLORS.length];
-      g.words.forEach(word => bars.push({ word, color, groupIndex: i }));
-    });
-    return bars;
-  }
-
+/**
+ * Expand 4-bar blocks into a flat list of bars, one bar per pattern position.
+ * X slots become silent bars (word=''). Color cycles per (block, rhyme-family).
+ */
+export function flattenBars(blocks: RhymeBlock[], scheme: RhymeScheme): Bar[] {
+  const pattern = scheme.pattern;
   const bars: Bar[] = [];
-  let pairIndex = 0;
-  for (let i = 0; i + 1 < groups.length; i += 2) {
-    const g0 = groups[i];
-    const g1 = groups[i + 1];
-    const color0 = RHYME_COLORS[(pairIndex * 2) % RHYME_COLORS.length];
-    const color1 = RHYME_COLORS[(pairIndex * 2 + 1) % RHYME_COLORS.length];
-    const maxLen = Math.max(g0.words.length, g1.words.length);
-    for (let w = 0; w < maxLen; w++) {
-      if (w < g0.words.length) bars.push({ word: g0.words[w], color: color0, groupIndex: i });
-      if (w < g1.words.length) bars.push({ word: g1.words[w], color: color1, groupIndex: i + 1 });
+  blocks.forEach((block, blockIdx) => {
+    for (let i = 0; i < 4; i++) {
+      const letter = pattern[i] ?? 'A';
+      const word = block.words[i] ?? '';
+      if (letter === 'X' || !word) {
+        bars.push({ word: '', color: 'yellow', blockIndex: blockIdx });
+        continue;
+      }
+      const familyIdx = letter === 'A' ? 0 : 1;
+      const color = RHYME_COLORS[(blockIdx * 2 + familyIdx) % RHYME_COLORS.length];
+      bars.push({ word, color, blockIndex: blockIdx });
     }
-    pairIndex++;
-  }
-  if (groups.length % 2 === 1) {
-    const last = groups[groups.length - 1];
-    const color = RHYME_COLORS[(groups.length - 1) % RHYME_COLORS.length];
-    last.words.forEach(word => bars.push({ word, color, groupIndex: groups.length - 1 }));
-  }
+  });
   return bars;
 }
