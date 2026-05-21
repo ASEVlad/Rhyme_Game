@@ -1,4 +1,4 @@
-export type RhymeSchemeId = 'AABB' | 'ABAB' | 'ABBA' | 'AAAA' | 'AAXX' | 'AXAX' | 'AXXA';
+export type RhymeSchemeId = 'AABB' | 'ABAB' | 'ABBA' | 'AAAA' | 'AAXX' | 'AXAX' | 'AXXA' | 'AXAA';
 
 /**
  * A scheme describes a 4-bar block where each character of `pattern` is a
@@ -20,6 +20,7 @@ export const RHYME_SCHEMES: readonly RhymeScheme[] = [
   { id: 'AAXX', label: 'AAXX', pattern: 'AAXX', blockCount: 8 },
   { id: 'AXAX', label: 'AXAX', pattern: 'AXAX', blockCount: 8 },
   { id: 'AXXA', label: 'AXXA', pattern: 'AXXA', blockCount: 8 },
+  { id: 'AXAA', label: 'AXAA', pattern: 'AXAA', blockCount: 8 },
 ];
 
 export const DEFAULT_SCHEME: RhymeSchemeId = 'AABB';

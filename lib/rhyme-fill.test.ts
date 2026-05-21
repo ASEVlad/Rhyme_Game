@@ -20,14 +20,14 @@ describe('computeRhymeFillPlan', () => {
     expect(plan.count).toBe(6);
   });
 
-  it('clamps count to the [4, 25] range', () => {
+  it('clamps count to the [4, 50] range', () => {
     // tiny song → MIN_BLOCKS floor
     expect(
       computeRhymeFillPlan({ duration: 10, bpm: 90, startOffset: 0 }).count
     ).toBe(4);
-    // 90s × 240bpm = 90 bars → ceil(90/4) = 23 blocks (within cap)
-    const big = computeRhymeFillPlan({ duration: 90, bpm: 240, startOffset: 0 });
-    expect(big.count).toBeLessThanOrEqual(25);
+    // 180s × 240bpm = 180 bars → ceil(180/4) = 45 blocks (within cap)
+    const big = computeRhymeFillPlan({ duration: 300, bpm: 240, startOffset: 0 });
+    expect(big.count).toBeLessThanOrEqual(50);
   });
 
   it('returns 0 targetBars (not negative) when startOffset >= duration', () => {
@@ -35,18 +35,18 @@ describe('computeRhymeFillPlan', () => {
     expect(plan.targetBars).toBe(0);
   });
 
-  it('caps targetBars at MAX_RHYME_SECONDS (90s) for long songs', () => {
-    // 240s playable would give 90 bars uncapped; with 90s cap: floor(90*90/240) = 33
+  it('caps targetBars at MAX_RHYME_SECONDS (180s) for long songs', () => {
+    // 240s playable would give 90 bars uncapped; with 180s cap: floor(180*90/240) = 67
     const plan = computeRhymeFillPlan({ duration: 240, bpm: 90, startOffset: 0 });
-    expect(plan.targetBars).toBe(33);
-    // ceil(33 / 4) = 9 blocks
-    expect(plan.count).toBe(9);
+    expect(plan.targetBars).toBe(67);
+    // ceil(67 / 4) = 17 blocks
+    expect(plan.count).toBe(17);
   });
 
   it('applies cap after startOffset subtraction', () => {
-    // 300s duration - 4s offset = 296s playable, capped to 90 → floor(90*90/240) = 33 bars
-    const plan = computeRhymeFillPlan({ duration: 300, bpm: 90, startOffset: 4 });
-    expect(plan.targetBars).toBe(33);
+    // 400s duration - 4s offset = 396s playable, capped to 180 → floor(180*90/240) = 67 bars
+    const plan = computeRhymeFillPlan({ duration: 400, bpm: 90, startOffset: 4 });
+    expect(plan.targetBars).toBe(67);
   });
 
   it('does not affect songs shorter than the cap', () => {

@@ -11,9 +11,9 @@ export type FillPlan = {
 };
 
 const MIN_BLOCKS = 4;
-const MAX_BLOCKS = 25;
+const MAX_BLOCKS = 50;
 const BARS_PER_BLOCK = 4;
-const MAX_RHYME_SECONDS = 90;
+const MAX_RHYME_SECONDS = 180;
 
 export function computeRhymeFillPlan(input: FillPlanInput): FillPlan {
   const playable = Math.max(0, input.duration - input.startOffset);

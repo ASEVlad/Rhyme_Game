@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         .slice(0, 60);
     }
     if (typeof body?.count === 'number' && Number.isFinite(body.count)) {
-      count = Math.max(1, Math.min(25, Math.floor(body.count)));
+      count = Math.max(1, Math.min(50, Math.floor(body.count)));
     }
   } catch {
     // No body or malformed JSON — use defaults.

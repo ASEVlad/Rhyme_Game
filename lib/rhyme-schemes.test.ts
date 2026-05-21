@@ -27,9 +27,9 @@ describe('getRhymeScheme', () => {
 });
 
 describe('RHYME_SCHEMES', () => {
-  it('exposes the 7 expected ids', () => {
+  it('exposes the 8 expected ids', () => {
     expect(RHYME_SCHEMES.map(s => s.id)).toEqual([
-      'AABB', 'ABAB', 'ABBA', 'AAAA', 'AAXX', 'AXAX', 'AXXA',
+      'AABB', 'ABAB', 'ABBA', 'AAAA', 'AAXX', 'AXAX', 'AXXA', 'AXAA',
     ]);
   });
 
@@ -56,6 +56,7 @@ describe('nonEmptySlotsPerBlock', () => {
     expect(nonEmptySlotsPerBlock(getRhymeScheme('AAXX'))).toBe(2);
     expect(nonEmptySlotsPerBlock(getRhymeScheme('AXAX'))).toBe(2);
     expect(nonEmptySlotsPerBlock(getRhymeScheme('AXXA'))).toBe(2);
+    expect(nonEmptySlotsPerBlock(getRhymeScheme('AXAA'))).toBe(3);
   });
 });
 
