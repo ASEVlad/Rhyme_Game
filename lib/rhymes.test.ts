@@ -6,41 +6,24 @@ import { getRhymeScheme } from './rhyme-schemes';
 
 type Behavior = 'good' | 'malformed' | 'throws' | 'empty';
 
-function mockClient(behavior: Behavior) {
-  const create = vi.fn(async () => {
+function mockGenerate(behavior: Behavior) {
+  return vi.fn(async (_call: { prompt: string; tool: { name: string; description: string }; temperature: number }) => {
     if (behavior === 'throws') throw new Error('network down');
-    if (behavior === 'malformed') {
-      return { content: [{ type: 'text', text: 'not json' }] };
-    }
-    if (behavior === 'empty') {
-      return {
-        content: [
-          { type: 'tool_use', name: 'rhyme_blocks', input: { blocks: [] } },
-        ],
-      };
-    }
+    if (behavior === 'malformed') return null; // generator couldn't produce a tool call
+    if (behavior === 'empty') return { blocks: [] };
     return {
-      content: [
-        {
-          type: 'tool_use',
-          name: 'rhyme_blocks',
-          input: {
-            blocks: [
-              ['кіт', 'літ', 'піт', 'цвіт'],
-              ['хата', 'лата', 'вата', 'плата'],
-            ],
-          },
-        },
+      blocks: [
+        ['кіт', 'літ', 'піт', 'цвіт'],
+        ['хата', 'лата', 'вата', 'плата'],
       ],
     };
   });
-  return { messages: { create } } as any;
 }
 
 describe('fetchRhymeBlocks', () => {
   it('returns blocks from a successful tool-use response', async () => {
-    const client = mockClient('good');
-    const blocks = await fetchRhymeBlocks({ client, language: 'uk' });
+    const generate = mockGenerate('good');
+    const blocks = await fetchRhymeBlocks({ generate, language: 'uk' });
     expect(blocks).toEqual([
       { words: ['кіт', 'літ', 'піт', 'цвіт'] },
       { words: ['хата', 'лата', 'вата', 'плата'] },
@@ -48,61 +31,57 @@ describe('fetchRhymeBlocks', () => {
   });
 
   it("uses the requested language's prompt template", async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'en' });
-    const call = client.messages.create.mock.calls[0][0];
-    const msg: string = call.messages[0].content;
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'en' });
+    const msg: string = generate.mock.calls[0][0].prompt;
     expect(msg).toContain('English');
     expect(msg).toContain('8 4-bar blocks'); // AABB default → blockCount=8
   });
 
   it('sets temperature to a random value in [0.4, 0.8)', async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'uk' });
-    const { temperature } = client.messages.create.mock.calls[0][0];
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'uk' });
+    const { temperature } = generate.mock.calls[0][0];
     expect(temperature).toBeGreaterThanOrEqual(0.4);
     expect(temperature).toBeLessThan(0.8);
   });
 
   it('includes excluded words in the prompt', async () => {
-    const client = mockClient('good');
+    const generate = mockGenerate('good');
     await fetchRhymeBlocks({
-      client,
+      generate,
       language: 'uk',
       exclude: { words: ['кіт', 'хата'], endings: [] },
     });
-    const msg: string = client.messages.create.mock.calls[0][0].messages[0].content;
+    const msg: string = generate.mock.calls[0][0].prompt;
     expect(msg).toContain('кіт');
     expect(msg).toContain('хата');
   });
 
   it('interpolates the language label into the tool description', async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'es' });
-    const call = client.messages.create.mock.calls[0][0];
-    expect(call.tools[0].description).toContain('Español');
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'es' });
+    expect(generate.mock.calls[0][0].tool.description).toContain('Español');
   });
 
   it('uses rhyme_blocks as tool name', async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'uk' });
-    const call = client.messages.create.mock.calls[0][0];
-    expect(call.tools[0].name).toBe('rhyme_blocks');
-    expect(call.tool_choice).toEqual({ type: 'tool', name: 'rhyme_blocks' });
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'uk' });
+    expect(generate.mock.calls[0][0].tool.name).toBe('rhyme_blocks');
   });
 
-  it('falls back to fallback blocks when the API throws', async () => {
+  it('falls back to fallback blocks when the generator throws', async () => {
     const blocks = await fetchRhymeBlocks({
-      client: mockClient('throws'),
+      generate: mockGenerate('throws'),
       language: 'de',
       schemeId: 'AABB',
     });
     expect(blocks).toEqual(buildFallbackBlocks('de', getRhymeScheme('AABB'), 8));
   });
 
-  it('falls back when no tool-use block is returned', async () => {
+  it('falls back when the generator returns no tool call', async () => {
     const blocks = await fetchRhymeBlocks({
-      client: mockClient('malformed'),
+      generate: mockGenerate('malformed'),
       language: 'pl',
       schemeId: 'AABB',
     });
@@ -111,55 +90,59 @@ describe('fetchRhymeBlocks', () => {
 
   it('falls back when blocks array is empty', async () => {
     const blocks = await fetchRhymeBlocks({
-      client: mockClient('empty'),
+      generate: mockGenerate('empty'),
       language: 'en',
       schemeId: 'AABB',
     });
     expect(blocks).toEqual(buildFallbackBlocks('en', getRhymeScheme('AABB'), 8));
   });
 
-  it("falls back to fallback blocks when no client is provided", async () => {
-    const blocks = await fetchRhymeBlocks({ language: 'es', schemeId: 'AABB' });
+  it('falls back to fallback blocks when the generator yields null', async () => {
+    const blocks = await fetchRhymeBlocks({
+      generate: async () => null,
+      language: 'es',
+      schemeId: 'AABB',
+    });
     expect(blocks).toEqual(buildFallbackBlocks('es', getRhymeScheme('AABB'), 8));
   });
 
   it('defaults to uk when language is missing or unknown', async () => {
-    const blocks = await fetchRhymeBlocks();
+    const blocks = await fetchRhymeBlocks({ generate: async () => null });
     expect(blocks).toEqual(buildFallbackBlocks('uk', getRhymeScheme('AABB'), 8));
   });
 
   it('maps expert difficultyId onto Difficulty: hard in the prompt', async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'en', difficultyId: 'expert' });
-    const msg: string = client.messages.create.mock.calls[0][0].messages[0].content;
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'en', difficultyId: 'expert' });
+    const msg: string = generate.mock.calls[0][0].prompt;
     expect(msg).toContain('Difficulty: hard');
   });
 
   it('maps beginner difficultyId onto Difficulty: easy in the prompt', async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'en', difficultyId: 'beginner' });
-    const msg: string = client.messages.create.mock.calls[0][0].messages[0].content;
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'en', difficultyId: 'beginner' });
+    const msg: string = generate.mock.calls[0][0].prompt;
     expect(msg).toContain('Difficulty: easy');
   });
 
   it('requests scheme.blockCount blocks by default', async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'en', schemeId: 'AAAA' });
-    const msg: string = client.messages.create.mock.calls[0][0].messages[0].content;
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'en', schemeId: 'AAAA' });
+    const msg: string = generate.mock.calls[0][0].prompt;
     expect(msg).toContain('8 4-bar blocks');
   });
 
   it('uses explicit count over scheme.blockCount when provided', async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'uk', schemeId: 'AABB', count: 12 });
-    const msg: string = client.messages.create.mock.calls[0][0].messages[0].content;
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'uk', schemeId: 'AABB', count: 12 });
+    const msg: string = generate.mock.calls[0][0].prompt;
     expect(msg).toContain('12 4-bar blocks');
   });
 
   it('passes the scheme pattern into the prompt', async () => {
-    const client = mockClient('good');
-    await fetchRhymeBlocks({ client, language: 'en', schemeId: 'AXAX' });
-    const msg: string = client.messages.create.mock.calls[0][0].messages[0].content;
+    const generate = mockGenerate('good');
+    await fetchRhymeBlocks({ generate, language: 'en', schemeId: 'AXAX' });
+    const msg: string = generate.mock.calls[0][0].prompt;
     expect(msg).toContain('AXAX');
   });
 });

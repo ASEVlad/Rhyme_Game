@@ -11,7 +11,6 @@
     "brand:export": "node scripts/export-brand.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.30.0",
     "@auth/pg-adapter": "^1.11.2",
     "framer-motion": "^12.38.0",
     "music-tempo": "^1.0.3",

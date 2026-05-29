@@ -2,24 +2,28 @@ import { execFileSync } from 'child_process';
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { callGeminiTool, type GeminiTool } from '@/lib/gemini';
 import { isYouTubeUrl, hashUrl } from '@/lib/yt-beat';
 import type { Beat, BeatCategory } from '@/lib/beats';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 const BEATS_DIR = join(process.cwd(), 'public', 'beats');
 const YT_PREFIX = 'yt-';
 const CATALOG_PATH = join(BEATS_DIR, 'yt-catalog.json');
 const KEEP_N = 200;
 
+// Cheap tasks: Flash-Lite is plenty; fall back to Flash if it's down.
+const BEAT_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+
 const VALID_CATEGORIES: BeatCategory[] = ['boom-bap', 'trap', 'jazz', 'lo-fi', 'drill', 'other'];
 
-const GENRE_TOOL = {
+const GENRE_TOOL: GeminiTool = {
   name: 'beat_category',
   description: 'Return the most likely genre category for a beat.',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: 'object',
     properties: {
       category: { type: 'string', enum: VALID_CATEGORIES },
     },
@@ -27,11 +31,11 @@ const GENRE_TOOL = {
   },
 };
 
-const TITLE_TOOL = {
+const TITLE_TOOL: GeminiTool = {
   name: 'beat_title',
   description: 'Return a short clean title for a rap beat.',
-  input_schema: {
-    type: 'object' as const,
+  parameters: {
+    type: 'object',
     properties: {
       title: { type: 'string', description: '2–5 words, no SEO filler' },
     },
@@ -87,30 +91,16 @@ function detectBpm(filepath: string): { bpm: number; bpmFallback: boolean } {
 }
 
 async function detectGenre(title: string, bpm: number): Promise<BeatCategory> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return 'other';
-  try {
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 64,
-      tools: [GENRE_TOOL],
-      tool_choice: { type: 'tool', name: 'beat_category' },
-      messages: [{
-        role: 'user',
-        content: `Given a beat titled "${title}" with a detected BPM of ${bpm}, suggest the most likely genre category.`,
-      }],
-    });
-    const block = response.content.find(
-      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'beat_category'
-    );
-    const category = (block?.input as { category?: string })?.category;
-    return VALID_CATEGORIES.includes(category as BeatCategory)
-      ? (category as BeatCategory)
-      : 'other';
-  } catch {
-    return 'other';
-  }
+  const args = await callGeminiTool({
+    prompt: `Given a beat titled "${title}" with a detected BPM of ${bpm}, suggest the most likely genre category.`,
+    tool: GENRE_TOOL,
+    models: BEAT_MODELS,
+    maxTokens: 64,
+  });
+  const category = (args as { category?: string } | null)?.category;
+  return VALID_CATEGORIES.includes(category as BeatCategory)
+    ? (category as BeatCategory)
+    : 'other';
 }
 
 async function generateTitle(
@@ -119,37 +109,23 @@ async function generateTitle(
   bpm: number,
   genre: BeatCategory,
 ): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return rawTitle.slice(0, 80);
-  try {
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 128,
-      tools: [TITLE_TOOL],
-      tool_choice: { type: 'tool', name: 'beat_title' },
-      messages: [{
-        role: 'user',
-        content: [
-          'Clean up this YouTube beat title into 2–5 words.',
-          'Strip: FREE, SOLD, year numbers, "Type Beat", "Instrumental", "Rap Beats", pipe-separated suffixes, bracketed tags.',
-          'Keep: artist names (J Cole, Kendrick), mood words (dark, chill), genre words (boom bap, trap, jazz).',
-          'If the description adds useful mood/vibe info, use it.',
-          '',
-          `YouTube title: ${rawTitle}`,
-          `Description (first 500 chars): ${description}`,
-          `BPM: ${bpm}  Genre: ${genre}`,
-        ].join('\n'),
-      }],
-    });
-    const block = response.content.find(
-      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'beat_title'
-    );
-    const title = (block?.input as { title?: string })?.title;
-    return typeof title === 'string' && title.trim() ? title.trim() : rawTitle.slice(0, 80);
-  } catch {
-    return rawTitle.slice(0, 80);
-  }
+  const args = await callGeminiTool({
+    prompt: [
+      'Clean up this YouTube beat title into 2–5 words.',
+      'Strip: FREE, SOLD, year numbers, "Type Beat", "Instrumental", "Rap Beats", pipe-separated suffixes, bracketed tags.',
+      'Keep: artist names (J Cole, Kendrick), mood words (dark, chill), genre words (boom bap, trap, jazz).',
+      'If the description adds useful mood/vibe info, use it.',
+      '',
+      `YouTube title: ${rawTitle}`,
+      `Description (first 500 chars): ${description}`,
+      `BPM: ${bpm}  Genre: ${genre}`,
+    ].join('\n'),
+    tool: TITLE_TOOL,
+    models: BEAT_MODELS,
+    maxTokens: 128,
+  });
+  const title = (args as { title?: string } | null)?.title;
+  return typeof title === 'string' && title.trim() ? title.trim() : rawTitle.slice(0, 80);
 }
 
 export async function POST(req: NextRequest) {

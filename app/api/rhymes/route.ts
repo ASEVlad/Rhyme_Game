@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { fetchRhymeBlocks } from '@/lib/rhymes';
+import { getGeminiKeys } from '@/lib/gemini';
 import { getLanguage } from '@/lib/languages';
 import type { RhymeExclusion } from '@/lib/languages';
 import { getDifficulty } from '@/lib/difficulties';
@@ -33,13 +33,10 @@ export async function POST(request: Request) {
   }
   const lang = getLanguage(rawLanguage);
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.warn('[rhymes] ANTHROPIC_API_KEY not set — using fallback blocks');
+  if (!getGeminiKeys().length) {
+    console.warn('[rhymes] no GEMINI_API_KEY set — using fallback blocks');
   }
-  const client = apiKey ? new Anthropic({ apiKey }) : undefined;
   const blocks = await fetchRhymeBlocks({
-    client,
     language: lang.id,
     exclude,
     difficultyId: getDifficulty(rawDifficultyId).id,
