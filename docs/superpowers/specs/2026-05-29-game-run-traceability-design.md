@@ -27,9 +27,19 @@ Key facts that shape the design:
 
 - Every run is authenticated. `/play`, `/yt`, `/calibrate` are login-gated in
   [middleware.ts](../../../middleware.ts), so the session is always present.
+- Identity key is **email, not user id.** [auth.config.ts](../../../auth.config.ts)
+  uses `session: { strategy: 'jwt' }` with no callback surfacing `session.user.id`,
+  and the Credentials provider ([auth.ts](../../../auth.ts)) returns `{ id: email }`
+  without persisting a `users` row — so a FK to `users(id)` would fail and silently
+  drop the audit row. `session.user.email` is guaranteed for both providers (the
+  Google `signIn` callback rejects emailless logins). The app is already email-keyed
+  (waitlist, accepted-emails), so we key the audit on email too.
 - `/api/rhymes` does **not** currently know which beat is playing — it only
   receives the options. Capturing "which track" requires the client to send beat
   metadata.
+- Local beats omit the `source` field ([lib/beats.ts](../../../lib/beats.ts)
+  declares `source?: 'youtube'`); only YT-downloaded beats set it. Missing source
+  is normalized to `'local'`.
 - `fetchRhymeBlocks` silently falls back to canned blocks when Gemini fails or no
   key is set. Whether a run used the fallback is the single most useful
   rhyme-quality signal, so it must be captured.
@@ -62,8 +72,7 @@ applied on prod:
 ```sql
 CREATE TABLE game_runs (
   id            TEXT NOT NULL DEFAULT gen_random_uuid()::text,
-  user_id       TEXT REFERENCES users(id) ON DELETE SET NULL,
-  user_email    TEXT,            -- snapshot, so the admin page reads "who" without a join
+  user_email    TEXT,            -- identity key (see Background); nullable for robustness
   beat_id       TEXT,
   beat_title    TEXT,
   beat_bpm      REAL,
@@ -79,13 +88,14 @@ CREATE TABLE game_runs (
   PRIMARY KEY (id)
 );
 CREATE INDEX game_runs_created_at_idx ON game_runs (created_at DESC);
-CREATE INDEX game_runs_user_id_idx ON game_runs (user_id);
+CREATE INDEX game_runs_user_email_idx ON game_runs (user_email);
 ```
 
 - One row **per generation call**. `playAgain` re-fetches rhymes, so it logs a new
   row — the natural grain ("a run" = "a generation").
-- `ON DELETE SET NULL` plus the `user_email` snapshot keep the audit trail intact
-  if a user is deleted.
+- No FK to `users` — email is the identity (see Background). Join on email if the
+  `users` row is ever needed. `user_email` is nullable so a logging insert never
+  fails on a missing email (best-effort); in practice it is always present.
 - `blocks` is stored as-is; a run is small, JSONB is fine.
 
 ## Components
@@ -94,7 +104,6 @@ CREATE INDEX game_runs_user_id_idx ON game_runs (user_id);
 
 ```ts
 export type GameRunRecord = {
-  userId: string | null;
   userEmail: string | null;
   beat: { id, title, bpm, category, source } | null;  // all fields optional/nullable
   language: string;
@@ -124,8 +133,8 @@ export async function logGameRun(record: GameRunRecord): Promise<void>;
 
 - Parse optional beat fields from the body: `beat.id`, `beat.title`, `beat.bpm`,
   `beat.category`, `beat.source` — validate types, bound string lengths, ignore
-  anything malformed (store null).
-- After `fetchRhymeBlocks`, call `auth()` to get `session.user` (id + email).
+  anything malformed (store null). Normalize a missing `beat.source` to `'local'`.
+- After `fetchRhymeBlocks`, call `auth()` and read `session?.user?.email`.
 - Call `logGameRun(...)`, awaited but wrapped so it can never break or noticeably
   delay the rhymes response (the insert is a single indexed write on a long-running
   Node server).
