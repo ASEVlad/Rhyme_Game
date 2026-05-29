@@ -55,7 +55,7 @@ describe('Setup — desktop inline beat list', () => {
     expect(startPreviewMock.mock.calls[0][0].id).toBe('b2');
   });
 
-  it('renders the ▮▮ now-playing indicator on the previewing row', () => {
+  it('renders the now-playing indicator on the previewing row', () => {
     previewingIdValue = 'b1';
     render(
       <Setup
@@ -67,8 +67,8 @@ describe('Setup — desktop inline beat list', () => {
     );
     const list = screen.getByTestId('desktop-beat-list');
     const row = within(list).getByRole('button', { name: /Beat One/i });
-    expect(within(row).getByText('▮▮')).toBeInTheDocument();
+    expect(within(row).getByTestId('now-playing')).toBeInTheDocument();
     const otherRow = within(list).getByRole('button', { name: /Beat Two/i });
-    expect(within(otherRow).queryByText('▮▮')).not.toBeInTheDocument();
+    expect(within(otherRow).queryByTestId('now-playing')).not.toBeInTheDocument();
   });
 });
