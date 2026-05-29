@@ -27,8 +27,13 @@ export async function releaseWaitlistBatch(limit: number): Promise<ReleaseResult
       failed.push(email);
       continue;
     }
-    await pool.query(`UPDATE waitlist SET accepted = true WHERE email = $1`, [email]);
-    accepted.push(email);
+    try {
+      await pool.query(`UPDATE waitlist SET accepted = true WHERE email = $1`, [email]);
+      accepted.push(email);
+    } catch (err) {
+      console.warn('[release-waitlist] UPDATE failed after email sent:', email, err);
+      failed.push(email);
+    }
   }
 
   const { rows: countRows } = await pool.query<{ count: number }>(

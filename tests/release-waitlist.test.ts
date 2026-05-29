@@ -72,3 +72,17 @@ it('returns empty when the pool is undefined', async () => {
   vi.doUnmock('@/lib/db');
   vi.resetModules();
 });
+
+it('treats an UPDATE failure (after a sent email) as a failed row, not a throw', async () => {
+  query
+    .mockResolvedValueOnce({ rows: [{ email: 'a@b.com' }] }) // SELECT
+    .mockRejectedValueOnce(new Error('db down')) // UPDATE rejects
+    .mockResolvedValueOnce({ rows: [{ count: 1 }] }); // remaining count
+  sendAcceptedEmail.mockResolvedValue(true);
+
+  const result = await releaseWaitlistBatch(10);
+
+  expect(result.accepted).toEqual([]);
+  expect(result.failed).toEqual(['a@b.com']);
+  expect(result.remaining).toBe(1);
+});
