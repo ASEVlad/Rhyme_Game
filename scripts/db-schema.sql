@@ -48,3 +48,23 @@ CREATE TABLE waitlist (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (id)
 );
+
+CREATE TABLE game_runs (
+  id            TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  user_email    TEXT,
+  beat_id       TEXT,
+  beat_title    TEXT,
+  beat_bpm      REAL,
+  beat_category TEXT,
+  beat_source   TEXT,            -- 'local' | 'youtube'
+  language      TEXT NOT NULL,
+  difficulty    TEXT NOT NULL,
+  scheme        TEXT NOT NULL,
+  block_count   INTEGER,
+  used_fallback BOOLEAN,
+  blocks        JSONB NOT NULL,  -- the generated RhymeBlock[]
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (id)
+);
+CREATE INDEX game_runs_created_at_idx ON game_runs (created_at DESC);
+CREATE INDEX game_runs_user_email_idx ON game_runs (user_email);
