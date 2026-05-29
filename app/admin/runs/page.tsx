@@ -38,7 +38,7 @@ async function recentRuns(): Promise<RunRow[]> {
 
 function summarizeBlocks(blocks: { words: string[] }[]): string {
   return blocks
-    .map(b => b.words.filter(Boolean).join(' / '))
+    .map(b => (b?.words ?? []).filter(Boolean).join(' / '))
     .join('  |  ');
 }
 
