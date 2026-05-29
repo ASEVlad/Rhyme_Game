@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   if (!getGeminiKeys().length) {
     console.warn('[rhymes] no GEMINI_API_KEY set — using fallback blocks');
   }
-  const blocks = await fetchRhymeBlocks({
+  const { blocks } = await fetchRhymeBlocks({
     language: lang.id,
     exclude,
     difficultyId: getDifficulty(rawDifficultyId).id,

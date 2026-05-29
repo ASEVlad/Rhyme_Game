@@ -23,11 +23,12 @@ function mockGenerate(behavior: Behavior) {
 describe('fetchRhymeBlocks', () => {
   it('returns blocks from a successful tool-use response', async () => {
     const generate = mockGenerate('good');
-    const blocks = await fetchRhymeBlocks({ generate, language: 'uk' });
+    const { blocks, usedFallback } = await fetchRhymeBlocks({ generate, language: 'uk' });
     expect(blocks).toEqual([
       { words: ['кіт', 'літ', 'піт', 'цвіт'] },
       { words: ['хата', 'лата', 'вата', 'плата'] },
     ]);
+    expect(usedFallback).toBe(false);
   });
 
   it("uses the requested language's prompt template", async () => {
@@ -71,44 +72,49 @@ describe('fetchRhymeBlocks', () => {
   });
 
   it('falls back to fallback blocks when the generator throws', async () => {
-    const blocks = await fetchRhymeBlocks({
+    const { blocks, usedFallback } = await fetchRhymeBlocks({
       generate: mockGenerate('throws'),
       language: 'de',
       schemeId: 'AABB',
     });
     expect(blocks).toEqual(buildFallbackBlocks('de', getRhymeScheme('AABB'), 8));
+    expect(usedFallback).toBe(true);
   });
 
   it('falls back when the generator returns no tool call', async () => {
-    const blocks = await fetchRhymeBlocks({
+    const { blocks, usedFallback } = await fetchRhymeBlocks({
       generate: mockGenerate('malformed'),
       language: 'pl',
       schemeId: 'AABB',
     });
     expect(blocks).toEqual(buildFallbackBlocks('pl', getRhymeScheme('AABB'), 8));
+    expect(usedFallback).toBe(true);
   });
 
   it('falls back when blocks array is empty', async () => {
-    const blocks = await fetchRhymeBlocks({
+    const { blocks, usedFallback } = await fetchRhymeBlocks({
       generate: mockGenerate('empty'),
       language: 'en',
       schemeId: 'AABB',
     });
     expect(blocks).toEqual(buildFallbackBlocks('en', getRhymeScheme('AABB'), 8));
+    expect(usedFallback).toBe(true);
   });
 
   it('falls back to fallback blocks when the generator yields null', async () => {
-    const blocks = await fetchRhymeBlocks({
+    const { blocks, usedFallback } = await fetchRhymeBlocks({
       generate: async () => null,
       language: 'es',
       schemeId: 'AABB',
     });
     expect(blocks).toEqual(buildFallbackBlocks('es', getRhymeScheme('AABB'), 8));
+    expect(usedFallback).toBe(true);
   });
 
   it('defaults to uk when language is missing or unknown', async () => {
-    const blocks = await fetchRhymeBlocks({ generate: async () => null });
+    const { blocks, usedFallback } = await fetchRhymeBlocks({ generate: async () => null });
     expect(blocks).toEqual(buildFallbackBlocks('uk', getRhymeScheme('AABB'), 8));
+    expect(usedFallback).toBe(true);
   });
 
   it('maps expert difficultyId onto Difficulty: hard in the prompt', async () => {

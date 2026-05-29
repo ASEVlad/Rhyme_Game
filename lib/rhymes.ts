@@ -93,12 +93,17 @@ export function sampleBlocks(blocks: RhymeBlock[], n: number): RhymeBlock[] {
   return copy.slice(0, n);
 }
 
-export async function fetchRhymeBlocks(opts: FetchOpts = {}): Promise<RhymeBlock[]> {
+export type FetchResult = { blocks: RhymeBlock[]; usedFallback: boolean };
+
+export async function fetchRhymeBlocks(opts: FetchOpts = {}): Promise<FetchResult> {
   const difficulty = getDifficulty(opts.difficultyId);
   const scheme = getRhymeScheme(opts.schemeId);
   const count = opts.count ?? scheme.blockCount;
   const lang = getLanguage(opts.language);
-  const fallback = () => buildFallbackBlocks(lang.id, scheme, count);
+  const fallback = (): FetchResult => ({
+    blocks: buildFallbackBlocks(lang.id, scheme, count),
+    usedFallback: true,
+  });
   const generate = opts.generate ?? defaultGenerator;
   try {
     const tool = buildTool(lang);
@@ -106,7 +111,7 @@ export async function fetchRhymeBlocks(opts: FetchOpts = {}): Promise<RhymeBlock
     const temperature = 0.4 + Math.random() * 0.4;
     const input = await generate({ prompt, tool, temperature });
     const parsed = parseBlocks(input, scheme.pattern);
-    return parsed ?? fallback();
+    return parsed ? { blocks: parsed, usedFallback: false } : fallback();
   } catch (err) {
     console.error('[rhymes] fetch failed, using fallback', err);
     return fallback();
