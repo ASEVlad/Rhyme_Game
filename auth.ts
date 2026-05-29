@@ -4,26 +4,10 @@ import Resend from 'next-auth/providers/resend';
 import PostgresAdapter from '@auth/pg-adapter';
 import { authConfig } from './auth.config';
 import { pool } from './lib/db';
-import { isEmailAccepted, upsertWaitlist } from './lib/accepted-emails';
-import { isInviteCookieValid } from './lib/invite';
-import { notifyWaitlistJoin } from './lib/waitlist-notify';
+import { decideSignIn } from './lib/decide-signin';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;
-
-async function decideSignIn(email: string): Promise<boolean> {
-  if (isInviteCookieValid()) {
-    const inserted = await upsertWaitlist(email, true);
-    if (inserted) await notifyWaitlistJoin(email);
-    return true;
-  }
-  if (await isEmailAccepted(email)) {
-    return true;
-  }
-  const inserted = await upsertWaitlist(email, false);
-  if (inserted) await notifyWaitlistJoin(email);
-  return false;
-}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
