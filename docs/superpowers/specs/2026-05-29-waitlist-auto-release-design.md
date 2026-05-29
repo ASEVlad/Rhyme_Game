@@ -58,8 +58,9 @@ The email-then-flip ordering enforces the invariant **accepted ⇒ notified**. A
 
 ### Trigger — `app/api/cron/release-waitlist/route.ts`
 
+- `export const runtime = 'nodejs'` — **required**: the route imports the `pg` pool, which cannot run on the Edge runtime (mirrors `app/api/waitlist/route.ts`).
 - `POST` handler (no body needed).
-- **Auth:** require `Authorization: Bearer <CRON_SECRET>`; if `CRON_SECRET` is unset or the header mismatches → `401`. (Constant-time compare not required — the secret is high-entropy and the endpoint is localhost-only, but reject early.)
+- **Auth:** require `Authorization: Bearer <CRON_SECRET>`; if `CRON_SECRET` is unset or the header mismatches → `401`. The endpoint is **internet-facing** (Caddy reverse-proxies every path to Next, so `https://rhymefor.fun/api/cron/release-waitlist` is reachable), which makes the bearer token the *sole* gate — not defense-in-depth. Therefore `CRON_SECRET` must be ≥32 random bytes (`openssl rand -hex 32`); a guessing attack against that entropy is infeasible, so a plain string compare is acceptable. If `CRON_SECRET` is unset, fail closed (`401`), never open.
 - **No DB:** if `pool` is undefined → `503`.
 - **Limit:** `REGISTRATION_OPEN==="true"` → drain all; else → `parseInt(WAITLIST_DAILY_BATCH ?? "20")`.
 - Call `releaseWaitlistBatch(limit)`; respond `200` with `{ accepted: number, failed: number, remaining: number }` (counts, not raw emails, to keep PII out of timer logs).
@@ -119,6 +120,7 @@ later: operator sets REGISTRATION_OPEN=true + restart
 - **Resend failure for a row** → that row stays `accepted=false`, logged via `console.warn`; retried next run. Other rows in the batch are unaffected (independent per-row try/catch).
 - **Partial batch** → response reports `accepted` + `failed` separately so a spike in `failed` is visible in logs.
 - **Timer fires while app is down** → `curl` fails, systemd logs non-zero exit; `Persistent=true` + next daily run self-heals (no state lost — nothing was accepted).
+- **Concurrent runs** (e.g. a manual `curl` fired during the daily timer run) could select overlapping rows and double-send a "you're in" email to a few users. Harmless — the `UPDATE ... SET accepted=true` is idempotent and `remaining` is recomputed — so at 20/day this is not worth row-level locking. If volume ever makes this matter, claim rows with `UPDATE ... WHERE accepted=false RETURNING email` before emailing (accepting that a post-claim email failure would then need its own retry path).
 - **Resend free-tier cap (100 emails/day)** → if a single run tries to email more than the cap (most likely the `REGISTRATION_OPEN` drain-all on a large backlog), sends past the limit return non-OK and those rows stay pending — the email-then-accept invariant turns this into automatic spillover to the next daily run. No special handling needed. In practice the daily `WAITLIST_DAILY_BATCH=20` drip keeps the backlog small before open-up, so the final drain is well under the cap.
 
 ## Testing (vitest)
