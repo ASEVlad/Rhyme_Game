@@ -7,7 +7,7 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isProtected = ['/play', '/yt', '/calibrate'].some(p =>
+      const isProtected = ['/play', '/yt', '/calibrate', '/admin'].some(p =>
         nextUrl.pathname.startsWith(p)
       );
       if (isProtected && !isLoggedIn) return false;

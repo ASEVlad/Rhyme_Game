@@ -5,7 +5,7 @@ import { decideInvite } from './lib/invite';
 
 const { auth } = NextAuth(authConfig);
 
-const PROTECTED_PREFIXES = ['/play', '/yt', '/calibrate'];
+const PROTECTED_PREFIXES = ['/play', '/yt', '/calibrate', '/admin'];
 
 export default auth(req => {
   const { nextUrl } = req;
