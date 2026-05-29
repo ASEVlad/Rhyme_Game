@@ -1,5 +1,5 @@
 // tests/decide-signin.test.ts
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { isEmailAccepted, upsertWaitlist, isInviteCookieValid, notifyWaitlistJoin } = vi.hoisted(() => ({
   isEmailAccepted: vi.fn(),
@@ -30,12 +30,14 @@ it('accepts everyone and skips the gate checks when REGISTRATION_OPEN=true', asy
   expect(upsertWaitlist).toHaveBeenCalledWith('open@b.com', true);
   expect(isInviteCookieValid).not.toHaveBeenCalled();
   expect(isEmailAccepted).not.toHaveBeenCalled();
+  expect(notifyWaitlistJoin).not.toHaveBeenCalled();
 });
 
 it('accepts when the invite cookie is valid (flag off)', async () => {
   isInviteCookieValid.mockReturnValue(true);
   expect(await decideSignIn('invited@b.com')).toBe(true);
   expect(upsertWaitlist).toHaveBeenCalledWith('invited@b.com', true);
+  expect(notifyWaitlistJoin).not.toHaveBeenCalled();
 });
 
 it('accepts an already-accepted email (flag off)', async () => {
