@@ -20,10 +20,15 @@ export async function POST(request: Request) {
     ? Number.MAX_SAFE_INTEGER
     : Number.parseInt(process.env.WAITLIST_DAILY_BATCH ?? '20', 10) || 20;
 
-  const { accepted, failed, remaining } = await releaseWaitlistBatch(limit);
-  return NextResponse.json({
-    accepted: accepted.length,
-    failed: failed.length,
-    remaining,
-  });
+  try {
+    const { accepted, failed, remaining } = await releaseWaitlistBatch(limit);
+    return NextResponse.json({
+      accepted: accepted.length,
+      failed: failed.length,
+      remaining,
+    });
+  } catch (err) {
+    console.warn('[cron/release-waitlist] release failed:', err);
+    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+  }
 }
