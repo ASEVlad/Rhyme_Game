@@ -17,7 +17,9 @@ beforeEach(() => {
   vi.stubEnv('WAITLIST_DAILY_BATCH', '20');
   vi.stubEnv('REGISTRATION_OPEN', '');
 });
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 it('401s without a bearer header and never runs the batch', async () => {
   const res = await post();

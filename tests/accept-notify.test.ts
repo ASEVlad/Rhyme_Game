@@ -8,7 +8,9 @@ describe('sendAcceptedEmail', () => {
     vi.stubEnv('EMAIL_FROM', 'noreply@rhymefor.fun');
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://rhymefor.fun');
   });
-  afterEach(() => vi.unstubAllEnvs());
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
 
   it('returns false and does not call fetch when the key is missing', async () => {
     vi.stubEnv('AUTH_RESEND_KEY', '');
