@@ -90,6 +90,13 @@ export function useGamePhases(): GamePhasesReturn {
               words: usedWordsRef.current,
               endings: [],
             },
+            beat: {
+              id: activeBeat.id,
+              title: activeBeat.title,
+              bpm: activeBeat.bpm,
+              category: activeBeat.category,
+              source: activeBeat.source ?? 'local',
+            },
           }),
         });
         if (!res.ok) throw new Error('rhymes-failed');
