@@ -41,7 +41,7 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
       <form onSubmit={handleSubmit} className="space-y-2">
         {status === 'error' && (
           <p aria-live="polite" className="text-xs text-red-400 text-center">
-            Your account isn&apos;t accepted yet.
+            Sign-in failed — try again.
           </p>
         )}
         <div className="flex flex-col md:flex-row gap-2">
@@ -86,7 +86,7 @@ export function EmailSignInForm({ variant = 'stacked' }: Props = {}) {
       </p>
       {status === 'error' && (
         <p aria-live="polite" className="text-xs text-red-400 text-center">
-          Your account isn&apos;t accepted yet.
+          Sign-in failed — try again.
         </p>
       )}
       <input

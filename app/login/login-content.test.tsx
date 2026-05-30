@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { LoginContent } from './login-content';
 
@@ -35,17 +35,10 @@ describe('LoginContent', () => {
     expect(screen.getByText(/or use email/i)).toBeInTheDocument();
   });
 
-  it('shows the waitlist as a collapsed text link by default', () => {
+  it('does not surface any waitlist UI (registration is open)', () => {
     render(<LoginContent />);
-    expect(screen.getByRole('button', { name: /not invited\? join the waitlist/i })).toBeInTheDocument();
-    // The actual waitlist form (with its own Join waitlist submit button) is not yet mounted
-    expect(screen.queryByRole('button', { name: /^join waitlist$/i })).not.toBeInTheDocument();
-  });
-
-  it('expands the waitlist form when the text link is clicked', () => {
-    render(<LoginContent />);
-    fireEvent.click(screen.getByRole('button', { name: /not invited\? join the waitlist/i }));
-    expect(screen.getByRole('button', { name: /^join waitlist$/i })).toBeInTheDocument();
+    expect(screen.queryByText(/waitlist/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/by invitation/i)).not.toBeInTheDocument();
   });
 
   it('renders the back-to-home link', () => {

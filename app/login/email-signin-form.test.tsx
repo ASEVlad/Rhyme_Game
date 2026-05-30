@@ -100,7 +100,7 @@ describe('EmailSignInForm', () => {
     });
   });
 
-  it('shows "not accepted yet" when signIn returns an error', async () => {
+  it('shows the error microcopy when signIn returns an error', async () => {
     (signIn as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
       error: 'CredentialsSignin',
@@ -113,7 +113,7 @@ describe('EmailSignInForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/account isn't accepted yet/i)).toBeInTheDocument(),
+      expect(screen.getByText(/sign-in failed/i)).toBeInTheDocument(),
     );
     // Form remains for retry.
     expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument();
@@ -121,7 +121,7 @@ describe('EmailSignInForm', () => {
     expect(assignMock).not.toHaveBeenCalled();
   });
 
-  it('shows "not accepted yet" when signIn rejects', async () => {
+  it('shows the error microcopy when signIn rejects', async () => {
     (signIn as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('offline'));
     render(<EmailSignInForm />);
 
@@ -131,7 +131,7 @@ describe('EmailSignInForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/account isn't accepted yet/i)).toBeInTheDocument(),
+      expect(screen.getByText(/sign-in failed/i)).toBeInTheDocument(),
     );
   });
 
@@ -148,13 +148,13 @@ describe('EmailSignInForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/account isn't accepted yet/i)).toBeInTheDocument(),
+      expect(screen.getByText(/sign-in failed/i)).toBeInTheDocument(),
     );
 
     fireEvent.change(screen.getByPlaceholderText('your@email.com'), {
       target: { value: 'me2@example.com' },
     });
-    expect(screen.queryByText(/account isn't accepted yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/sign-in failed/i)).not.toBeInTheDocument();
   });
 
   describe('variant="inline"', () => {

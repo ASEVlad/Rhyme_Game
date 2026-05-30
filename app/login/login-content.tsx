@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { LoginNav } from './login-nav';
-import { WaitlistForm } from './waitlist-form';
 import { EmailSignInForm } from './email-signin-form';
 
 // useSearchParams() requires a Suspense boundary in Next.js 14 App Router.
@@ -13,7 +11,6 @@ import { EmailSignInForm } from './email-signin-form';
 export function LoginContent() {
   const searchParams = useSearchParams();
   const oauthError = searchParams.get('error');
-  const [showWaitlist, setShowWaitlist] = useState(false);
 
   return (
     <main
@@ -40,16 +37,11 @@ export function LoginContent() {
             >
               Sign in
             </h2>
-            <p className="text-xs tracking-widest text-white/40 uppercase">
-              Access by invitation
-            </p>
           </div>
 
           {oauthError && (
             <p className="text-sm text-red-400 text-center">
-              {oauthError === 'AccessDenied'
-                ? "This account isn't on the access list"
-                : 'Sign-in failed — try again'}
+              Sign-in failed — try again
             </p>
           )}
 
@@ -72,20 +64,6 @@ export function LoginContent() {
             </p>
             <EmailSignInForm variant="inline" />
           </div>
-
-          {showWaitlist ? (
-            <div className="pt-2 border-t border-[rgba(94,200,255,0.10)]">
-              <WaitlistForm label="Get notified when we open up" />
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowWaitlist(true)}
-              className="block w-full text-center text-xs text-white/55 hover:text-white/80 transition-colors"
-            >
-              Not invited? Join the waitlist →
-            </button>
-          )}
         </div>
 
         <p className="text-xs text-white/35">

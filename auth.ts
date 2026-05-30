@@ -4,10 +4,13 @@ import Resend from 'next-auth/providers/resend';
 import PostgresAdapter from '@auth/pg-adapter';
 import { authConfig } from './auth.config';
 import { pool } from './lib/db';
-import { decideSignIn } from './lib/decide-signin';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;
+
+function isValidEmail(email: unknown): email is string {
+  return typeof email === 'string' && email.length <= MAX_EMAIL_LENGTH && EMAIL_RE.test(email);
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -18,9 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: { email: { type: 'email' } },
       async authorize(credentials) {
         const email = credentials?.email;
-        if (typeof email !== 'string') return null;
-        if (email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) return null;
-        if (!(await decideSignIn(email))) return null;
+        if (!isValidEmail(email)) return null;
         return { id: email, email, name: null };
       },
     }),
@@ -30,11 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === 'credentials') return true;
-      if (account?.provider === 'google') {
-        const email = user.email;
-        if (!email || email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) return false;
-        return decideSignIn(email);
-      }
+      if (account?.provider === 'google') return isValidEmail(user.email);
       // Any other provider (including the registered-but-unused 'resend') is denied.
       return false;
     },
