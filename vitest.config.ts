@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, configDefaults } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
@@ -17,5 +17,8 @@ export default defineConfig({
     environmentMatchGlobs: [
       ['**/*.test.tsx', 'jsdom'],
     ],
+    // Prevent tests inside a sibling git worktree from being double-collected
+    // when running vitest in the main checkout.
+    exclude: [...configDefaults.exclude, '**/.worktrees/**'],
   },
 });
