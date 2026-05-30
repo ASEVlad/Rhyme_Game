@@ -331,7 +331,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
   );
 
   return (
-    <main className="relative flex min-h-screen flex-col bg-[#070d16]">
+    <main className="relative flex h-[100svh] lg:h-auto lg:min-h-screen flex-col overflow-hidden lg:overflow-visible bg-[#070d16]">
       {/* Ambient background layers */}
       <div
         aria-hidden="true"
@@ -363,16 +363,16 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
       </nav>
 
       {/* CONTENT */}
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-start px-6 md:px-12 pt-2 lg:pt-6 pb-10">
+      <div className="relative z-10 flex flex-1 min-h-0 flex-col items-center justify-start px-6 md:px-12 pt-4 lg:pt-6 pb-3 lg:pb-10">
         <motion.div
           variants={containerV}
           initial="hidden"
           animate="show"
-          className="w-full max-w-md lg:max-w-3xl"
+          className="w-full max-w-md flex flex-1 min-h-0 flex-col lg:max-w-3xl lg:block"
         >
 
           {/* Header */}
-          <motion.div variants={itemV} className="mb-4 lg:mb-7">
+          <motion.div variants={itemV} className="mb-3 lg:mb-7">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/40">
               New round
             </p>
@@ -381,7 +381,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
             </h1>
           </motion.div>
 
-          <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-8 lg:items-stretch">
+          <div className="flex flex-1 min-h-0 flex-col space-y-3 lg:space-y-0 lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-8 lg:items-stretch">
 
             {/* ── LEFT PANEL: beat browser (card on desktop, bare on mobile) ── */}
             <motion.div variants={itemV} className="lg:relative lg:min-h-0">
@@ -664,9 +664,10 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
             </motion.div>
 
             {/* ── RIGHT PANEL: options + PLAY ── */}
-            <motion.div variants={itemV} className="flex flex-col gap-4">
-              {/* Options grouped in one labeled card (spacing, not hard dividers) */}
-              <div className={`${CARD} p-5 space-y-5`}>
+            <motion.div variants={itemV} className="flex flex-1 min-h-0 flex-col gap-3 lg:flex-none lg:gap-4">
+              {/* Options grouped in one labeled card (spacing, not hard dividers).
+                  On mobile this card absorbs leftover space and scrolls internally; on lg it's natural-height. */}
+              <div className={`${CARD} flex-1 min-h-0 overflow-y-auto p-4 space-y-4 lg:flex-none lg:overflow-visible lg:p-5 lg:space-y-5 ${SCROLL}`}>
                 <div>
                   <FieldLabel>Language</FieldLabel>
                   <LanguagePicker
@@ -711,7 +712,7 @@ export function Setup({ initialBeatId, initialYtBeat, initialLanguageId, onPlay,
                   transition={{ type: 'spring', stiffness: 400, damping: 26 }}
                   onClick={() => activeBeat && onPlay(activeBeat, languageId, difficultyId, schemeId)}
                   disabled={!canPlay}
-                  className={`relative w-full overflow-hidden rounded-2xl py-4 text-2xl font-extrabold text-[#06101f] disabled:opacity-40 disabled:cursor-not-allowed ${FOCUS}`}
+                  className={`relative w-full overflow-hidden rounded-2xl py-3.5 lg:py-4 text-2xl font-extrabold text-[#06101f] disabled:opacity-40 disabled:cursor-not-allowed ${FOCUS}`}
                   style={{
                     background: 'linear-gradient(135deg,#6fcdff 0%,#3a9bf0 50%,#2a63d6 100%)',
                     boxShadow: canPlay
