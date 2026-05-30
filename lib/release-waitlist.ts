@@ -21,7 +21,11 @@ export async function releaseWaitlistBatch(limit: number): Promise<ReleaseResult
     [limit],
   );
 
-  for (const { email } of rows) {
+  // Stay under Resend's 5 req/sec ceiling: 250ms between sends gives margin.
+  const SEND_GAP_MS = 250;
+  for (let i = 0; i < rows.length; i++) {
+    if (i > 0) await new Promise((r) => setTimeout(r, SEND_GAP_MS));
+    const { email } = rows[i];
     const sent = await sendAcceptedEmail(email);
     if (!sent) {
       failed.push(email);
